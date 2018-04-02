@@ -14,6 +14,64 @@
         android:textAlignment="center"
         android:textSize="24sp" />
 
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnUndo"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:text="U" />
+
+            <Button
+                android:id="@+id/btnRedo"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:text="R" />
+
+            <Button
+                android:id="@+id/btnBold"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:text="B" />
+
+            <Button
+                android:id="@+id/btnItalic"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:text="I" />
+
+            <Button
+                android:id="@+id/btnUnderline"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:text="_" />
+
+            <Button
+                android:id="@+id/btnHeader1"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:text="H1" />
+        </LinearLayout>
+
+    </ScrollView>
+
+    <jp.wasabeef.richeditor.RichEditor
+        android:id="@+id/editor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </jp.wasabeef.richeditor.RichEditor>
+
     <EditText
         android:id="@+id/newTxtBlock"
         android:layout_width="match_parent"
