@@ -1,0 +1,4 @@
+#Tue Apr 03 21:15:16 EDT 2018
+base.0=C\:\\Users\\Jeffrey\\Documents\\capstone2018\\app\\build\\intermediates\\transforms\\dexMerger\\debug\\0
+path.0=classes.dex
+renamed.0=classes.dex

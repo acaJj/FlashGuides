@@ -1,0 +1,135 @@
+-- Merging decision tree log ---
+manifest
+ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:2:1-24:12
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:2:1-24:12
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:2:1-24:12
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:2:1-24:12
+MERGED from [com.android.support:appcompat-v7:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\appcompat-v7-27.1.0.aar\18bd1c2f59628a584c51d15eceb5d43b\AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support.constraint:constraint-layout:1.0.2] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\constraint-layout-1.0.2.aar\cfe922627e7de805daa0f4c19c2a5ef6\AndroidManifest.xml:2:1-11:12
+MERGED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:2:1-23:12
+MERGED from [jp.wasabeef:richeditor-android:1.2.2] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\richeditor-android-1.2.2.aar\1eb3b2d554c30563012cfb31de5e3680\AndroidManifest.xml:2:1-12:12
+MERGED from [com.android.support:support-fragment:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-fragment-27.1.0.aar\ce478b7f7b193f4ce61ff977d6a34ad2\AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support:animated-vector-drawable:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\animated-vector-drawable-27.1.0.aar\ba954f71c3123d83697d5a65a5bf4590\AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support:support-core-ui:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-core-ui-27.1.0.aar\4e944d084423d8e92c8204fbfa2b370f\AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support:support-core-utils:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-core-utils-27.1.0.aar\6a78309ea1cf6b1b5fb24bd2a92d14ff\AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support:support-vector-drawable:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-vector-drawable-27.1.0.aar\55b4ff11f6615cedc442cdb2b0d01a41\AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support:support-compat:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-compat-27.1.0.aar\18a984d0f777d67d10d6aa2837c4be45\AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.lifecycle:livedata-core:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\livedata-core-1.1.0.aar\03437ad828607347f5ac8e247a3e6365\AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.lifecycle:viewmodel:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\viewmodel-1.1.0.aar\5b373e28f69e31d96528ae9c7cb3bff8\AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.lifecycle:runtime:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\runtime-1.1.0.aar\b1981beb1f905b2d189830be05aa0b89\AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.core:runtime:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\runtime-1.1.0.aar\57339b7e579cfa8cd70c745e302c6b0b\AndroidManifest.xml:17:1-22:12
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:2:1-24:12
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:2:1-24:12
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:2:1-24:12
+	package
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:3:5-46
+		INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+	android:versionName
+		INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:2:1-24:12
+		INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+	android:versionCode
+		INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:2:1-24:12
+		INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:2:11-69
+uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
+ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:5:5-81
+	android:name
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:5:22-78
+application
+ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:7:5-22:19
+MERGED from [com.android.support.constraint:constraint-layout:1.0.2] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\constraint-layout-1.0.2.aar\cfe922627e7de805daa0f4c19c2a5ef6\AndroidManifest.xml:9:5-20
+MERGED from [com.android.support.constraint:constraint-layout:1.0.2] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\constraint-layout-1.0.2.aar\cfe922627e7de805daa0f4c19c2a5ef6\AndroidManifest.xml:9:5-20
+MERGED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:11:5-21:19
+MERGED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:11:5-21:19
+	android:supportsRtl
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:12:9-35
+	android:label
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:10:9-41
+	android:roundIcon
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:11:9-54
+	android:icon
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:9:9-43
+	android:allowBackup
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:8:9-35
+	android:theme
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:13:9-65
+activity#com.wew.azizchr.guidezprototype.MainPage
+ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:14:9-20:20
+	android:name
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:14:19-43
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:15:13-19:29
+action#android.intent.action.MAIN
+ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:16:17-69
+	android:name
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:16:25-66
+category#android.intent.category.LAUNCHER
+ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:18:17-77
+	android:name
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:18:27-74
+activity#com.wew.azizchr.guidezprototype.TextBlockWriterActivity
+ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:21:9-70
+	android:name
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml:21:19-58
+uses-sdk
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+MERGED from [com.android.support:appcompat-v7:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\appcompat-v7-27.1.0.aar\18bd1c2f59628a584c51d15eceb5d43b\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:appcompat-v7:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\appcompat-v7-27.1.0.aar\18bd1c2f59628a584c51d15eceb5d43b\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support.constraint:constraint-layout:1.0.2] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\constraint-layout-1.0.2.aar\cfe922627e7de805daa0f4c19c2a5ef6\AndroidManifest.xml:5:5-7:41
+MERGED from [com.android.support.constraint:constraint-layout:1.0.2] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\constraint-layout-1.0.2.aar\cfe922627e7de805daa0f4c19c2a5ef6\AndroidManifest.xml:5:5-7:41
+MERGED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:7:5-9:41
+MERGED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:7:5-9:41
+MERGED from [jp.wasabeef:richeditor-android:1.2.2] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\richeditor-android-1.2.2.aar\1eb3b2d554c30563012cfb31de5e3680\AndroidManifest.xml:8:5-10:41
+MERGED from [jp.wasabeef:richeditor-android:1.2.2] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\richeditor-android-1.2.2.aar\1eb3b2d554c30563012cfb31de5e3680\AndroidManifest.xml:8:5-10:41
+MERGED from [com.android.support:support-fragment:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-fragment-27.1.0.aar\ce478b7f7b193f4ce61ff977d6a34ad2\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-fragment:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-fragment-27.1.0.aar\ce478b7f7b193f4ce61ff977d6a34ad2\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:animated-vector-drawable:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\animated-vector-drawable-27.1.0.aar\ba954f71c3123d83697d5a65a5bf4590\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:animated-vector-drawable:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\animated-vector-drawable-27.1.0.aar\ba954f71c3123d83697d5a65a5bf4590\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-core-ui:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-core-ui-27.1.0.aar\4e944d084423d8e92c8204fbfa2b370f\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-core-ui:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-core-ui-27.1.0.aar\4e944d084423d8e92c8204fbfa2b370f\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-core-utils:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-core-utils-27.1.0.aar\6a78309ea1cf6b1b5fb24bd2a92d14ff\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-core-utils:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-core-utils-27.1.0.aar\6a78309ea1cf6b1b5fb24bd2a92d14ff\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-vector-drawable:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-vector-drawable-27.1.0.aar\55b4ff11f6615cedc442cdb2b0d01a41\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-vector-drawable:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-vector-drawable-27.1.0.aar\55b4ff11f6615cedc442cdb2b0d01a41\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-compat:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-compat-27.1.0.aar\18a984d0f777d67d10d6aa2837c4be45\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-compat:27.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\support-compat-27.1.0.aar\18a984d0f777d67d10d6aa2837c4be45\AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:livedata-core:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\livedata-core-1.1.0.aar\03437ad828607347f5ac8e247a3e6365\AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:livedata-core:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\livedata-core-1.1.0.aar\03437ad828607347f5ac8e247a3e6365\AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:viewmodel:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\viewmodel-1.1.0.aar\5b373e28f69e31d96528ae9c7cb3bff8\AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:viewmodel:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\viewmodel-1.1.0.aar\5b373e28f69e31d96528ae9c7cb3bff8\AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:runtime:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\runtime-1.1.0.aar\b1981beb1f905b2d189830be05aa0b89\AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:runtime:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\runtime-1.1.0.aar\b1981beb1f905b2d189830be05aa0b89\AndroidManifest.xml:20:5-44
+MERGED from [android.arch.core:runtime:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\runtime-1.1.0.aar\57339b7e579cfa8cd70c745e302c6b0b\AndroidManifest.xml:20:5-44
+MERGED from [android.arch.core:runtime:1.1.0] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\runtime-1.1.0.aar\57339b7e579cfa8cd70c745e302c6b0b\AndroidManifest.xml:20:5-44
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\Jeffrey\Documents\capstone2018\app\src\main\AndroidManifest.xml
+provider#com.kbeanie.multipicker.utils.AMPFileProvider
+ADDED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:12:9-20:20
+	android:grantUriPermissions
+		ADDED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:16:13-47
+	android:authorities
+		ADDED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:14:13-76
+	android:exported
+		ADDED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:15:13-37
+	android:name
+		ADDED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:13:13-73
+meta-data#android.support.FILE_PROVIDER_PATHS
+ADDED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:17:13-19:49
+	android:resource
+		ADDED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:19:17-46
+	android:name
+		ADDED from [com.kbeanie:multipicker:1.1.31] C:\Users\Jeffrey\.gradle\caches\transforms-1\files-1.1\multipicker-1.1.31.aar\f7386dafc56010bc0de2536d13f703f4\AndroidManifest.xml:18:17-67
