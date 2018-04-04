@@ -8,6 +8,7 @@ import android.os.Build;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -132,7 +133,7 @@ public class MainPage extends AppCompatActivity {
     public boolean addText(String text){
         try{
             TextView textView = new TextView(MainPage.this);
-            textView.setText(text);
+            textView.setText(Html.fromHtml(text));
 
             //modifies the texts size, color and padding
             textView.setTextSize(18);

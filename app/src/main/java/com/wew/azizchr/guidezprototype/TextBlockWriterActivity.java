@@ -36,8 +36,8 @@ public class TextBlockWriterActivity extends AppCompatActivity {
         text = getIntent().getStringExtra("newtext");
 
         mEditor.setEditorHeight(200);
-        mEditor.setEditorFontSize(22);
-        mEditor.setEditorFontColor(Color.RED);
+        mEditor.setEditorFontSize(20);
+        mEditor.setEditorFontColor(Color.BLACK);
         mEditor.setPlaceholder("Insert text here...");
 
         if (savedInstanceState != null){
@@ -46,9 +46,7 @@ public class TextBlockWriterActivity extends AppCompatActivity {
 
         mEditor.setOnTextChangeListener(new RichEditor.OnTextChangeListener() {
             @Override
-            public void onTextChange(String text) {
-                mPreview.setText(text);
-            }
+            public void onTextChange(String text){ }
         });
 
         findViewById(R.id.btnUndo).setOnClickListener(new View.OnClickListener() {
@@ -96,7 +94,7 @@ public class TextBlockWriterActivity extends AppCompatActivity {
         mbtnDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                text = mEditText.getText().toString();
+                text = mEditor.getHtml().toString();
                 setTextResult(text);
             }
         });
