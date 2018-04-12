@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import jp.wasabeef.richeditor.RichEditor;
 
@@ -94,8 +95,16 @@ public class TextBlockWriterActivity extends AppCompatActivity {
         mbtnDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                text = mEditor.getHtml().toString();
-                setTextResult(text);
+                try{
+                    text = mEditor.getHtml().toString();
+                    if (text == "" || text == null){
+                        Toast.makeText(TextBlockWriterActivity.this, "You have to enter something!", Toast.LENGTH_SHORT).show();
+                    }else{
+                        setTextResult(text);
+                    }
+                }catch (NullPointerException ex){
+                    ex.getMessage();
+                }
             }
         });
     }
