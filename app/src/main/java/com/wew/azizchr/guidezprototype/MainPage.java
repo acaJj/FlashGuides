@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -45,6 +47,13 @@ public class MainPage extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_page);
+
+        if (android.os.Build.VERSION.SDK_INT >= 21){
+            Window window = this.getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
+        }
 
         layoutFeed = (LinearLayout) findViewById(R.id.layoutFeed);
         index = 0;
@@ -115,7 +124,7 @@ public class MainPage extends AppCompatActivity {
      * @param imageUri the uri of the image being added
      * @return true if success, otherwise false
      */
-    public boolean addImage(Uri imageUri){
+    public boolean addImage(final Uri imageUri){
         try{
             LinearLayout newPicBlock = new LinearLayout(MainPage.this);
             final Spinner spinner = new Spinner(MainPage.this);
@@ -123,6 +132,14 @@ public class MainPage extends AppCompatActivity {
 
             ImageView newImgView = new ImageView(MainPage.this);
             newImgView.setImageURI(imageUri);
+            newImgView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(MainPage.this, ViewPhoto.class);
+                    intent.putExtra("imageUri", imageUri);
+                    startActivity(intent);
+                }
+            });
 
             //fits the image to the sides, fixes the view bounds, adds padding
             newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
