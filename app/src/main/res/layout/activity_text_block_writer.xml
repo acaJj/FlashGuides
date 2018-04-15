@@ -26,78 +26,109 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <ScrollView
+    <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:scrollbarStyle="insideInset" >
 
             <Button
                 android:id="@+id/btnUndo"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="U" />
+                android:text="@string/btn_undo" />
 
             <Button
                 android:id="@+id/btnRedo"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="R" />
+                android:text="@string/btn_redo"/>
 
             <Button
                 android:id="@+id/btnBold"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="B" />
+                android:text="@string/btn_bold"
+                android:textStyle="bold" />
 
             <Button
                 android:id="@+id/btnItalic"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="I" />
+                android:text="@string/btn_italic"
+                android:textStyle="italic" />
 
             <Button
                 android:id="@+id/btnUnderline"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="_" />
+                android:text="@string/btn_underline" />
 
             <Button
                 android:id="@+id/btnHeader1"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="H1" />
+                android:text="@string/btn_header1" />
+
+            <Button
+                android:id="@+id/btnHeader2"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:text="@string/btn_header2" />
+
+            <Button
+                android:id="@+id/btnHeader3"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:text="@string/btn_header3" />
+
+            <Button
+                android:id="@+id/btnBullet"
+                android:layout_width="70dp"
+                android:layout_height="50dp"
+                android:text="@string/btn_bullets" />
         </LinearLayout>
 
-    </ScrollView>
-
-    <jp.wasabeef.richeditor.RichEditor
-        android:id="@+id/editor"
+    </HorizontalScrollView>
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/preview"
+        <jp.wasabeef.richeditor.RichEditor
+            android:id="@+id/editor"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </jp.wasabeef.richeditor.RichEditor>
+            android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/btnDone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/border_button_done"
-        android:fontFamily="sans-serif-condensed"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:text="Done"
-        android:textAlignment="center"
-        android:textColor="#8e55d3"
-        android:textSize="25dp"
-        android:textStyle="bold" />
+            <TextView
+                android:id="@+id/preview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </jp.wasabeef.richeditor.RichEditor>
+
+        <Button
+            android:id="@+id/btnDone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/border_button_done"
+            android:fontFamily="sans-serif-condensed"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="Done"
+            android:textAlignment="center"
+            android:layout_gravity="center"
+            android:textColor="#8e55d3"
+            android:textSize="25dp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</ScrollView>
 
 </LinearLayout>

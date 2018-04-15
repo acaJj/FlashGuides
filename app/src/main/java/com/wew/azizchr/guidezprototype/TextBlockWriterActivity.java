@@ -58,6 +58,29 @@ public class TextBlockWriterActivity extends AppCompatActivity {
             public void onTextChange(String text){ }
         });
 
+        setTextButtonFunctionality();
+
+        mbtnDone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try{
+                    text = mEditor.getHtml().toString();
+                    if (text == "" || text == null){
+                        Toast.makeText(TextBlockWriterActivity.this, "You have to enter something!", Toast.LENGTH_SHORT).show();
+                    }else{
+                        setTextResult(text);
+                    }
+                }catch (NullPointerException ex){
+                    ex.getMessage();
+                }
+            }
+        });
+    }
+
+    /**
+     * Finds all text buttons and adds functionality to them
+     */
+    private void setTextButtonFunctionality() {
         findViewById(R.id.btnUndo).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -93,6 +116,7 @@ public class TextBlockWriterActivity extends AppCompatActivity {
             }
         });
 
+
         findViewById(R.id.btnHeader1).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -100,19 +124,25 @@ public class TextBlockWriterActivity extends AppCompatActivity {
             }
         });
 
-        mbtnDone.setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btnHeader2).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try{
-                    text = mEditor.getHtml().toString();
-                    if (text == "" || text == null){
-                        Toast.makeText(TextBlockWriterActivity.this, "You have to enter something!", Toast.LENGTH_SHORT).show();
-                    }else{
-                        setTextResult(text);
-                    }
-                }catch (NullPointerException ex){
-                    ex.getMessage();
-                }
+                mEditor.setHeading(2);
+            }
+        });
+
+        findViewById(R.id.btnHeader3).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mEditor.setHeading(3);
+            }
+        });
+
+
+        findViewById(R.id.btnBullet).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mEditor.setBullets();
             }
         });
     }
