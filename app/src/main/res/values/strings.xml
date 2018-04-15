@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">Guidez Prototype</string>
+    <string name="btn_bold">B</string>
+    <string name="btn_italic">I</string>
+    <string name="btn_underline">___</string>
+    <string name="btn_indent">&gt;&gt;|</string>
+    <string name="btn_outdent">|&lt;&lt;</string>
+    <string name="btn_header1">H1</string>
+    <string name="btn_header2">H2</string>
+    <string name="btn_header3">H3</string>
+    <string name="btn_undo">&lt;-</string>
+    <string name="btn_redo">-&gt;</string>
+    <string name="btn_left_align">|&lt;</string>
+    <string name="btn_center_align">&gt;|&lt;</string>
+    <string name="btn_right_align">&gt;|</string>
+    <string name="btn_bullets">List</string>
+    <string name="btn_num_list">1.</string>
+    <string name="btn_block">Block</string>
 </resources>

@@ -63,7 +63,7 @@ public class MainPage extends AppCompatActivity {
             public void onImagesChosen(List<ChosenImage> list) {
                 //Log.i("THUMBNAIL PATH: ",list.get(0).getQueryUri());
                 Uri imagePath = Uri.parse(list.get(0).getQueryUri());
-                addImage(imagePath);
+                addImage(imagePath,true);
             }
 
             @Override
@@ -122,9 +122,10 @@ public class MainPage extends AppCompatActivity {
     /**
      * Creates and adds a new ImageView to the guide's layoutFeed
      * @param imageUri the uri of the image being added
+     * @param rotate determines if picture should be rotated when placed
      * @return true if success, otherwise false
      */
-    public boolean addImage(final Uri imageUri){
+    public boolean addImage(final Uri imageUri, boolean rotate){
         try{
             LinearLayout newPicBlock = new LinearLayout(MainPage.this);
             final Spinner spinner = new Spinner(MainPage.this);
@@ -145,6 +146,7 @@ public class MainPage extends AppCompatActivity {
             newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             newImgView.setAdjustViewBounds(true);
             newImgView.setPadding(3, 10, 3, 10);
+            if (rotate)newImgView.setRotation(90);
 
             mSpinners.add(spinner);
             newPicBlock.addView(spinner);
@@ -282,7 +284,7 @@ public class MainPage extends AppCompatActivity {
                         public void onImagesChosen(List<ChosenImage> list) {
                             //Log.i("THUMBNAIL PATH: ",list.get(0).getQueryUri());
                             Uri imagePath = Uri.parse(list.get(0).getQueryUri());
-                            addImage(imagePath);
+                            addImage(imagePath,true);
                         }
 
                         @Override
@@ -295,7 +297,7 @@ public class MainPage extends AppCompatActivity {
             }
             else if (requestCode == SELECT_FILE){
                 Uri selectedImageUri = data.getData();
-                addImage(selectedImageUri);
+                addImage(selectedImageUri,false);
             } else if (requestCode == WRITE_TEXT){
                 if (data == null){
                     return;
