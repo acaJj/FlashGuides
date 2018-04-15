@@ -38,7 +38,7 @@ public class TextBlockWriterActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_text_block_writer);
 
-        mEditText = findViewById(R.id.newTxtBlock);
+        //mEditText = findViewById(R.id.newTxtBlock);
         mEditor = findViewById(R.id.editor);
         mPreview = findViewById(R.id.preview);
         mbtnDone = findViewById(R.id.btnDone);
