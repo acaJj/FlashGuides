@@ -179,7 +179,15 @@ public class MainPage extends AppCompatActivity {
             ImageView newImgView = new ImageView(MainPage.this);
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
            // newImgView.setImageURI(imageUri);
-            newImgView.setImageBitmap(setImageOrientation(bitmap));
+            bitmap = setImageOrientation(bitmap);
+            if (bitmap.getWidth() > bitmap.getHeight()){
+                bitmap = resizeBitmap(bitmap,550,450);
+            }else if (bitmap.getWidth() < bitmap.getHeight()){
+                bitmap = resizeBitmap(bitmap,450,550);
+            }else {
+                bitmap = resizeBitmap(bitmap,450,450);
+            }
+            newImgView.setImageBitmap(bitmap);
             newImgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -244,6 +252,17 @@ public class MainPage extends AppCompatActivity {
         }
         Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);
         return rotatedBitmap;
+    }
+
+    /**
+     * Resizes bitmaps to be a lower resolution to prevent app slowdown
+     * @param bitmap the bitmap we're resizing
+     * @param width the desired width
+     * @param height the desired height
+     * @return the resized bitmap
+     */
+    public Bitmap resizeBitmap(Bitmap bitmap, int width, int height){
+        return Bitmap.createScaledBitmap(bitmap,width,height,true);
     }
 
     /**
