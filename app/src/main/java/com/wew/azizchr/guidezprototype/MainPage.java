@@ -2,9 +2,14 @@ package com.wew.azizchr.guidezprototype;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -27,7 +32,11 @@ import com.kbeanie.multipicker.api.Picker;
 import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
 import com.kbeanie.multipicker.api.entity.ChosenImage;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MainPage extends AppCompatActivity {
@@ -41,6 +50,7 @@ public class MainPage extends AppCompatActivity {
     private static final int WRITE_TEXT =1;
     private String outputPath;
     private String newText;
+    private String mImagePath;
     private List<Spinner> mSpinners = new ArrayList<Spinner>();
 
     @Override
@@ -64,6 +74,7 @@ public class MainPage extends AppCompatActivity {
                 //Log.i("THUMBNAIL PATH: ",list.get(0).getQueryUri());
                 Uri imagePath = Uri.parse(list.get(0).getQueryUri());
                 addImage(imagePath,true);
+
             }
 
             @Override
@@ -119,47 +130,6 @@ public class MainPage extends AppCompatActivity {
         builder.show();
     }
 
-    /**
-     * Creates and adds a new ImageView to the guide's layoutFeed
-     * @param imageUri the uri of the image being added
-     * @param rotate determines if picture should be rotated when placed
-     * @return true if success, otherwise false
-     */
-    public boolean addImage(final Uri imageUri, boolean rotate){
-        try{
-            LinearLayout newPicBlock = new LinearLayout(MainPage.this);
-            final Spinner spinner = new Spinner(MainPage.this);
-            setSpinnerListeners(spinner);
-
-            ImageView newImgView = new ImageView(MainPage.this);
-            newImgView.setImageURI(imageUri);
-            newImgView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(MainPage.this, ViewPhoto.class);
-                    intent.putExtra("imageUri", imageUri);
-                    startActivity(intent);
-                }
-            });
-
-            //fits the image to the sides, fixes the view bounds, adds padding
-            newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            newImgView.setAdjustViewBounds(true);
-            newImgView.setPadding(3, 10, 3, 10);
-            if (rotate)newImgView.setRotation(90);
-
-            mSpinners.add(spinner);
-            newPicBlock.addView(spinner);
-            newPicBlock.addView(newImgView);
-            layoutFeed.addView(newPicBlock, index);
-            index++ ;
-            updateSpinnerLists();
-        }catch(Exception ex){
-            ex.getMessage();
-            return false;
-        }
-        return true;
-    }
 
     /**
      * Creates and adds a new text block to the layoutFeed
@@ -188,10 +158,92 @@ public class MainPage extends AppCompatActivity {
 
             updateSpinnerLists();
         }catch (Exception ex){
-            ex.getMessage();
+            ex.printStackTrace();
             return false;
         }
         return true;
+    }
+
+    /**
+     * Creates and adds a new ImageView to the guide's layoutFeed
+     * @param imageUri the uri of the image being added
+     * @param rotate determines if picture should be rotated when placed
+     * @return true if success, otherwise false
+     */
+    public boolean addImage(final Uri imageUri, boolean rotate){
+        try{
+            LinearLayout newPicBlock = new LinearLayout(MainPage.this);
+            final Spinner spinner = new Spinner(MainPage.this);
+            setSpinnerListeners(spinner);
+
+            ImageView newImgView = new ImageView(MainPage.this);
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+           // newImgView.setImageURI(imageUri);
+            newImgView.setImageBitmap(setImageOrientation(bitmap));
+            newImgView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(MainPage.this, ViewPhoto.class);
+                    intent.putExtra("imageUri", imageUri);
+                    startActivity(intent);
+                }
+            });
+
+            //fits the image to the sides, fixes the view bounds, adds padding
+            newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            newImgView.setAdjustViewBounds(true);
+            newImgView.setPadding(3, 10, 3, 10);
+
+            mSpinners.add(spinner);
+            newPicBlock.addView(spinner);
+            newPicBlock.addView(newImgView);
+            layoutFeed.addView(newPicBlock, index);
+            index++ ;
+            updateSpinnerLists();
+        }catch(Exception ex){
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    void createImageFile() throws IOException{
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String fileName = "IMAGE_"+timeStamp+"_";
+        File storageDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+
+        File picture = File.createTempFile(fileName,".jpg",storageDirectory);
+
+    }
+
+    /**
+     * Detects if captured image was in portrait or landscape mode and rotates it accordingly
+     * @param bitmap of the image we captured
+     * @return the correctly rotated bitmap that we want to set in our imgView
+     */
+    private Bitmap setImageOrientation(Bitmap bitmap){
+        ExifInterface exifInterface = null;
+        try{
+            //the path of the picture taken is used to initialize the exifInterface
+            Log.d("OUTPUT PATH: ",outputPath);
+            exifInterface = new ExifInterface(outputPath);
+        }catch (IOException ex){
+            ex.printStackTrace();
+        }
+        //gets the camera orientation tag of the image
+        int mCameraOrientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION,ExifInterface.ORIENTATION_UNDEFINED);
+        Matrix matrix = new Matrix();
+        switch(mCameraOrientation){
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                matrix.setRotate(90);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                matrix.setRotate(180);
+                break;
+            default:
+        }
+        Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);
+        return rotatedBitmap;
     }
 
     /**
@@ -247,6 +299,11 @@ public class MainPage extends AppCompatActivity {
         updateSpinnerLists();
     }
 
+    /**
+     * Adds reordering functionality to a spinner passed into the function
+     * @param spinner a new spinner created that we want to give reorder functionality to
+     * @return true if function succeeded, otherwise false
+     */
     public boolean setSpinnerListeners(final Spinner spinner){
         try{
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
