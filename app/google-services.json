@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "324807363723",
+    "firebase_url": "https://flash-guides.firebaseio.com",
+    "project_id": "flash-guides",
+    "storage_bucket": "flash-guides.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:324807363723:android:71f3e15bd4020039",
+        "android_client_info": {
+          "package_name": "com.wew.azizchr.guidezprototype"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "324807363723-sq6n4u3f8463h85ock89v4377russotm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAefFiINMhPwiU_M8E6iIC1PPOMdLEXuFk"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
