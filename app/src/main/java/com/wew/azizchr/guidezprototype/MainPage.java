@@ -2,6 +2,7 @@ package com.wew.azizchr.guidezprototype;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -15,6 +16,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -27,6 +29,9 @@ import com.kbeanie.multipicker.api.Picker;
 import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
 import com.kbeanie.multipicker.api.entity.ChosenImage;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +47,10 @@ public class MainPage extends AppCompatActivity {
     private String outputPath;
     private String newText;
     private List<Spinner> mSpinners = new ArrayList<Spinner>();
+    private Button btnSave;
+    private Button btnPublish;
+
+    private int guideCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +63,8 @@ public class MainPage extends AppCompatActivity {
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
+        btnSave = findViewById(R.id.btnSave);
+        btnPublish = findViewById(R.id.btnPublish);
 
         layoutFeed = (LinearLayout) findViewById(R.id.layoutFeed);
         index = 0;
@@ -71,6 +82,50 @@ public class MainPage extends AppCompatActivity {
 
             }
         });
+
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveToPDF();
+            }
+        });
+
+        btnPublish.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                publishToDB();
+            }
+        });
+    }
+
+    /**
+     * Publishes the completed guide to the server
+     */
+    private void publishToDB() {
+        //PUBLISHING LOGIC
+    }
+
+    /**
+     * Saves the completed guide to pdf format on your phone
+     */
+    private void saveToPDF() {
+        LinearLayout layout = getLayoutFeed();
+        layout.setDrawingCacheEnabled(true);
+        Bitmap bitmap = layout.getDrawingCache();
+
+        try {
+            File file = null;
+            if (android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
+                file = new File(android.os.Environment.getExternalStorageDirectory(), "Saved_Guides");
+                if (!file.exists()) file.mkdirs();
+            }
+            File f = new File(file.getAbsolutePath() + file.separator + "Guide" + guideCount + ".pdf");
+            FileOutputStream out = new FileOutputStream(f);
+            bitmap.compress(Bitmap.CompressFormat.PNG,10,out);
+            out.close();
+        } catch (Exception ex) {
+            ex.getStackTrace();
+        }
     }
 
     /**
@@ -269,6 +324,18 @@ public class MainPage extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    public LinearLayout getLayoutFeed(){
+        LinearLayout layoutToGet = new LinearLayout(MainPage.this);
+
+        for (int i = 0;i<layoutFeed.getChildCount();i++) {
+            LinearLayout view = (LinearLayout) layoutFeed.getChildAt(i);
+            if (i == layoutFeed.getChildCount() - 1)break;
+            else layoutToGet.addView(view.getChildAt(1));
+        }
+
+        return layoutToGet;
     }
 
     @Override

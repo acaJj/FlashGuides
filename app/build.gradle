@@ -28,6 +28,11 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     implementation 'com.kbeanie:multipicker:1.1.31@aar'
     implementation 'jp.wasabeef:richeditor-android:1.2.2'
+<<<<<<< HEAD
     compile 'com.google.firebase:firebase-core:15.0.0'
+=======
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:recyclerview-v7:27.1.1'
+>>>>>>> origin/SaveandPublish
 }
 apply plugin: 'com.google.gms.google-services'
