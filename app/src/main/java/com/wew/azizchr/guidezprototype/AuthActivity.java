@@ -1,7 +1,9 @@
 package com.wew.azizchr.guidezprototype;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -19,5 +21,10 @@ public class AuthActivity extends AppCompatActivity {
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
+    }
+
+    public void onClickSignUp(View view) {
+        Intent intent = new Intent(AuthActivity.this, SignUpActivty.class);
+        startActivity(intent);
     }
 }
