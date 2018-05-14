@@ -23,6 +23,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toolbar;
 
+import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.kbeanie.multipicker.api.CameraImagePicker;
 import com.kbeanie.multipicker.api.ImagePicker;
 import com.kbeanie.multipicker.api.Picker;
@@ -39,6 +42,9 @@ public class MainPage extends AppCompatActivity {
 
     LinearLayout layoutFeed;
     int index;
+
+    //Checks current Auth state
+    //private FirebaseAuth mAuth;
 
     private ImagePicker imgPicker;
     private CameraImagePicker camera;
@@ -66,6 +72,8 @@ public class MainPage extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSave);
         btnPublish = findViewById(R.id.btnPublish);
 
+
+
         layoutFeed = (LinearLayout) findViewById(R.id.layoutFeed);
         index = 0;
         camera = new CameraImagePicker(MainPage.this);
@@ -83,6 +91,7 @@ public class MainPage extends AppCompatActivity {
             }
         });
 
+<<<<<<< HEAD
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -126,7 +135,19 @@ public class MainPage extends AppCompatActivity {
         } catch (Exception ex) {
             ex.getStackTrace();
         }
+=======
+        //init firebase auth instance
+        //mAuth = FirebaseAuth.getInstance();
+>>>>>>> origin/master
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Check if user is signed in
+        //FirebaseUser currentUser = mAuth.getCurrentUser();
+    }
+
 
     /**
      * Brings up a menu of image options for the user on button press
@@ -186,7 +207,7 @@ public class MainPage extends AppCompatActivity {
             setSpinnerListeners(spinner);
 
             ImageView newImgView = new ImageView(MainPage.this);
-            newImgView.setImageURI(imageUri);
+            Glide.with(this).load(imageUri).into(newImgView);
             newImgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
