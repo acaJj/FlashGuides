@@ -74,7 +74,10 @@
                         app:srcCompat="@drawable/ic_add_text" />
 
                 </LinearLayout>
-
+                <TextView
+                    android:id="@+id/txtDisplay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
             </LinearLayout>
         </ScrollView>
     </LinearLayout>

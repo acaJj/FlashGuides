@@ -6,11 +6,16 @@ android {
         applicationId "com.wew.azizchr.guidezprototype"
         minSdkVersion 19
         targetSdkVersion 27
+        multiDexEnabled true
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
+       /* debug{
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }*/
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -34,5 +39,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:15.0.2'
     implementation 'com.firebaseui:firebase-ui-auth:3.2.2'
     implementation 'com.google.firebase:firebase-auth:15.1.0'
+    implementation 'com.google.firebase:firebase-storage:15.0.2'
+    implementation 'com.google.firebase:firebase-firestore:16.0.0'
+    //implementation 'com.google.firebase:firebase-database:15.0.0'
 }
 apply plugin: 'com.google.gms.google-services'

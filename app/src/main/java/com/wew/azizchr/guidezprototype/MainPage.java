@@ -2,13 +2,18 @@ package com.wew.azizchr.guidezprototype;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
+import android.transition.Transition;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -19,27 +24,56 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.Toolbar;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.kbeanie.multipicker.api.CameraImagePicker;
 import com.kbeanie.multipicker.api.ImagePicker;
 import com.kbeanie.multipicker.api.Picker;
 import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
 import com.kbeanie.multipicker.api.entity.ChosenImage;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class MainPage extends AppCompatActivity {
+
+    private static final String NAME_KEY = "NAME";
+    private static final String PLACEMENT_KEY = "PLACEMENT";
+    private static final String TEXT_VALUE_KEY = "TEXT";
 
     LinearLayout layoutFeed;
     int index;
 
-    //Checks current Auth state
+    //Firebase Instance Variables
     //private FirebaseAuth mAuth;
+    private FirebaseStorage mStorage;
+    private FirebaseFirestore mFirestore;
+
+    //Cloud Firestore Reference Variables
+    private DocumentReference mDocRef;
+    private CollectionReference guideData;
 
     private ImagePicker imgPicker;
     private CameraImagePicker camera;
@@ -48,6 +82,7 @@ public class MainPage extends AppCompatActivity {
     private String outputPath;
     private String newText;
     private List<Spinner> mSpinners = new ArrayList<Spinner>();
+    private TextView display;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,8 +96,11 @@ public class MainPage extends AppCompatActivity {
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
 
+        display = findViewById(R.id.txtDisplay);
 
-
+        mStorage = FirebaseStorage.getInstance();
+        mFirestore = FirebaseFirestore.getInstance();
+        guideData = mFirestore.collection("guides/guide1/textData");
         layoutFeed = (LinearLayout) findViewById(R.id.layoutFeed);
         index = 0;
         camera = new CameraImagePicker(MainPage.this);
@@ -84,11 +122,90 @@ public class MainPage extends AppCompatActivity {
         //mAuth = FirebaseAuth.getInstance();
     }
 
+    public void saveToDevice(){
+
+    }
+
+    public void getTextBlock(){
+        mDocRef = guideData.document("textBlock1");
+        mDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                if (documentSnapshot.exists()){
+                    String text = documentSnapshot.getString(TEXT_VALUE_KEY);
+                    int placement = (int)documentSnapshot.get(PLACEMENT_KEY);
+                    display.setText(text);
+                }
+            }
+        });
+    }
+
+    public void uploadText(String text, int place){
+        Log.i("UPLOADTEXT: ", "STARTING UPLOAD");
+        if (text.isEmpty()){return;}
+        Map<String,Object> dataToSave = new HashMap<String, Object>();
+        dataToSave.put(TEXT_VALUE_KEY,text);
+        dataToSave.put(PLACEMENT_KEY,place);
+        mDocRef = guideData.document("textBlock1");
+        mDocRef.set(dataToSave).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()){
+                    Log.d("UPLOADTEXT: ", "onComplete: Text Block has been saved");
+                }else{
+                    Log.e("UPLOADTEXT: ", "onComplete: ",task.getException() );
+                }
+            }
+        });
+    }
+
+    public void uploadImage(Bitmap img){
+        Log.i("UPLOADIMAGE: ","Starting upload");
+       // img.setDrawingCacheEnabled(true);
+       // img.buildDrawingCache(true);
+      //  Bitmap bitmap = img.getDrawingCache();
+       // img.destroyDrawingCache();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        img.compress(Bitmap.CompressFormat.PNG,100,baos);
+      //  img.setDrawingCacheEnabled(false);
+        byte[] data = baos.toByteArray();
+
+        String path = "guideimages/"+ UUID.randomUUID() + ".png";
+        StorageReference imgRef = mStorage.getReference(path);
+
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setCustomMetadata("text","TESTING")
+                .build();
+
+        UploadTask uploadTask = imgRef.putBytes(data,metadata);
+        Log.i("UPLOADIMAGE: ","uploadtask");
+        uploadTask.addOnSuccessListener(MainPage.this,new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                Toast.makeText(MainPage.this, "Upload Complete", Toast.LENGTH_SHORT).show();
+            }
+        });
+        Log.i("UPLOADIMAGE: ","please be done");
+    }
+
     @Override
     public void onStart() {
         super.onStart();
         // Check if user is signed in
         //FirebaseUser currentUser = mAuth.getCurrentUser();
+        mDocRef = guideData.document("textBlock1");
+        mDocRef.addSnapshotListener(MainPage.this, new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                if (documentSnapshot.exists()){
+                    String text = documentSnapshot.getString(TEXT_VALUE_KEY);
+                    //int placement = (int)documentSnapshot.get(PLACEMENT_KEY);
+                    display.setText(text);
+                }else if(e!= null){
+                    Log.i("GOT AN EXcEPTION: ", "onEvent: ", e);
+                }
+            }
+        });
     }
 
 
@@ -151,6 +268,16 @@ public class MainPage extends AppCompatActivity {
 
             ImageView newImgView = new ImageView(MainPage.this);
             Glide.with(this).load(imageUri).into(newImgView);
+            Glide.with(MainPage.this)
+                    .asBitmap()
+                    .load(imageUri)
+                    .into(new SimpleTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
+                            uploadImage(resource);
+                        }
+                    });
+
             newImgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -164,15 +291,18 @@ public class MainPage extends AppCompatActivity {
             newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             newImgView.setAdjustViewBounds(true);
             newImgView.setPadding(3, 10, 3, 10);
-
             mSpinners.add(spinner);
             newPicBlock.addView(spinner);
             newPicBlock.addView(newImgView);
             layoutFeed.addView(newPicBlock, index);
             index++ ;
             updateSpinnerLists();
+            Log.i("UPLOAD TO FB: ","BEFORE UPLOAD");
+          //  uploadImage(newImgView);
+            Log.i("UPLOAD TO FB: ","After UPLOAD");
+
         }catch(Exception ex){
-            ex.getMessage();
+            Log.i("IMAGE ERROR: ", ex.getMessage());
             return false;
         }
         return true;
@@ -201,8 +331,9 @@ public class MainPage extends AppCompatActivity {
             newTextBlock.addView(spinner);
             newTextBlock.addView(textView);
             layoutFeed.addView(newTextBlock, index);
-            index++;
 
+            uploadText(textView.getText().toString(),index);
+            index++;
             updateSpinnerLists();
         }catch (Exception ex){
             ex.getMessage();
