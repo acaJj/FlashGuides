@@ -34,13 +34,8 @@
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="onClickSignIn"
             android:text="Login" />
-
-        <Button
-            android:id="@+id/btnForgotPass"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Forgot Password?" />
 
         <Button
             android:id="@+id/btnSignUp"
@@ -53,6 +48,7 @@
             android:id="@+id/button5"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="onClickGuest"
             android:text="Continue As Guest" />
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

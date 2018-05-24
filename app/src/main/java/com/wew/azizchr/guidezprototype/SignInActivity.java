@@ -5,11 +5,9 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,19 +17,16 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import org.w3c.dom.Text;
-
-public class SignUpActivty extends AppCompatActivity {
+public class SignInActivity extends AppCompatActivity {
 
     TextView mEmail;
     TextView mPassword;
-    TextView mConfirmPassword;
 
     private FirebaseAuth mAuth;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sign_up_activty);
+        setContentView(R.layout.activity_sign_in);
 
         //sets the status bar color
         if (android.os.Build.VERSION.SDK_INT >= 21){
@@ -41,14 +36,16 @@ public class SignUpActivty extends AppCompatActivity {
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
 
-        mEmail = (TextView) findViewById(R.id.txtSignUpEmail);
-        mPassword = (TextView) findViewById(R.id.txtSignUpPassword);
-        mConfirmPassword = (TextView) findViewById(R.id.txtConfirmPassword);
-
+        mEmail = (TextView) findViewById(R.id.txtSignInEmail);
+        mPassword = (TextView) findViewById(R.id.txtSignInPass);
         mAuth = FirebaseAuth.getInstance();
     }
 
-    public void onSignUpClick(View view) {
+    boolean isEmailValid(CharSequence email) {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
+    }
+
+    public void OnSignInClick(View view) {
         //Checks if the fields are empty
         if( TextUtils.isEmpty(mEmail.getText())){
             mEmail.setError( "Email is required!" );
@@ -56,53 +53,41 @@ public class SignUpActivty extends AppCompatActivity {
         else if( TextUtils.isEmpty(mPassword.getText())){
             mPassword.setError( "Password is required!" );
         }
-        else if( TextUtils.isEmpty(mConfirmPassword.getText())){
-            mConfirmPassword.setError( "Password is required!" );
-        }
         else{
             String email = mEmail.getText().toString();
             String pass = mPassword.getText().toString();
-            String confPass = mConfirmPassword.getText().toString();
 
-            //Checks if the email is valid, passwords match and are in the proper range
+            //Checks if the email is valid, then signs the user in
             if(isEmailValid(email)){
-                if(pass.length() >= 6 && pass.length() <= 20){
-                    if(pass.equals(confPass)) {
-                        //Signs the user up using the email and password provided
-                        createAccount(email, pass);
-                    } else{
-                        mConfirmPassword.setError("Passwords must match!");
-                    }
-                }else{
-                    mPassword.setError("Password length must be between 6-20 characters!");
-                }
+                signIn(email, pass);
             } else {
                 mEmail.setError( "Not valid email format!" );
             }
+
         }
     }
 
-    //Checks to see if the email is a valid format.
-    boolean isEmailValid(CharSequence email) {
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
-    }
+    private void signIn(String email, String password) {
 
-    //Creates an account using the provided email and password
-    private void createAccount(String email, String password) {
-        mAuth.createUserWithEmailAndPassword(email, password)
+        mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            //Account was created, user was signed in, and now switching to homepage
-                            Intent intent = new Intent(SignUpActivty.this, Homepage.class);
+                            //If the email and password match with an account, it starts the homepage activity
+                            Intent intent = new Intent(SignInActivity.this, Homepage.class);
                             startActivity(intent);
                             finish();
                         } else {
-                            Toast.makeText(SignUpActivty.this, "Signup failed. Reason:" + task.getException(),
-                                    Toast.LENGTH_LONG).show();
+                            Toast.makeText(SignInActivity.this, "Sign In failed.",
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
+    }
+
+    public void OnForgotClick(View view) {
+        Toast.makeText(SignInActivity.this, "This is for LATER",
+                Toast.LENGTH_LONG).show();
     }
 }

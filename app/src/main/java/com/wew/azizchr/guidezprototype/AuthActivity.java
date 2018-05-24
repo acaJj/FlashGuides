@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 public class AuthActivity extends AppCompatActivity {
 
@@ -23,8 +24,21 @@ public class AuthActivity extends AppCompatActivity {
         }
     }
 
+    //Starts sign up activity
     public void onClickSignUp(View view) {
         Intent intent = new Intent(AuthActivity.this, SignUpActivty.class);
         startActivity(intent);
+    }
+
+    //Starts sign in activty
+    public void onClickSignIn(View view) {
+        Intent intent = new Intent(AuthActivity.this, SignInActivity.class);
+        startActivity(intent);
+    }
+
+    //Signs in as a guest
+    public void onClickGuest(View view) {
+        Toast.makeText(AuthActivity.this, "This is for LATER",
+                Toast.LENGTH_LONG).show();
     }
 }

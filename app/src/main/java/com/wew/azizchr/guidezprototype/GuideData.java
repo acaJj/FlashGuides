@@ -5,7 +5,8 @@ package com.wew.azizchr.guidezprototype;
  */
 
 
-/**This class isnt used for anything right now but in the future it will be used to model
+/**
+ * This class isnt used for anything right now but in the future it will be used to model
  * the data that we dump into the db
  */
 
