@@ -78,6 +78,12 @@
                     android:id="@+id/txtDisplay"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/btnSaveGuide"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Save Guide"/>
             </LinearLayout>
         </ScrollView>
     </LinearLayout>

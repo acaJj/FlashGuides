@@ -18,8 +18,13 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.w3c.dom.Text;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SignUpActivty extends AppCompatActivity {
 
@@ -28,6 +33,8 @@ public class SignUpActivty extends AppCompatActivity {
     TextView mConfirmPassword;
 
     private FirebaseAuth mAuth;
+    private FirebaseFirestore mFirebaseFirestore;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +53,7 @@ public class SignUpActivty extends AppCompatActivity {
         mConfirmPassword = (TextView) findViewById(R.id.txtConfirmPassword);
 
         mAuth = FirebaseAuth.getInstance();
+        mFirebaseFirestore = FirebaseFirestore.getInstance();
     }
 
     public void onSignUpClick(View view) {
@@ -88,12 +96,19 @@ public class SignUpActivty extends AppCompatActivity {
     }
 
     //Creates an account using the provided email and password
-    private void createAccount(String email, String password) {
+    private void createAccount(final String email, final String password) {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
+                            //adds new user info to the database
+                            User newUser = new User(mAuth.getCurrentUser().getUid());
+                            newUser.setEmail(email);
+                            newUser.setPassword(password);
+                            newUser.setNumGuides(0);
+                            DocumentReference newUserDoc = mFirebaseFirestore.document("Users/" + mAuth.getUid());
+                            newUserDoc.set(newUser);
                             //Account was created, user was signed in, and now switching to homepage
                             Intent intent = new Intent(SignUpActivty.this, Homepage.class);
                             startActivity(intent);

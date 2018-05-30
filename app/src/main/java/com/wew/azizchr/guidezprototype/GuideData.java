@@ -15,11 +15,11 @@ public class GuideData {
     private String type;
     private String placement;
     private String guideId;
-    private String data;
+    private Object data;
 
     public GuideData(){}
 
-    public GuideData(String id, String type, String placement, String guideId, String data) {
+    public GuideData(String id, String type, String placement, String guideId, Object data) {
         this.id = id;
         this.type = type;
         this.placement = placement;
@@ -59,11 +59,11 @@ public class GuideData {
         this.guideId = guideId;
     }
 
-    public String getData() {
+    public Object getData() {
         return data;
     }
 
-    public void setData(String data) {
+    public void setData(Object data) {
         this.data = data;
     }
 }

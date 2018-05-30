@@ -21,6 +21,8 @@ import java.util.Locale;
 
 public class Homepage extends AppCompatActivity {
 
+    private static final String NEW_GUIDE = "NEW_GUIDE";
+
     private Button btnMakeGuide;
     private FirebaseAuth mAuth;
     Calendar calendar;
@@ -50,6 +52,7 @@ public class Homepage extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(Homepage.this,MainPage.class);
+                intent.putExtra(NEW_GUIDE, true);
                 startActivity(intent);
             }
         });

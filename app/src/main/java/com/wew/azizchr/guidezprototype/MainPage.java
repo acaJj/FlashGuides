@@ -20,6 +20,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -59,21 +60,42 @@ import java.util.UUID;
 
 public class MainPage extends AppCompatActivity {
 
-    private static final String NAME_KEY = "NAME";
-    private static final String PLACEMENT_KEY = "PLACEMENT";
-    private static final String TEXT_VALUE_KEY = "TEXT";
+
+    //PROBLEMS:
+    //guideNum resets everytime main page is loaded, needs to be saved - FIXED I THINK, NO WAY OF KNOWING UNTIL LATER
+    //textBlockNUm and imgBlockNum don't work properly i think - FIXED
+    //pictures taken with the camera aren't saved to firebase storage - FIXED
+    //the instances may be different each time, logging out and logging back in generates a new instance - NOT A BUG BUT RELATED PROBLEM FIXED
+    //probably more - DONT KNOW
+
+
+
+
+    private static final String NAME_KEY = "name";
+    private static final String PLACEMENT_KEY = "placement";
+    private static final String TEXT_VALUE_KEY = "text";
+    private static final String IMG_URL_KEY = "imgUrl";
+    private static final String IMG_TAG = "IMG";
+    private static final String TEXT_TAG = "TEXT";
+    private static final String NEW_GUIDE = "NEW_GUIDE";
 
     LinearLayout layoutFeed;
     int index;
+    private int guideNum;//the current guide index thing
+    private int textBlockNum;
+    private int imgBlockNum;
+    private boolean isNew;
 
     //Firebase Instance Variables
     //private FirebaseAuth mAuth;
     private FirebaseStorage mStorage;
     private FirebaseFirestore mFirestore;
+    private FirebaseAuth mFirebaseAuth;
 
     //Cloud Firestore Reference Variables
     private DocumentReference mDocRef;
     private CollectionReference guideData;
+    private CollectionReference picData;
 
     private ImagePicker imgPicker;
     private CameraImagePicker camera;
@@ -83,6 +105,9 @@ public class MainPage extends AppCompatActivity {
     private String newText;
     private List<Spinner> mSpinners = new ArrayList<Spinner>();
     private TextView display;
+    private Button btnSaveGuide;
+
+    User userData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,9 +123,46 @@ public class MainPage extends AppCompatActivity {
 
         display = findViewById(R.id.txtDisplay);
 
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser mCurrentUser = mFirebaseAuth.getCurrentUser();
         mStorage = FirebaseStorage.getInstance();
         mFirestore = FirebaseFirestore.getInstance();
-        guideData = mFirestore.collection("guides/guide1/textData");
+
+        if (savedInstanceState != null){
+            textBlockNum = savedInstanceState.getInt("TEXTBLOCKNUM");
+            imgBlockNum = savedInstanceState.getInt("IMGBLOCKNUM");
+        }else{
+            textBlockNum = 0;
+            imgBlockNum = 0;
+        }
+
+        Log.i("USER ID: ",mFirebaseAuth.getUid());
+        DocumentReference userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
+        userRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                userData = documentSnapshot.toObject(User.class);
+                String dbString = "Users/" + mFirebaseAuth.getUid() + "/guides/guide" + userData.getNumGuides();
+                guideData = mFirestore.collection(dbString + "/textData");
+                picData = mFirestore.collection(dbString + "/imageData");
+                Log.i("","SUCCESSFULLY RETRIEVED DATA");
+
+                mDocRef = guideData.document("textBlock"+textBlockNum);
+                mDocRef.addSnapshotListener(MainPage.this, new EventListener<DocumentSnapshot>() {
+                    @Override
+                    public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                        if (documentSnapshot.exists()){
+                            String text = documentSnapshot.getString(TEXT_VALUE_KEY);
+                            //int placement = (int)documentSnapshot.get(PLACEMENT_KEY);
+                            display.setText(text);
+                        }else if(e!= null){
+                            Log.i("GOT AN EXcEPTION: ", "onEvent: ", e);
+                        }
+                    }
+                });
+            }
+        });
+
         layoutFeed = (LinearLayout) findViewById(R.id.layoutFeed);
         index = 0;
         camera = new CameraImagePicker(MainPage.this);
@@ -118,16 +180,45 @@ public class MainPage extends AppCompatActivity {
             }
         });
 
-        //init firebase auth instance
-        //mAuth = FirebaseAuth.getInstance();
+        btnSaveGuide = findViewById(R.id.btnSaveGuide);
+        btnSaveGuide.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveGuide();
+            }
+        });
     }
 
     public void saveToDevice(){
 
     }
+//create a new object that models the data for the new text block
+    //contains attributes of placement and type and stuff
+    public boolean saveGuide(){
+        for (int i =0; i< layoutFeed.getChildCount()-3;i++){
+            String tag = (String) layoutFeed.getChildAt(i).getTag();
+            switch (tag){
+                case IMG_TAG:
+
+                    break;
+                case TEXT_TAG:
+
+                    break;
+            }
+        }
+
+        boolean isNew = getIntent().getBooleanExtra(NEW_GUIDE,false);
+        if (isNew){
+            guideNum++;
+            DocumentReference newUserDoc = mFirestore.document("Users/" + mFirebaseAuth.getUid());
+            newUserDoc.update("guideNum",guideNum);
+            Log.i("SAVE_GUIDE: ","NEW GUIDE SAVED TO DB");
+        }
+        return true;
+    }
 
     public void getTextBlock(){
-        mDocRef = guideData.document("textBlock1");
+        mDocRef = guideData.document("textBlock" + textBlockNum);
         mDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
@@ -146,7 +237,7 @@ public class MainPage extends AppCompatActivity {
         Map<String,Object> dataToSave = new HashMap<String, Object>();
         dataToSave.put(TEXT_VALUE_KEY,text);
         dataToSave.put(PLACEMENT_KEY,place);
-        mDocRef = guideData.document("textBlock1");
+        mDocRef = guideData.document("textBlock" + textBlockNum);
         mDocRef.set(dataToSave).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -157,9 +248,11 @@ public class MainPage extends AppCompatActivity {
                 }
             }
         });
+
+        textBlockNum++;
     }
 
-    public void uploadImage(Bitmap img){
+    public void uploadImage(Bitmap img, final int place){
         Log.i("UPLOADIMAGE: ","Starting upload");
        // img.setDrawingCacheEnabled(true);
        // img.buildDrawingCache(true);
@@ -170,7 +263,7 @@ public class MainPage extends AppCompatActivity {
       //  img.setDrawingCacheEnabled(false);
         byte[] data = baos.toByteArray();
 
-        String path = "guideimages/"+ UUID.randomUUID() + ".png";
+        final String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + UUID.randomUUID() + ".png";
         StorageReference imgRef = mStorage.getReference(path);
 
         StorageMetadata metadata = new StorageMetadata.Builder()
@@ -182,10 +275,25 @@ public class MainPage extends AppCompatActivity {
         uploadTask.addOnSuccessListener(MainPage.this,new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                Map<String,Object> dataToSave = new HashMap<String, Object>();
+                dataToSave.put(IMG_URL_KEY,path);
+                dataToSave.put(PLACEMENT_KEY, place);
+                mDocRef = picData.document("imgBlock" + imgBlockNum);
+                mDocRef.set(dataToSave).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()){
+                            Log.d("UPLOADIMAGE: ", "onComplete: Image Block URL has been saved");
+                        }else{
+                            Log.e("UPLOADIMAGE: ", "onComplete: ",task.getException() );
+                        }
+                    }
+                });
                 Toast.makeText(MainPage.this, "Upload Complete", Toast.LENGTH_SHORT).show();
             }
         });
         Log.i("UPLOADIMAGE: ","please be done");
+        imgBlockNum++;
     }
 
     @Override
@@ -193,19 +301,7 @@ public class MainPage extends AppCompatActivity {
         super.onStart();
         // Check if user is signed in
         //FirebaseUser currentUser = mAuth.getCurrentUser();
-        mDocRef = guideData.document("textBlock1");
-        mDocRef.addSnapshotListener(MainPage.this, new EventListener<DocumentSnapshot>() {
-            @Override
-            public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
-                if (documentSnapshot.exists()){
-                    String text = documentSnapshot.getString(TEXT_VALUE_KEY);
-                    //int placement = (int)documentSnapshot.get(PLACEMENT_KEY);
-                    display.setText(text);
-                }else if(e!= null){
-                    Log.i("GOT AN EXcEPTION: ", "onEvent: ", e);
-                }
-            }
-        });
+
     }
 
 
@@ -265,7 +361,6 @@ public class MainPage extends AppCompatActivity {
             LinearLayout newPicBlock = new LinearLayout(MainPage.this);
             final Spinner spinner = new Spinner(MainPage.this);
             setSpinnerListeners(spinner);
-
             ImageView newImgView = new ImageView(MainPage.this);
             Glide.with(this).load(imageUri).into(newImgView);
             Glide.with(MainPage.this)
@@ -274,7 +369,7 @@ public class MainPage extends AppCompatActivity {
                     .into(new SimpleTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
-                            uploadImage(resource);
+                            uploadImage(resource, index);
                         }
                     });
 
@@ -286,6 +381,7 @@ public class MainPage extends AppCompatActivity {
                     startActivity(intent);
                 }
             });
+            newImgView.setTag(IMG_TAG);
 
             //fits the image to the sides, fixes the view bounds, adds padding
             newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -321,6 +417,7 @@ public class MainPage extends AppCompatActivity {
 
             TextView textView = new TextView(MainPage.this);
             textView.setText(Html.fromHtml(text));
+            textView.setTag(TEXT_TAG);
 
             //modifies the texts size, color and padding
             textView.setTextSize(18);
@@ -461,6 +558,9 @@ public class MainPage extends AppCompatActivity {
         //need a save path in case the activity is killed
         //will need to re-initialize cameraimagepicker
         outstate.putString("ImagePath",outputPath);
+        outstate.putInt("guideNum",guideNum);
+        outstate.putInt("TEXTBLOCKNUM",textBlockNum);
+        outstate.putInt("IMGBLOCKNUM",imgBlockNum);
         super.onSaveInstanceState(outstate);
     }
 
