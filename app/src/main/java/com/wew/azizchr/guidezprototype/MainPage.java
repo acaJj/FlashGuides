@@ -31,6 +31,7 @@ import android.widget.Toolbar;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -50,6 +51,8 @@ import com.kbeanie.multipicker.api.ImagePicker;
 import com.kbeanie.multipicker.api.Picker;
 import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
 import com.kbeanie.multipicker.api.entity.ChosenImage;
+
+import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -228,17 +231,24 @@ public class MainPage extends AppCompatActivity {
                     display.setText(text);
                 }
             }
+        }).addOnFailureListener(MainPage.this ,new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Intent intent = new Intent(MainPage.this, ErrorActivity.class);
+                intent.putExtra("ERRORS", e.getStackTrace().toString());
+                startActivity(intent);
+            }
         });
     }
 
-    public void uploadText(String text, int place){
+    public void uploadText(TextData text){
         Log.i("UPLOADTEXT: ", "STARTING UPLOAD");
-        if (text.isEmpty()){return;}
-        Map<String,Object> dataToSave = new HashMap<String, Object>();
-        dataToSave.put(TEXT_VALUE_KEY,text);
-        dataToSave.put(PLACEMENT_KEY,place);
+        if (text.getText().isEmpty()){return;}
+        //Map<String,Object> dataToSave = new HashMap<String, Object>();
+        //dataToSave.put(TEXT_VALUE_KEY,text);
+        //dataToSave.put(PLACEMENT_KEY,place);
         mDocRef = guideData.document("textBlock" + textBlockNum);
-        mDocRef.set(dataToSave).addOnCompleteListener(new OnCompleteListener<Void>() {
+        /*mDocRef.set(dataToSave).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if (task.isSuccessful()){
@@ -248,22 +258,19 @@ public class MainPage extends AppCompatActivity {
                 }
             }
         });
-
+*/
+        mDocRef.set(text);
         textBlockNum++;
     }
 
-    public void uploadImage(Bitmap img, final int place){
+    public void uploadImage(PictureData img, Bitmap pic){
         Log.i("UPLOADIMAGE: ","Starting upload");
-       // img.setDrawingCacheEnabled(true);
-       // img.buildDrawingCache(true);
-      //  Bitmap bitmap = img.getDrawingCache();
-       // img.destroyDrawingCache();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        img.compress(Bitmap.CompressFormat.PNG,100,baos);
-      //  img.setDrawingCacheEnabled(false);
+        pic.compress(Bitmap.CompressFormat.PNG,100,baos);
         byte[] data = baos.toByteArray();
 
-        final String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + UUID.randomUUID() + ".png";
+        String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + UUID.randomUUID() + ".png";
+        img.setImgPath(path);
         StorageReference imgRef = mStorage.getReference(path);
 
         StorageMetadata metadata = new StorageMetadata.Builder()
@@ -275,7 +282,7 @@ public class MainPage extends AppCompatActivity {
         uploadTask.addOnSuccessListener(MainPage.this,new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Map<String,Object> dataToSave = new HashMap<String, Object>();
+                /*Map<String,Object> dataToSave = new HashMap<String, Object>();
                 dataToSave.put(IMG_URL_KEY,path);
                 dataToSave.put(PLACEMENT_KEY, place);
                 mDocRef = picData.document("imgBlock" + imgBlockNum);
@@ -288,10 +295,20 @@ public class MainPage extends AppCompatActivity {
                             Log.e("UPLOADIMAGE: ", "onComplete: ",task.getException() );
                         }
                     }
-                });
+                });*/
                 Toast.makeText(MainPage.this, "Upload Complete", Toast.LENGTH_SHORT).show();
             }
+        }).addOnFailureListener(MainPage.this, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Intent intent = new Intent(MainPage.this, ErrorActivity.class);
+                intent.putExtra("ERRORS", e.getStackTrace().toString());
+                startActivity(intent);
+                return;
+            }
         });
+        mDocRef = picData.document("imgBlock" + imgBlockNum);
+        mDocRef.set(img);
         Log.i("UPLOADIMAGE: ","please be done");
         imgBlockNum++;
     }
@@ -369,7 +386,10 @@ public class MainPage extends AppCompatActivity {
                     .into(new SimpleTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
-                            uploadImage(resource, index);
+                            PictureData picData = new PictureData();
+                            picData.setImg(resource);
+                            picData.setPlacement(index);
+                            uploadImage(picData, resource);
                         }
                     });
 
@@ -429,7 +449,11 @@ public class MainPage extends AppCompatActivity {
             newTextBlock.addView(textView);
             layoutFeed.addView(newTextBlock, index);
 
-            uploadText(textView.getText().toString(),index);
+            TextData mTextData = new TextData();
+            mTextData.setText(textView.getText().toString());
+            mTextData.setPlacement(index);
+
+            uploadText(mTextData);
             index++;
             updateSpinnerLists();
         }catch (Exception ex){

@@ -13,13 +13,20 @@ package com.wew.azizchr.guidezprototype;
 public class GuideData {
     private String id;
     private String type;
-    private String placement;
+    private int placement;
     private String guideId;
     private Object data;
 
     public GuideData(){}
 
-    public GuideData(String id, String type, String placement, String guideId, Object data) {
+    public GuideData(String id, String type, int placement, String guideId) {
+        this.id = id;
+        this.type = type;
+        this.placement = placement;
+        this.guideId = guideId;
+    }
+
+    public GuideData(String id, String type, int placement, String guideId, Object data) {
         this.id = id;
         this.type = type;
         this.placement = placement;
@@ -43,11 +50,11 @@ public class GuideData {
         this.type = type;
     }
 
-    public String getPlacement() {
+    public int getPlacement() {
         return placement;
     }
 
-    public void setPlacement(String placement) {
+    public void setPlacement(int placement) {
         this.placement = placement;
     }
 
