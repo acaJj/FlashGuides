@@ -51,7 +51,7 @@ public class Homepage extends AppCompatActivity {
         btnMakeGuide.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(Homepage.this,MainPage.class);
+                Intent intent = new Intent(Homepage.this,CreateGuideTitle.class);
                 intent.putExtra(NEW_GUIDE, true);
                 startActivity(intent);
             }

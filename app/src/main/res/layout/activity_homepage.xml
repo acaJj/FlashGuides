@@ -6,33 +6,48 @@
     android:layout_height="match_parent"
     tools:context=".Homepage">
 
-    <TextView
-        android:id="@+id/txtHomePageGreet"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="163dp"
-        android:layout_marginStart="163dp"
-        android:layout_marginTop="49dp"
-        android:text="TextView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/btnMakeGuide"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Make Guide"/>
-    <Button
-        android:id="@+id/btnSignOut"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="46dp"
-        android:layout_marginEnd="148dp"
-        android:layout_marginStart="148dp"
-        android:onClick="OnSignOutClick"
-        android:text="Sign Out"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <TextView
+            android:id="@+id/txtHomePageGreet"
+            android:layout_width="289dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="163dp"
+            android:layout_marginStart="163dp"
+            android:layout_marginTop="168dp"
+            android:text="greeting"
+            android:textAlignment="center"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/btnBrowseGuides"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Browse Guides" />
+
+        <Button
+            android:id="@+id/btnMakeGuide"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create A Guide" />
+
+        <Button
+            android:id="@+id/btnSignOut"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="OnSignOutClick"
+            android:text="Sign Out"
+            tools:layout_editor_absoluteX="124dp"
+            tools:layout_editor_absoluteY="473dp" />
+
+    </LinearLayout>
+
 </android.support.constraint.ConstraintLayout>
