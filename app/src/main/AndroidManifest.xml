@@ -13,7 +13,7 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         <activity
             android:name=".MainPage"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait" />
         <activity android:name=".TextBlockWriterActivity" />
         <activity android:name=".ViewPhoto" />
         <activity android:name=".AuthActivity" />
@@ -26,7 +26,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".SignInActivity" />
-        <activity android:name=".ErrorActivity"></activity>
+        <activity android:name=".ErrorActivity" />
+        <activity android:name=".UserCollectionActivity" />
+        <activity android:name=".EditPictureActivity"></activity>
     </application>
 
 </manifest>

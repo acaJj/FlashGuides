@@ -14,6 +14,7 @@ public class PictureData extends GuideData {
 
     private String imgPath;
     private Bitmap img;
+    private int picNumber;
 
     public PictureData() {
     }

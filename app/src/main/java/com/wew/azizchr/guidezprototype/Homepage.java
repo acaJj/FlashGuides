@@ -24,6 +24,7 @@ public class Homepage extends AppCompatActivity {
     private static final String NEW_GUIDE = "NEW_GUIDE";
 
     private Button btnMakeGuide;
+    private Button btnCollection;
     private FirebaseAuth mAuth;
     Calendar calendar;
     TextView mGreeting;
@@ -43,6 +44,7 @@ public class Homepage extends AppCompatActivity {
         }
 
         btnMakeGuide = findViewById(R.id.btnMakeGuide);
+        btnCollection = findViewById(R.id.btnCollection);
         mAuth = FirebaseAuth.getInstance();
         mGreeting = (TextView) findViewById(R.id.txtHomePageGreet);
         calendar = Calendar.getInstance(Locale.getDefault());
@@ -54,6 +56,16 @@ public class Homepage extends AppCompatActivity {
                 Intent intent = new Intent(Homepage.this,MainPage.class);
                 intent.putExtra(NEW_GUIDE, true);
                 startActivity(intent);
+                finish();
+            }
+        });
+
+        btnCollection.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(Homepage.this,UserCollectionActivity.class);
+                startActivity(intent);
+                finish();
             }
         });
     }

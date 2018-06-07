@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
@@ -21,6 +22,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Gallery;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -73,7 +75,7 @@ public class MainPage extends AppCompatActivity {
 
 
 
-
+    //CONSTANTS FOR MAP KEYS OR ACTIVITY CODES
     private static final String NAME_KEY = "name";
     private static final String PLACEMENT_KEY = "placement";
     private static final String TEXT_VALUE_KEY = "text";
@@ -100,10 +102,12 @@ public class MainPage extends AppCompatActivity {
     private CollectionReference guideData;
     private CollectionReference picData;
 
+    //LayoutFeed-Related Variables (includes camera variables)
     private ImagePicker imgPicker;
     private CameraImagePicker camera;
     private static final int SELECT_FILE =0;
     private static final int WRITE_TEXT =1;
+    private static final int SWAP_IMAGE = 2;
     private String outputPath;
     private String newText;
     private List<Spinner> mSpinners = new ArrayList<Spinner>();
@@ -160,6 +164,7 @@ public class MainPage extends AppCompatActivity {
                             display.setText(text);
                         }else if(e!= null){
                             Log.i("GOT AN EXcEPTION: ", "onEvent: ", e);
+                            startErrorActivity(e.getStackTrace().toString());
                         }
                     }
                 });
@@ -179,7 +184,7 @@ public class MainPage extends AppCompatActivity {
 
             @Override
             public void onError(String s) {
-
+                startErrorActivity(s);
             }
         });
 
@@ -234,9 +239,7 @@ public class MainPage extends AppCompatActivity {
         }).addOnFailureListener(MainPage.this ,new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Intent intent = new Intent(MainPage.this, ErrorActivity.class);
-                intent.putExtra("ERRORS", e.getStackTrace().toString());
-                startActivity(intent);
+                startErrorActivity(e.getStackTrace().toString());
             }
         });
     }
@@ -301,14 +304,16 @@ public class MainPage extends AppCompatActivity {
         }).addOnFailureListener(MainPage.this, new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Intent intent = new Intent(MainPage.this, ErrorActivity.class);
-                intent.putExtra("ERRORS", e.getStackTrace().toString());
-                startActivity(intent);
-                return;
+                startErrorActivity(e.getStackTrace().toString());
             }
         });
-        mDocRef = picData.document("imgBlock" + imgBlockNum);
-        mDocRef.set(img);
+        try{
+            mDocRef = picData.document("imgBlock" + imgBlockNum);
+            mDocRef.set(img);
+        }catch(Exception ex){
+            startErrorActivity(ex.getStackTrace().toString());
+        }
+
         Log.i("UPLOADIMAGE: ","please be done");
         imgBlockNum++;
     }
@@ -378,7 +383,7 @@ public class MainPage extends AppCompatActivity {
             LinearLayout newPicBlock = new LinearLayout(MainPage.this);
             final Spinner spinner = new Spinner(MainPage.this);
             setSpinnerListeners(spinner);
-            ImageView newImgView = new ImageView(MainPage.this);
+            final ImageView newImgView = new ImageView(MainPage.this);
             Glide.with(this).load(imageUri).into(newImgView);
             Glide.with(MainPage.this)
                     .asBitmap()
@@ -396,9 +401,8 @@ public class MainPage extends AppCompatActivity {
             newImgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(MainPage.this, ViewPhoto.class);
-                    intent.putExtra("imageUri", imageUri);
-                    startActivity(intent);
+                    openImageOptionsMenu(newImgView,index);
+
                 }
             });
             newImgView.setTag(IMG_TAG);
@@ -419,9 +423,43 @@ public class MainPage extends AppCompatActivity {
 
         }catch(Exception ex){
             Log.i("IMAGE ERROR: ", ex.getMessage());
+            startErrorActivity(ex.getStackTrace().toString());
             return false;
         }
         return true;
+    }
+
+    private void openImageOptionsMenu(final ImageView img, final int index) {
+        final CharSequence[] items = {"Edit Picture","Change Picture","Focus on Picture","Cancel"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainPage.this);
+        builder.setTitle("Image Options");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if(items[i].equals("Edit Picture")){
+                    BitmapDrawable drawable = (BitmapDrawable) img.getDrawable();
+                    Bitmap bitmap = drawable.getBitmap();
+                    Intent intent = new Intent(MainPage.this, EditPictureActivity.class);
+                    intent.putExtra("imageUri",bitmap);
+                }else if(items[i].equals("Change Picture")) {
+                    Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    intent.setType("image/*");
+                    intent.putExtra("INDEX",index);
+                    startActivityForResult(intent.createChooser(intent, "Select Image"), SWAP_IMAGE);
+                } else if (items[i].equals("Focus on Picture")){
+                    //Get the current image in the imageview as a drawable bitmap and sends that
+                    //to viewphoto activity instead of imageUri, which is just the first image loaded
+                    BitmapDrawable drawable = (BitmapDrawable) img.getDrawable();
+                    Bitmap bitmap = drawable.getBitmap();
+                    Intent intent = new Intent(MainPage.this, ViewPhoto.class);
+                    intent.putExtra("imageUri",bitmap);
+                    startActivity(intent);
+                }else if(items[i].equals("Cancel")){
+                    dialogInterface.dismiss();
+                }
+            }
+        });
     }
 
     /**
@@ -457,7 +495,7 @@ public class MainPage extends AppCompatActivity {
             index++;
             updateSpinnerLists();
         }catch (Exception ex){
-            ex.getMessage();
+            startErrorActivity(ex.getStackTrace().toString());
             return false;
         }
         return true;
@@ -535,7 +573,7 @@ public class MainPage extends AppCompatActivity {
                 }
             });
         }catch (Exception ex){
-            ex.getMessage();
+            startErrorActivity(ex.getStackTrace().toString());
             return false;
         }
 
@@ -573,8 +611,34 @@ public class MainPage extends AppCompatActivity {
                 }
                 newText = TextBlockWriterActivity.getTextBlockWritten(data);
                 addText(newText);
+            } else if (requestCode == SWAP_IMAGE){
+                Uri selectedImageUri = data.getData();
+                int index = data.getIntExtra("INDEX" , 0);
+                swapImage(selectedImageUri, index);
             }
         }
+    }
+
+    private void swapImage(Uri selectedImageUri, int index) {
+        LinearLayout block = (LinearLayout) layoutFeed.getChildAt(index);
+        ImageView imgView = (ImageView) block.getChildAt(1);
+        final PictureData picData = new PictureData();
+        picData.setPlacement(index);
+        Glide.with(MainPage.this).load(selectedImageUri).into(imgView);
+        Glide.with(MainPage.this)
+                .asBitmap()
+                .load(selectedImageUri)
+                .into(new SimpleTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
+                        picData.setImg(resource);
+                        uploadImage(picData, resource);
+                    }
+                });
+    }
+
+    public void updateImageBlock(){
+
     }
 
     @Override
@@ -596,5 +660,12 @@ public class MainPage extends AppCompatActivity {
             outputPath = savedInstanceState.getString("ImagePath", null);
         }
         super.onRestoreInstanceState(savedInstanceState);
+    }
+
+    public void startErrorActivity(String errors){
+        Intent intent = new Intent(MainPage.this, ErrorActivity.class);
+        intent.putExtra("ERRORS", errors);
+        startActivity(intent);
+        return;
     }
 }
