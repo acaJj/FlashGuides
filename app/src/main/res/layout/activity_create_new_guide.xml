@@ -11,23 +11,24 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/txtNewGuideTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:background="#8e55d3"
-        android:fontFamily="sans-serif-condensed"
-        android:paddingBottom="15dp"
-        android:paddingTop="15dp"
-        android:text="New Guide"
-        android:textAlignment="center"
-        android:textColor="#FFFFFF"
-        android:textSize="25dp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent" />
+        <TextView
+            android:id="@+id/txtNewGuideTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:background="#8e55d3"
+            android:fontFamily="sans-serif-condensed"
+            android:onClick="onClickGuideTitle"
+            android:paddingBottom="15dp"
+            android:paddingTop="15dp"
+            android:text="New Guide"
+            android:textAlignment="center"
+            android:textColor="#FFFFFF"
+            android:textSize="25dp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <ScrollView
             android:layout_width="match_parent"
@@ -45,45 +46,57 @@
                 tools:layout_editor_absoluteY="300dp">
 
                 <LinearLayout
+                    android:id="@+id/buttonLayout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@drawable/border_new_content"
                     android:orientation="horizontal">
+                    <!--
+                                        <ImageButton
+                                            android:id="@+id/imageButton3"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="match_parent"
+                                            android:layout_weight="1"
+                                            android:background="@null"
+                                            android:onClick="onClickGallery"
+                                            android:padding="30dp"
+                                            android:scaleType="fitCenter"
+                                            app:srcCompat="@drawable/ic_add_photo" />
 
-                    <ImageButton
-                        android:id="@+id/imageButton3"
+                                        <ImageButton
+                                            android:id="@+id/imageButton2"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="175dp"
+                                            android:layout_weight="1"
+                                            android:background="@null"
+                                            android:onClick="onClickText"
+                                            android:padding="30dp"
+                                            android:scaleType="fitCenter"
+                                            app:srcCompat="@drawable/ic_add_text" />
+                    -->
+                    <Button
+                        android:id="@+id/btnAddStep"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="@null"
-                        android:onClick="onClickGallery"
-                        android:padding="30dp"
-                        android:scaleType="fitCenter"
-                        app:srcCompat="@drawable/ic_add_photo" />
-
-                    <ImageButton
-                        android:id="@+id/imageButton2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="175dp"
-                        android:layout_weight="1"
-                        android:background="@null"
                         android:onClick="onClickText"
-                        android:padding="30dp"
-                        android:scaleType="fitCenter"
-                        app:srcCompat="@drawable/ic_add_text" />
+                        android:text="Add a Step!" />
 
+                    <Button
+                        android:id="@+id/btnAddImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:onClick="onClickGallery"
+                        android:text="Add an Image" />
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/txtDisplay"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
+                <!--
                 <Button
                     android:id="@+id/btnSaveGuide"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Save Guide" />
+                    android:text="Save Guide" /> -->
             </LinearLayout>
         </ScrollView>
     </LinearLayout>

@@ -30,6 +30,8 @@ public class TextBlockWriterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //sets the color for the status bar
         if (android.os.Build.VERSION.SDK_INT >= 21){
             Window window = this.getWindow();
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);

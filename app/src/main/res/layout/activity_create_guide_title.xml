@@ -50,7 +50,7 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:hint="Ex. How to ... "
-            android:inputType="textPersonName"
+            android:inputType="textCapSentences"
             android:paddingBottom="20dp"
             android:paddingTop="25dp"
             android:singleLine="false"

@@ -3,17 +3,23 @@ package com.wew.azizchr.guidezprototype;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.InputType;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -28,6 +34,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.kbeanie.multipicker.api.CameraImagePicker;
 import com.kbeanie.multipicker.api.ImagePicker;
+import com.kbeanie.multipicker.api.Picker;
 import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
 import com.kbeanie.multipicker.api.entity.ChosenImage;
 
@@ -36,25 +43,25 @@ import java.util.List;
 
 public class CreateNewGuide extends AppCompatActivity {
 
-
-
-    private static final String NAME_KEY = "name";
-    private static final String PLACEMENT_KEY = "placement";
-    private static final String TEXT_VALUE_KEY = "text";
-    private static final String IMG_URL_KEY = "imgUrl";
-    private static final String IMG_TAG = "IMG";
     private static final String TEXT_TAG = "TEXT";
-    private static final String NEW_GUIDE = "NEW_GUIDE";
+    private static final String IMG_TAG = "IMG";
     private static final int SELECT_FILE =0;
     private static final int WRITE_TEXT =1;
 
     private String outputPath;
+    private String newText;
 
-    int index;
+    private int currentIndex;
+    private int currentStep;
+    private int totalEntries;
+    private int currentPictureSwap;
+    private Boolean isSwapping;
 
     private CameraImagePicker camera;
     public LinearLayout layoutFeed;
+
     TextView mNewGuideTitle;
+    Button mAddImage;
 
     String guideTitle = "NULL";
     @Override
@@ -97,8 +104,13 @@ public class CreateNewGuide extends AppCompatActivity {
             }
         });
 
-        index = 0;
+        currentIndex = 0;
+        currentStep = 1;
+        totalEntries = 0;
+        isSwapping = false;
         layoutFeed = (LinearLayout) findViewById(R.id.newGuideLayoutFeed);
+        mAddImage = (Button) findViewById(R.id.btnAddImage);
+        mAddImage.setVisibility(View.GONE);
     }
 
     public void onClickGallery(View view) {
@@ -118,7 +130,7 @@ public class CreateNewGuide extends AppCompatActivity {
         final CharSequence[] items = {"Camera","Gallery","Cancel"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
-        builder.setTitle("Add Image");
+        builder.setTitle("Add an Image");
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -129,6 +141,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     intent.setType("image/*");
                     startActivityForResult(intent.createChooser(intent,"Select File"),SELECT_FILE);
                 }else if(items[i].equals("Cancel")){
+                    if(isSwapping){isSwapping = false;}
                     dialogInterface.dismiss();
                 }
             }
@@ -154,7 +167,7 @@ public class CreateNewGuide extends AppCompatActivity {
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
                             PictureData picData = new PictureData();
                             picData.setImg(resource);
-                            picData.setPlacement(index);
+                            picData.setPlacement(currentIndex);
                             //uploadImage(picData, resource);
                         }
                     });
@@ -162,10 +175,7 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    //Gotta put modal here so you can do the shit
-                    Intent intent = new Intent(CreateNewGuide.this, ViewPhoto.class);
-                    intent.putExtra("imageUri", imageUri);
-                    startActivity(intent);
+                    DecideImage(imageUri, v);
                 }
             });
             newImgView.setTag(IMG_TAG);
@@ -174,8 +184,16 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             newImgView.setAdjustViewBounds(true);
             newImgView.setPadding(3, 10, 3, 10);
-            layoutFeed.addView(newImgView, index);
-            index++ ;
+
+            if(isSwapping){
+                layoutFeed.addView(newImgView, currentPictureSwap);
+                layoutFeed.removeViewAt(currentPictureSwap + 1);
+                currentPictureSwap = 0;
+                isSwapping = false;
+            }else {
+                layoutFeed.addView(newImgView, currentIndex);
+                currentIndex++;
+            }
 
         }catch(Exception ex){
             Log.i("IMAGE ERROR: ", ex.getMessage());
@@ -184,8 +202,94 @@ public class CreateNewGuide extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * Creates and adds a new text block to the layoutFeed
+     * @param text of the new text block
+     * @return true if success, otherwise false
+     */
+    public boolean addText(String text){
+        try{
+            LinearLayout newStepBlock = new LinearLayout(CreateNewGuide.this);
+            newStepBlock.setOrientation(LinearLayout.VERTICAL);
 
-    private void DecideImage(){
+            TextView textView = new TextView(CreateNewGuide.this);
+            textView.setText(Html.fromHtml(text));
+            textView.setTag(TEXT_TAG);
+
+            textView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    DecideText(v);
+                }
+            });
+
+            //modifies the texts size, color and padding
+            textView.setTextSize(18);
+            textView.setTextColor(Color.BLACK);
+            textView.setPadding(5,10,5,10);
+
+            //newStepBlock.addView(textView);
+            layoutFeed.addView(textView, currentIndex);
+
+            TextData mTextData = new TextData();
+            mTextData.setText(textView.getText().toString());
+            mTextData.setPlacement(currentIndex);
+
+            //uploadText(mTextData);
+            currentIndex++;
+            currentStep++;
+
+            if(currentStep > 1){
+                mAddImage.setVisibility(View.VISIBLE);
+            }
+        }catch (Exception ex){
+            ex.getMessage();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Adds an image or some text
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(resultCode == RESULT_OK) {
+            if(requestCode == Picker.PICK_IMAGE_CAMERA){
+                if (camera == null){
+                    camera = new CameraImagePicker(CreateNewGuide.this,outputPath);
+                    camera.setImagePickerCallback(new ImagePickerCallback() {
+                        @Override
+                        public void onImagesChosen(List<ChosenImage> list) {
+                            Uri imagePath = Uri.parse(list.get(0).getQueryUri());
+                            addImage(imagePath);
+                        }
+
+                        @Override
+                        public void onError(String s) {
+
+                        }
+                    });
+                }
+                camera.submit(data);
+            }
+            else if (requestCode == SELECT_FILE){
+                Uri selectedImageUri = data.getData();
+                addImage(selectedImageUri);
+            } else if (requestCode == WRITE_TEXT){
+                if (data == null){
+                    return;
+                }
+                newText = TextBlockWriterActivity.getTextBlockWritten(data);
+                addText(newText);
+            }
+        }
+    }
+
+    /**
+     * Builds and displays a menu of options for selecting a photo in the guide
+     */
+    private void DecideImage(final Uri imageUri, final View v){
         final CharSequence[] items = {"Delete Picture","View Picture", "Swap Picture", "Cancel"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
@@ -194,18 +298,100 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Delete Picture")){
-                    //Remove picture, call method to shift rest of indexes up
+                    //Remove picture, indexes shift up
+                    layoutFeed.removeView(v);
+                    currentIndex--;
                 }else if(items[i].equals("View Picture")){
+                    //calls the activty to view the picture and passes the URI
                     Intent intent = new Intent(CreateNewGuide.this, ViewPhoto.class);
-                    //intent.putExtra("imageUri", imageUri); - Decide image will pass the final URI to this method from Add Image
+                    intent.putExtra("imageUri", imageUri);
                     startActivity(intent);
-                }else if(items[i].equals("Edit Picture")){
-                    //Delete current picture, swap picture with whatever they want. Use SelectImage() maybe?
+                }else if(items[i].equals("Swap Picture")){
+                    isSwapping = true;
+                    currentPictureSwap = layoutFeed.indexOfChild(v);
+                    SelectImage();
                 }else if(items[i].equals("Cancel")){
                     dialogInterface.dismiss();
                 }
             }
         });
         builder.show();
+    }
+
+    /**
+     * Builds and displays a menu of options for selecting a text block in the guide
+     */
+    private void DecideText(final View v){
+        final CharSequence[] items = {"Delete Text","Edit Text", "Cancel"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
+        builder.setTitle("What would you like to do?");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if(items[i].equals("Delete Text")) {
+                    //Remove text, indexes shift up
+
+                    //add functionality to cannot remove the first step
+                        layoutFeed.removeView(v);
+                        currentIndex--;
+                        currentStep--;
+                }else if(items[i].equals("Edit Text")){
+                    //needs to do something similar to swap picture where you can set the mode to edidting and replace text instead of adding a new index.
+
+                    //TextView text = (TextView) v;
+                    //Intent intent = new Intent(CreateNewGuide.this, ViewPhoto.class);
+                    //intent.putExtra("CURRENT TEXT", text.getText().toString());
+                    //startActivity(intent);
+                }else if(items[i].equals("Cancel")){
+                    dialogInterface.dismiss();
+                }
+            }
+        });
+        builder.show();
+    }
+
+    /**
+     * Builds and displays a edittext to allow the user to edit the title
+     */
+    public void onClickGuideTitle(View view) {
+        String newGuideTitle = mNewGuideTitle.getText().toString();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Guide Title");
+        final EditText input = new EditText(this);
+        input.setText(newGuideTitle);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        builder.setView(input);
+
+        builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mNewGuideTitle.setText(input.getText().toString());
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
+    }
+
+    /**
+     * Asks the user if they really want to go back and erease all unsaved data
+     */
+    @Override
+    public void onBackPressed() {
+        new AlertDialog.Builder(this)
+                .setMessage("Are you sure you want to go back? Any unsaved changes will be lost.")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        CreateNewGuide.this.finish();
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 }
