@@ -31,6 +31,8 @@ public class SignUpActivty extends AppCompatActivity {
     TextView mEmail;
     TextView mPassword;
     TextView mConfirmPassword;
+    TextView mFirstName;
+    TextView mLastName;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore mFirebaseFirestore;
@@ -48,6 +50,8 @@ public class SignUpActivty extends AppCompatActivity {
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
 
+        mFirstName = findViewById(R.id.txtFirstName);
+        mLastName = findViewById(R.id.txtLastName);
         mEmail = (TextView) findViewById(R.id.txtSignUpEmail);
         mPassword = (TextView) findViewById(R.id.txtSignUpPassword);
         mConfirmPassword = (TextView) findViewById(R.id.txtConfirmPassword);
@@ -68,6 +72,8 @@ public class SignUpActivty extends AppCompatActivity {
             mConfirmPassword.setError( "Password is required!" );
         }
         else{
+            String firstName = mFirstName.getText().toString();
+            String lastName = mLastName.getText().toString();
             String email = mEmail.getText().toString();
             String pass = mPassword.getText().toString();
             String confPass = mConfirmPassword.getText().toString();
@@ -77,7 +83,7 @@ public class SignUpActivty extends AppCompatActivity {
                 if(pass.length() >= 6 && pass.length() <= 20){
                     if(pass.equals(confPass)) {
                         //Signs the user up using the email and password provided
-                        createAccount(email, pass);
+                        createAccount(firstName,lastName,email, pass);
                     } else{
                         mConfirmPassword.setError("Passwords must match!");
                     }
@@ -96,7 +102,7 @@ public class SignUpActivty extends AppCompatActivity {
     }
 
     //Creates an account using the provided email and password
-    private void createAccount(final String email, final String password) {
+    private void createAccount(final String fn,final String ln,final String email, final String password) {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -104,6 +110,8 @@ public class SignUpActivty extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             //adds new user info to the database
                             User newUser = new User(mAuth.getCurrentUser().getUid());
+                            newUser.setFirstName(fn);
+                            newUser.setLastName(ln);
                             newUser.setEmail(email);
                             newUser.setPassword(password);
                             newUser.setNumGuides(0);

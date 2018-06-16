@@ -290,7 +290,7 @@ public class CreateNewGuide extends AppCompatActivity {
      * Builds and displays a menu of options for selecting a photo in the guide
      */
     private void DecideImage(final Uri imageUri, final View v){
-        final CharSequence[] items = {"Delete Picture","View Picture", "Swap Picture", "Cancel"};
+        final CharSequence[] items = {"Delete Picture","View Picture","Edit Picture", "Swap Picture", "Cancel"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
         builder.setTitle("What would you like to do?");
@@ -304,6 +304,10 @@ public class CreateNewGuide extends AppCompatActivity {
                 }else if(items[i].equals("View Picture")){
                     //calls the activty to view the picture and passes the URI
                     Intent intent = new Intent(CreateNewGuide.this, ViewPhoto.class);
+                    intent.putExtra("imageUri", imageUri);
+                    startActivity(intent);
+                }else if(items[i].equals("Edit Picture")){
+                    Intent intent = new Intent(CreateNewGuide.this, EditPhoto.class);
                     intent.putExtra("imageUri", imageUri);
                     startActivity(intent);
                 }else if(items[i].equals("Swap Picture")){
@@ -393,5 +397,26 @@ public class CreateNewGuide extends AppCompatActivity {
                 })
                 .setNegativeButton("No", null)
                 .show();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outstate){
+        //need a save path in case the activity is killed
+        //will need to re-initialize cameraimagepicker
+        outstate.putString("ImagePath",outputPath);
+        //outstate.putInt("guideNum",guideNum);
+        //outstate.putInt("TEXTBLOCKNUM",textBlockNum);
+       // outstate.putInt("IMGBLOCKNUM",imgBlockNum);
+        super.onSaveInstanceState(outstate);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState){
+        //after activity is restored, need to re-initialize these 2 values
+        // in order to re-initialize CameraImagePicker
+        if(savedInstanceState != null){
+            outputPath = savedInstanceState.getString("ImagePath", null);
+        }
+        super.onRestoreInstanceState(savedInstanceState);
     }
 }

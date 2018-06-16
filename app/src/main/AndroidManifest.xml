@@ -28,7 +28,9 @@
         <activity android:name=".SignInActivity" />
         <activity android:name=".ErrorActivity" />
         <activity android:name=".CreateGuideTitle" />
-        <activity android:name=".CreateNewGuide"></activity>
+        <activity android:name=".CreateNewGuide" />
+        <activity android:name=".SettingsActivity" />
+        <activity android:name=".EditPhoto"></activity>
     </application>
 
 </manifest>

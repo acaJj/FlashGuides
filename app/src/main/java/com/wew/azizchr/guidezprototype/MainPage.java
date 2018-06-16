@@ -90,7 +90,6 @@ public class MainPage extends AppCompatActivity {
     private boolean isNew;
 
     //Firebase Instance Variables
-    //private FirebaseAuth mAuth;
     private FirebaseStorage mStorage;
     private FirebaseFirestore mFirestore;
     private FirebaseAuth mFirebaseAuth;
