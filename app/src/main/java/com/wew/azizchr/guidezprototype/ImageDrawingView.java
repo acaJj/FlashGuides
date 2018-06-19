@@ -7,6 +7,8 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -20,13 +22,13 @@ import java.util.List;
 
 //TODO: This crashes because when you try to make it a view in the xml shit goes wrong idk why
 
-public class ImageDrawingView extends android.support.v7.widget.AppCompatImageView implements View.OnTouchListener {
+public class ImageDrawingView extends android.support.v7.widget.AppCompatImageView {
 
     public static int PEN_SIZE = 10;
     public static final int DEFAULT_COLOR = Color.BLACK;
     private static final float TOUCH_TOLERANCE = 4;
 
-    private Bitmap mNewBitmap;
+    private Bitmap mBitmap;
     private Canvas mCanvas;
     private Paint mInk;
 
@@ -34,24 +36,50 @@ public class ImageDrawingView extends android.support.v7.widget.AppCompatImageVi
     private ArrayList<DrawPath> paths = new ArrayList<>();
     private float mX,mY;
     private int currentColor, currentSize;
+    private Paint mBitmapPaint = new Paint(Paint.DITHER_FLAG);
 
     public ImageDrawingView(Context context){
-        super(context);
-        setOnTouchListener(this);
+        this(context,null);
     }
 
-    public void init(){
+    public ImageDrawingView(Context context, AttributeSet attributeSet){
+        super(context,attributeSet);
+    }
+
+    public void init(DisplayMetrics metrics){
+        int height = metrics.heightPixels;
+        int width = metrics.widthPixels;
+
+        mBitmap = Bitmap.createBitmap(width,height, Bitmap.Config.ARGB_8888);
+        mCanvas = new Canvas(mBitmap);
         currentColor = DEFAULT_COLOR;
         currentSize = PEN_SIZE;
+        mInk = new Paint(Paint.DITHER_FLAG);
+        mInk.setColor(Color.RED);
+        mInk.setStrokeWidth(5);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas){
+        canvas.save();
+        canvas.drawColor(Color.TRANSPARENT);
+
+        for (DrawPath dp: paths){
+            mInk.setColor(dp.color);
+            mInk.setStrokeWidth(dp.strokeWidth);
+            mInk.setMaskFilter(null);
+
+            mCanvas.drawPath(dp.path,mInk);
+        }
+        canvas.drawBitmap(mBitmap,0,0,mBitmapPaint);
+        canvas.restore();
     }
 
     public void setImage(Bitmap bitmap){
         mCanvas = new Canvas();
-        mInk = new Paint(Paint.DITHER_FLAG);
-        mInk.setColor(Color.RED);
-        mInk.setStrokeWidth(5);
         Matrix matrix = new Matrix();
-        mCanvas.drawBitmap(bitmap,matrix,mInk);
+        mBitmap = bitmap;
+        mCanvas.drawBitmap(mBitmap,matrix,mInk);
         setImageBitmap(bitmap);
     }
 
@@ -82,7 +110,7 @@ public class ImageDrawingView extends android.support.v7.widget.AppCompatImageVi
     }
 
     @Override
-    public boolean onTouch(View v, MotionEvent event)
+    public boolean onTouchEvent(MotionEvent event)
     {
         float x = event.getX();
         float y = event.getY();

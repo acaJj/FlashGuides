@@ -24,22 +24,31 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.kbeanie.multipicker.api.CameraImagePicker;
 import com.kbeanie.multipicker.api.ImagePicker;
 import com.kbeanie.multipicker.api.Picker;
 import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
 import com.kbeanie.multipicker.api.entity.ChosenImage;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class CreateNewGuide extends AppCompatActivity {
 
@@ -51,6 +60,9 @@ public class CreateNewGuide extends AppCompatActivity {
     private String outputPath;
     private String newText;
 
+    private int guideNum;//the current guide index thing
+    private int textBlockNum; //the current number of textBlocks
+    private int imgBlockNum;//the current number of image blocks
     private int currentIndex;
     private int currentStep;
     private int totalEntries;
@@ -64,6 +76,16 @@ public class CreateNewGuide extends AppCompatActivity {
     Button mAddImage;
 
     String guideTitle = "NULL";
+
+    //Firebase Instance Variables
+    private FirebaseStorage mStorage;
+    private FirebaseFirestore mFirestore;
+    private FirebaseAuth mFirebaseAuth;
+
+    //Cloud Firestore Reference Variables
+    private CollectionReference textData;
+    private CollectionReference picData;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,6 +101,12 @@ public class CreateNewGuide extends AppCompatActivity {
 
         mNewGuideTitle = (TextView) findViewById(R.id.txtNewGuideTitle);
 
+        //Initialize firebase variables
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser mCurrentUser = mFirebaseAuth.getCurrentUser();
+        mStorage = FirebaseStorage.getInstance();
+        mFirestore = FirebaseFirestore.getInstance();
+
         //Gets the guide name variable from previous activity and puts it in the title
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
@@ -88,6 +116,9 @@ public class CreateNewGuide extends AppCompatActivity {
             guideTitle = "New Guide (No title)";
         }
         mNewGuideTitle.setText(guideTitle);
+
+        textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
+        picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
 
         //Sets up the Camera Image Picker values
         camera = new CameraImagePicker(CreateNewGuide.this);
@@ -249,42 +280,6 @@ public class CreateNewGuide extends AppCompatActivity {
         return true;
     }
 
-    /**
-     * Adds an image or some text
-     */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(resultCode == RESULT_OK) {
-            if(requestCode == Picker.PICK_IMAGE_CAMERA){
-                if (camera == null){
-                    camera = new CameraImagePicker(CreateNewGuide.this,outputPath);
-                    camera.setImagePickerCallback(new ImagePickerCallback() {
-                        @Override
-                        public void onImagesChosen(List<ChosenImage> list) {
-                            Uri imagePath = Uri.parse(list.get(0).getQueryUri());
-                            addImage(imagePath);
-                        }
-
-                        @Override
-                        public void onError(String s) {
-
-                        }
-                    });
-                }
-                camera.submit(data);
-            }
-            else if (requestCode == SELECT_FILE){
-                Uri selectedImageUri = data.getData();
-                addImage(selectedImageUri);
-            } else if (requestCode == WRITE_TEXT){
-                if (data == null){
-                    return;
-                }
-                newText = TextBlockWriterActivity.getTextBlockWritten(data);
-                addText(newText);
-            }
-        }
-    }
 
     /**
      * Builds and displays a menu of options for selecting a photo in the guide
@@ -397,6 +392,116 @@ public class CreateNewGuide extends AppCompatActivity {
                 })
                 .setNegativeButton("No", null)
                 .show();
+    }
+
+    //Uploads a text block to the firestore database
+    public void uploadText(TextData text){
+        Log.i("UPLOADTEXT: ", "STARTING UPLOAD");
+        if (text.getText().isEmpty()){return;}
+        //Map<String,Object> dataToSave = new HashMap<String, Object>();
+        //dataToSave.put(TEXT_VALUE_KEY,text);
+        //dataToSave.put(PLACEMENT_KEY,place);
+        DocumentReference textBlockRef = textData.document("textBlock" + textBlockNum);
+        /*mDocRef.set(dataToSave).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()){
+                    Log.d("UPLOADTEXT: ", "onComplete: Text Block has been saved");
+                }else{
+                    Log.e("UPLOADTEXT: ", "onComplete: ",task.getException() );
+                }
+            }
+        });
+*/
+        textBlockRef.set(text);
+        textBlockNum++;
+    }
+
+    //Uploads an image reference to firebase storage and the firestore database
+    public void uploadImage(PictureData img, Bitmap pic){
+        Log.i("UPLOADIMAGE: ","Starting upload");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        pic.compress(Bitmap.CompressFormat.PNG,100,baos);
+        byte[] data = baos.toByteArray();
+
+        String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + UUID.randomUUID() + ".png";
+        img.setImgPath(path);
+        StorageReference imgRef = mStorage.getReference(path);
+
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setCustomMetadata("text","TESTING")
+                .build();
+
+        UploadTask uploadTask = imgRef.putBytes(data,metadata);
+        Log.i("UPLOADIMAGE: ","uploadtask");
+        uploadTask.addOnSuccessListener(CreateNewGuide.this,new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                /*Map<String,Object> dataToSave = new HashMap<String, Object>();
+                dataToSave.put(IMG_URL_KEY,path);
+                dataToSave.put(PLACEMENT_KEY, place);
+                mDocRef = picData.document("imgBlock" + imgBlockNum);
+                mDocRef.set(dataToSave).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()){
+                            Log.d("UPLOADIMAGE: ", "onComplete: Image Block URL has been saved");
+                        }else{
+                            Log.e("UPLOADIMAGE: ", "onComplete: ",task.getException() );
+                        }
+                    }
+                });*/
+            }
+        }).addOnFailureListener(CreateNewGuide.this, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Intent intent = new Intent(CreateNewGuide.this, ErrorActivity.class);
+                intent.putExtra("ERRORS", e.getStackTrace().toString());
+                startActivity(intent);
+                return;
+            }
+        });
+        DocumentReference imgBlockRef = picData.document("imgBlock" + imgBlockNum);
+        imgBlockRef.set(img);
+        Log.i("UPLOADIMAGE: ","please be done");
+        imgBlockNum++;
+    }
+
+    /**
+     * Adds an image or some text
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(resultCode == RESULT_OK) {
+            if(requestCode == Picker.PICK_IMAGE_CAMERA){
+                if (camera == null){
+                    camera = new CameraImagePicker(CreateNewGuide.this,outputPath);
+                    camera.setImagePickerCallback(new ImagePickerCallback() {
+                        @Override
+                        public void onImagesChosen(List<ChosenImage> list) {
+                            Uri imagePath = Uri.parse(list.get(0).getQueryUri());
+                            addImage(imagePath);
+                        }
+
+                        @Override
+                        public void onError(String s) {
+
+                        }
+                    });
+                }
+                camera.submit(data);
+            }
+            else if (requestCode == SELECT_FILE){
+                Uri selectedImageUri = data.getData();
+                addImage(selectedImageUri);
+            } else if (requestCode == WRITE_TEXT){
+                if (data == null){
+                    return;
+                }
+                newText = TextBlockWriterActivity.getTextBlockWritten(data);
+                addText(newText);
+            }
+        }
     }
 
     @Override
