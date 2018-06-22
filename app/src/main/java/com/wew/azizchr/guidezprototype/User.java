@@ -11,7 +11,7 @@ public class User {
     private String lastName;
     private String email;
     private String password;
-    private int numGuides;
+    private int guideNum;
 
     public User(){}
 
@@ -19,14 +19,14 @@ public class User {
         this.id = id;
     }
 
-    public User(String id,String userName, String firstName, String lastName, String email, String password, int numGuides) {
+    public User(String id,String userName, String firstName, String lastName, String email, String password, int guideNum) {
         this.id = id;
         this.userName = userName;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
-        this.numGuides = numGuides;
+        this.guideNum = guideNum;
     }
 
     public String getId() {
@@ -77,11 +77,11 @@ public class User {
         this.password = password;
     }
 
-    public int getNumGuides() {
-        return numGuides;
+    public int getguideNum() {
+        return guideNum;
     }
 
-    public void setNumGuides(int numGuides) {
-        this.numGuides = numGuides;
+    public void setGuideNum(int guideNum) {
+        this.guideNum = guideNum;
     }
 }

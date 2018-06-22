@@ -1,5 +1,6 @@
 package com.wew.azizchr.guidezprototype;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -14,6 +15,7 @@ import android.text.Html;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -28,6 +30,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -46,8 +49,10 @@ import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
 import com.kbeanie.multipicker.api.entity.ChosenImage;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class CreateNewGuide extends AppCompatActivity {
@@ -71,9 +76,16 @@ public class CreateNewGuide extends AppCompatActivity {
 
     private CameraImagePicker camera;
     public LinearLayout layoutFeed;
+    private LayoutInflater inflater = new LayoutInflater(CreateNewGuide.this) {
+        @Override
+        public LayoutInflater cloneInContext(Context context) {
+            return null;
+        }
+    };
 
     TextView mNewGuideTitle;
     Button mAddImage;
+    private Button mSave;
 
     String guideTitle = "NULL";
 
@@ -85,6 +97,11 @@ public class CreateNewGuide extends AppCompatActivity {
     //Cloud Firestore Reference Variables
     private CollectionReference textData;
     private CollectionReference picData;
+
+    //ArrayLists to store metadata for the guide text and picture components
+    private ArrayList<GuideData> mGuideDataArrayList = new ArrayList<>();
+    private ArrayList<TextData> mTextDataArrayList = new ArrayList<>();
+    private ArrayList<PictureData> mPictureDataArrayList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,7 +158,15 @@ public class CreateNewGuide extends AppCompatActivity {
         isSwapping = false;
         layoutFeed = (LinearLayout) findViewById(R.id.newGuideLayoutFeed);
         mAddImage = (Button) findViewById(R.id.btnAddImage);
+        mSave = findViewById(R.id.btnSaveGuide);
         mAddImage.setVisibility(View.GONE);
+
+        mSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveGuide();
+            }
+        });
     }
 
     public void onClickGallery(View view) {
@@ -153,6 +178,28 @@ public class CreateNewGuide extends AppCompatActivity {
         startActivityForResult(intent,WRITE_TEXT);
     }
 
+    private void saveGuide(){
+        //all data is stored in custom objects and added to an array list, we iterate through that to upload
+        for (int i = 0; i < mGuideDataArrayList.size(); i++){
+            GuideData dataToSave = mGuideDataArrayList.get(i);
+            if (dataToSave.getType().equals("Text")){
+                TextData textDataPkg = (TextData) dataToSave;
+                textDataPkg.setPlacement(i);
+                uploadText(textDataPkg);
+            }else if (dataToSave.getType().equals("Picture")){
+                PictureData picDataPkg = (PictureData)dataToSave;
+                picDataPkg.setPlacement(i);
+                uploadImage(picDataPkg,picDataPkg.getUri());
+            }
+        }
+
+        updateGuideCount();
+    }
+
+    private void updateGuideCount() {
+        DocumentReference userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
+        userRef.update("guideNum", guideNum);
+    }
 
     /**
      * Builds and displays a menu of options for placing a picture
@@ -197,9 +244,10 @@ public class CreateNewGuide extends AppCompatActivity {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
                             PictureData picData = new PictureData();
-                            picData.setImg(resource);
+                            picData.setUri(imageUri.toString());
                             picData.setPlacement(currentIndex);
-                            //uploadImage(picData, resource);
+                            picData.setType("Picture");
+                            mGuideDataArrayList.add(picData);
                         }
                     });
 
@@ -265,8 +313,9 @@ public class CreateNewGuide extends AppCompatActivity {
             TextData mTextData = new TextData();
             mTextData.setText(textView.getText().toString());
             mTextData.setPlacement(currentIndex);
+            mTextData.setType("Text");
 
-            //uploadText(mTextData);
+            mGuideDataArrayList.add(mTextData);
             currentIndex++;
             currentStep++;
 
@@ -418,49 +467,48 @@ public class CreateNewGuide extends AppCompatActivity {
     }
 
     //Uploads an image reference to firebase storage and the firestore database
-    public void uploadImage(PictureData img, Bitmap pic){
+    public void uploadImage(final PictureData img, String picUri){
         Log.i("UPLOADIMAGE: ","Starting upload");
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        pic.compress(Bitmap.CompressFormat.PNG,100,baos);
-        byte[] data = baos.toByteArray();
 
-        String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + UUID.randomUUID() + ".png";
-        img.setImgPath(path);
-        StorageReference imgRef = mStorage.getReference(path);
+        Uri newUri = Uri.fromFile(new File(picUri));
 
-        StorageMetadata metadata = new StorageMetadata.Builder()
-                .setCustomMetadata("text","TESTING")
-                .build();
-
-        UploadTask uploadTask = imgRef.putBytes(data,metadata);
-        Log.i("UPLOADIMAGE: ","uploadtask");
-        uploadTask.addOnSuccessListener(CreateNewGuide.this,new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                /*Map<String,Object> dataToSave = new HashMap<String, Object>();
-                dataToSave.put(IMG_URL_KEY,path);
-                dataToSave.put(PLACEMENT_KEY, place);
-                mDocRef = picData.document("imgBlock" + imgBlockNum);
-                mDocRef.set(dataToSave).addOnCompleteListener(new OnCompleteListener<Void>() {
+        Glide.with(CreateNewGuide.this)
+                .asBitmap()
+                .load(newUri)
+                .into(new SimpleTarget<Bitmap>() {
                     @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()){
-                            Log.d("UPLOADIMAGE: ", "onComplete: Image Block URL has been saved");
-                        }else{
-                            Log.e("UPLOADIMAGE: ", "onComplete: ",task.getException() );
-                        }
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        resource.compress(Bitmap.CompressFormat.PNG,100,baos);
+                        byte[] data = baos.toByteArray();
+
+                        String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + UUID.randomUUID() + ".png";
+                        img.setImgPath(path);
+                        StorageReference imgRef = mStorage.getReference(path);
+
+                        StorageMetadata metadata = new StorageMetadata.Builder()
+                                .setCustomMetadata(mFirebaseAuth.getUid(),"guide"+guideNum+"/imgBlock" + imgBlockNum)
+                                .build();
+
+                        UploadTask uploadTask = imgRef.putBytes(data,metadata);
+                        Log.i("UPLOADIMAGE: ","uploadtask");
+                        uploadTask.addOnSuccessListener(CreateNewGuide.this,new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                //Can create a hashmap to upload but instead we use custom objects
+                            }
+                        }).addOnFailureListener(CreateNewGuide.this, new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Intent intent = new Intent(CreateNewGuide.this, ErrorActivity.class);
+                                intent.putExtra("ERRORS", e.getLocalizedMessage());
+                                startActivity(intent);
+                                return;
+                            }
+                        });
                     }
-                });*/
-            }
-        }).addOnFailureListener(CreateNewGuide.this, new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Intent intent = new Intent(CreateNewGuide.this, ErrorActivity.class);
-                intent.putExtra("ERRORS", e.getStackTrace().toString());
-                startActivity(intent);
-                return;
-            }
-        });
+                });
+
         DocumentReference imgBlockRef = picData.document("imgBlock" + imgBlockNum);
         imgBlockRef.set(img);
         Log.i("UPLOADIMAGE: ","please be done");

@@ -386,7 +386,7 @@ public class MainPage extends AppCompatActivity {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
                             PictureData picData = new PictureData();
-                            picData.setImg(resource);
+                            picData.setUri(imageUri.toString());
                             picData.setPlacement(index);
                             uploadImage(picData, resource);
                         }

@@ -1,6 +1,7 @@
 package com.wew.azizchr.guidezprototype;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 //import java.io.ByteArrayOutputStream;
 
 /**
@@ -13,7 +14,7 @@ import android.graphics.Bitmap;
 public class PictureData extends GuideData {
 
     private String imgPath;
-    private Bitmap img;
+    private String uri;
 
     public PictureData() {
     }
@@ -36,11 +37,11 @@ public class PictureData extends GuideData {
         this.imgPath = imgPath;
     }
 
-    public Bitmap getImg() {
-        return img;
+    public String getUri() {
+        return uri;
     }
 
-    public void setImg(Bitmap img) {
-        this.img = img;
+    public void setUri(String uri) {
+        this.uri = uri;
     }
 }
