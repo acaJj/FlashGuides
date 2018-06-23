@@ -144,7 +144,7 @@ public class MainPage extends AppCompatActivity {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 userData = documentSnapshot.toObject(User.class);
-                String dbString = "Users/" + mFirebaseAuth.getUid() + "/guides/guide" + userData.getNumGuides();
+                String dbString = "Users/" + mFirebaseAuth.getUid() + "/guides/guide" + userData.getguideNum();
                 guideData = mFirestore.collection(dbString + "/textData");
                 picData = mFirestore.collection(dbString + "/imageData");
                 Log.i("","SUCCESSFULLY RETRIEVED DATA");

@@ -114,7 +114,7 @@ public class SignUpActivty extends AppCompatActivity {
                             newUser.setLastName(ln);
                             newUser.setEmail(email);
                             newUser.setPassword(password);
-                            newUser.setNumGuides(0);
+                            newUser.setGuideNum(0);
                             DocumentReference newUserDoc = mFirebaseFirestore.document("Users/" + mAuth.getUid());
                             newUserDoc.set(newUser);
                             //Account was created, user was signed in, and now switching to homepage

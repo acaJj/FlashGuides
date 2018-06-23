@@ -1,5 +1,6 @@
 package com.wew.azizchr.guidezprototype;
 
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -7,7 +8,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -31,7 +34,7 @@ public class SettingsActivity extends AppCompatActivity {
     private FirebaseFirestore mFirestore;
     private DocumentReference userAccountRef;
 
-    private User mUser;
+    private User mUser = new User();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,13 +43,22 @@ public class SettingsActivity extends AppCompatActivity {
 
         FirebaseAuth mFirebaseAuth = FirebaseAuth.getInstance();
         mCurrentUser = mFirebaseAuth.getCurrentUser();
+        mFirestore = FirebaseFirestore.getInstance();
 
         //TODO: this documentPath is a null object reference, makes app crash, need to fix
         userAccountRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
-        userAccountRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+        userAccountRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
-            public void onSuccess(DocumentSnapshot documentSnapshot) {
-                mUser = documentSnapshot.toObject(User.class);
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                DocumentSnapshot documentSnapshot = task.getResult();
+                mUser.setUserName( documentSnapshot.getString("username"));
+                mUser.setPassword(documentSnapshot.getString("password"));
+                mUser.setFirstName(documentSnapshot.getString("firstName"));
+                mUser.setFirstName(documentSnapshot.getString("lastName"));
+                int num = documentSnapshot.getLong("numGuides").intValue();
+                mUser.setGuideNum(num);
+                mUser.setId(documentSnapshot.getString("id"));
+                mUser.setEmail("email");
             }
         });
 
@@ -89,16 +101,22 @@ public class SettingsActivity extends AppCompatActivity {
         String newFirstName = mFirstName.getText().toString();
         String newLastName = mLastName.getText().toString();
         String newPass = mPassword.getText().toString();
+        String newNick = mNickName.getText().toString();
         if (!newFirstName.equals(mUser.getFirstName())){
-            userAccountRef.update("firstname",newFirstName);
+            userAccountRef.update("firstName",newFirstName);
         }
 
         if (!newLastName.equals(mUser.getLastName())){
-            userAccountRef.update("lastname",newLastName);
+            userAccountRef.update("lastName",newLastName);
+        }
+
+        if (!newNick.equals(mUser.getUserName())){
+            userAccountRef.update("userName",newNick);
         }
 
         if (!newPass.equals(mUser.getPassword())){
-            if (newPass.length() >=6 && newPass.length() <= 20){
+            //if there is a new password typed out, it must be between 6 and 20 chars
+            if ((!newPass.isEmpty()) && (newPass.length() >=6 && newPass.length() <= 20)){
                 if (newPass.equals(mConfirmPassword.getText().toString())){
                     userAccountRef.update("password", newPass);
                 }else{
