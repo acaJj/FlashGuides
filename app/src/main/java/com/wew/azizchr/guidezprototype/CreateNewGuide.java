@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -60,10 +61,12 @@ public class CreateNewGuide extends AppCompatActivity {
     private static final String TEXT_TAG = "TEXT";
     private static final String IMG_TAG = "IMG";
     private static final int SELECT_FILE =0;
-    private static final int WRITE_TEXT =1;
+    private static final int WRITE_STEP =1;
+    private static final int WRITE_DESC =2;
 
     private String outputPath;
-    private String newText;
+    private String newStepTitle;
+    private String newStepDesc;
 
     private int guideNum;//the current guide index thing
     private int textBlockNum; //the current number of textBlocks
@@ -157,9 +160,9 @@ public class CreateNewGuide extends AppCompatActivity {
         totalEntries = 0;
         isSwapping = false;
         layoutFeed = (LinearLayout) findViewById(R.id.newGuideLayoutFeed);
-        mAddImage = (Button) findViewById(R.id.btnAddImage);
+        //mAddImage = (Button) findViewById(R.id.btnAddImage);
         mSave = findViewById(R.id.btnSaveGuide);
-        mAddImage.setVisibility(View.GONE);
+        //mAddImage.setVisibility(View.GONE);
 
         mSave.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -173,9 +176,10 @@ public class CreateNewGuide extends AppCompatActivity {
         SelectImage();
     }
 
-    public void onClickText(View view) {
-        Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
-        startActivityForResult(intent,WRITE_TEXT);
+    public void onClickStep(View view) {
+        Intent intent = new Intent(CreateNewGuide.this,AddStepActivity.class);
+        intent.putExtra("CurrStep", currentStep);
+        startActivityForResult(intent,WRITE_STEP);
     }
 
     private void saveGuide(){
@@ -283,39 +287,66 @@ public class CreateNewGuide extends AppCompatActivity {
 
     /**
      * Creates and adds a new text block to the layoutFeed
-     * @param text of the new text block
+     * @param title of the new step block
+     * @param desc of the new step block
      * @return true if success, otherwise false
      */
-    public boolean addText(String text){
+    public boolean addStep(String title, String desc){
         try{
             LinearLayout newStepBlock = new LinearLayout(CreateNewGuide.this);
+            LinearLayout newTitleBlock = new LinearLayout(CreateNewGuide.this);
             newStepBlock.setOrientation(LinearLayout.VERTICAL);
+            newTitleBlock.setOrientation(LinearLayout.HORIZONTAL);
 
-            TextView textView = new TextView(CreateNewGuide.this);
-            textView.setText(Html.fromHtml(text));
-            textView.setTag(TEXT_TAG);
+            TextView mStepNumber = new TextView(CreateNewGuide.this);
+            mStepNumber.setTypeface(null, Typeface.BOLD);
+            mStepNumber.setTextSize(24);
+            mStepNumber.setTextColor(Color.BLACK);
+            TextView mStepTitle = new TextView(CreateNewGuide.this);
+            mStepTitle.setTypeface(null, Typeface.BOLD);
+            mStepTitle.setTextSize(24);
+            mStepTitle.setTextColor(Color.BLACK);
+            TextView mStepDesc = new TextView(CreateNewGuide.this);
+            mStepDesc.setTextSize(17);
+            mStepDesc.setTextColor(Color.DKGRAY);
+            mStepDesc.setPadding(5, 10, 5, 10);
 
+            Button addImage = new Button(CreateNewGuide.this);
+            addImage.setText("Add Image to step " + currentStep);
+            Button addDesc = new Button (CreateNewGuide.this);
+            addDesc.setText("Add Text to Step " + currentStep);
+
+            mStepNumber.setText("Step" +currentStep + " : ");
+            mStepTitle.setText(title);
+            mStepDesc.setText(desc);
+
+            //we can use this later on to
+            /*
             textView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     DecideText(v);
                 }
             });
+            */
 
-            //modifies the texts size, color and padding
-            textView.setTextSize(18);
-            textView.setTextColor(Color.BLACK);
-            textView.setPadding(5,10,5,10);
+            //Set up the views to show everything
+            newTitleBlock.addView(mStepNumber);
+            newTitleBlock.addView(mStepTitle);
+            newStepBlock.addView(newTitleBlock);
+            newStepBlock.addView(mStepDesc);
+            newStepBlock.addView(addImage);
+            newStepBlock.addView(addDesc);
 
-            //newStepBlock.addView(textView);
-            layoutFeed.addView(textView, currentIndex);
+            layoutFeed.addView(newStepBlock, currentIndex);
 
-            TextData mTextData = new TextData();
-            mTextData.setText(textView.getText().toString());
-            mTextData.setPlacement(currentIndex);
-            mTextData.setType("Text");
+            //JEFF idk what to do with this, pls explaoin
+            //TextData mTextData = new TextData();
+            //mTextData.setText(textView.getText().toString());
+            //mTextData.setPlacement(currentIndex);
+            //mTextData.setType("Text");
 
-            mGuideDataArrayList.add(mTextData);
+            //mGuideDataArrayList.add(mTextData);
             currentIndex++;
             currentStep++;
 
@@ -542,12 +573,13 @@ public class CreateNewGuide extends AppCompatActivity {
             else if (requestCode == SELECT_FILE){
                 Uri selectedImageUri = data.getData();
                 addImage(selectedImageUri);
-            } else if (requestCode == WRITE_TEXT){
+            } else if (requestCode == WRITE_STEP){
                 if (data == null){
                     return;
                 }
-                newText = TextBlockWriterActivity.getTextBlockWritten(data);
-                addText(newText);
+                newStepTitle = AddStepActivity.getTitle(data);
+                newStepDesc = AddStepActivity.getDesc(data);
+                addStep(newStepTitle, newStepDesc);
             }
         }
     }

@@ -80,9 +80,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:onClick="onClickText"
+                        android:onClick="onClickStep"
                         android:text="Add a Step!" />
-
+                    <!--
                     <Button
                         android:id="@+id/btnAddImage"
                         android:layout_width="match_parent"
@@ -90,6 +90,7 @@
                         android:layout_weight="1"
                         android:onClick="onClickGallery"
                         android:text="Add an Image" />
+                        -->
                 </LinearLayout>
 
                 <!--
@@ -102,6 +103,7 @@
         </ScrollView>
         <LinearLayout
             android:id="@+id/footer"
+            android:gravity="center"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <Button
