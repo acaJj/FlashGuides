@@ -45,7 +45,6 @@ public class SettingsActivity extends AppCompatActivity {
         mCurrentUser = mFirebaseAuth.getCurrentUser();
         mFirestore = FirebaseFirestore.getInstance();
 
-        //TODO: this documentPath is a null object reference, makes app crash, need to fix
         userAccountRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
         userAccountRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override

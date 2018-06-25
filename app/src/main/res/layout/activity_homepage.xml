@@ -28,10 +28,10 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
-            android:id="@+id/btnBrowseGuides"
+            android:id="@+id/btnGuideCollection"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Browse Guides" />
+            android:text="Your Guides" />
 
         <Button
             android:id="@+id/btnMakeGuide"
