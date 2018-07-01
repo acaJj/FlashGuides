@@ -31,7 +31,9 @@
         <activity android:name=".CreateNewGuide" />
         <activity android:name=".SettingsActivity" />
         <activity android:name=".EditPhoto" />
-        <activity android:name=".UserCollectionActivity"></activity>
+        <activity android:name=".UserCollectionActivity" />
+        <activity android:name=".AddStepActivity" />
+
     </application>
 
 </manifest>

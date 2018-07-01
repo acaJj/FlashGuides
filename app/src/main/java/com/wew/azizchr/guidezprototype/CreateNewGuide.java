@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -31,12 +32,15 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
@@ -60,12 +64,14 @@ public class CreateNewGuide extends AppCompatActivity {
     private static final String TEXT_TAG = "TEXT";
     private static final String IMG_TAG = "IMG";
     private static final int SELECT_FILE =0;
-    private static final int WRITE_TEXT =1;
+    private static final int WRITE_STEP =1;
+    private static final int WRITE_DESC =2;
 
     private String outputPath;
-    private String newText;
+    private String newStepTitle;
+    private String newStepDesc;
 
-    private int guideNum;//the current guide index thing
+    private int guideNum = 0;//the current guide index thing
     private int textBlockNum; //the current number of textBlocks
     private int imgBlockNum;//the current number of image blocks
     private int currentIndex;
@@ -97,11 +103,11 @@ public class CreateNewGuide extends AppCompatActivity {
     //Cloud Firestore Reference Variables
     private CollectionReference textData;
     private CollectionReference picData;
+    private DocumentReference userRef;
 
-    //ArrayLists to store metadata for the guide text and picture components
+    //ArrayList stores metadata for the guide text and picture components
     private ArrayList<GuideData> mGuideDataArrayList = new ArrayList<>();
-    private ArrayList<TextData> mTextDataArrayList = new ArrayList<>();
-    private ArrayList<PictureData> mPictureDataArrayList = new ArrayList<>();
+    private Guide newGuide;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,6 +121,8 @@ public class CreateNewGuide extends AppCompatActivity {
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
+
+        newGuide = new Guide();
 
         mNewGuideTitle = (TextView) findViewById(R.id.txtNewGuideTitle);
 
@@ -130,10 +138,24 @@ public class CreateNewGuide extends AppCompatActivity {
         if(bundle != null){
             guideTitle = bundle.getString("GUIDE_TITLE");
         } else{
-            guideTitle = "New Guide (No title)";
+            guideTitle = "Guide (No title)";
         }
         mNewGuideTitle.setText(guideTitle);
 
+        newGuide.setAuthor(mCurrentUser.getDisplayName());
+        newGuide.setTitle(mCurrentUser.getDisplayName()+" / "+guideTitle);
+
+        userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
+        userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                DocumentSnapshot documentSnapshot = task.getResult();
+                guideNum = documentSnapshot.getLong("numGuides").intValue();
+            }
+
+        });
+
+        guideNum++;
         textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
         picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
 
@@ -157,9 +179,9 @@ public class CreateNewGuide extends AppCompatActivity {
         totalEntries = 0;
         isSwapping = false;
         layoutFeed = (LinearLayout) findViewById(R.id.newGuideLayoutFeed);
-        mAddImage = (Button) findViewById(R.id.btnAddImage);
+        //mAddImage = (Button) findViewById(R.id.btnAddImage);
         mSave = findViewById(R.id.btnSaveGuide);
-        mAddImage.setVisibility(View.GONE);
+        //mAddImage.setVisibility(View.GONE);
 
         mSave.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -173,18 +195,25 @@ public class CreateNewGuide extends AppCompatActivity {
         SelectImage();
     }
 
-    public void onClickText(View view) {
-        Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
-        startActivityForResult(intent,WRITE_TEXT);
+    public void onClickStep(View view) {
+        Intent intent = new Intent(CreateNewGuide.this,AddStepActivity.class);
+        intent.putExtra("CurrStep", currentStep);
+        startActivityForResult(intent,WRITE_STEP);
     }
 
     private void saveGuide(){
+
+        DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
+        guideRef.set(newGuide);
+
         //all data is stored in custom objects and added to an array list, we iterate through that to upload
+        //the order the objects are stored in the array is the order they're laid out in the layout
         for (int i = 0; i < mGuideDataArrayList.size(); i++){
+            //gets the next data object and uploads depending on the type of data we have
             GuideData dataToSave = mGuideDataArrayList.get(i);
             if (dataToSave.getType().equals("Text")){
                 TextData textDataPkg = (TextData) dataToSave;
-                textDataPkg.setPlacement(i);
+                textDataPkg.setPlacement(i);//sets the placement to the current index
                 uploadText(textDataPkg);
             }else if (dataToSave.getType().equals("Picture")){
                 PictureData picDataPkg = (PictureData)dataToSave;
@@ -196,9 +225,11 @@ public class CreateNewGuide extends AppCompatActivity {
         updateGuideCount();
     }
 
+    /**
+     * Updates users guideNum value in db so the guide names can be different: 'guide0', 'guide1', etc
+     */
     private void updateGuideCount() {
-        DocumentReference userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
-        userRef.update("guideNum", guideNum);
+        userRef.update("numGuides", guideNum);
     }
 
     /**
@@ -243,6 +274,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     .into(new SimpleTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
+                            //creates object to hold picture data
                             PictureData picData = new PictureData();
                             picData.setUri(imageUri.toString());
                             picData.setPlacement(currentIndex);
@@ -283,38 +315,65 @@ public class CreateNewGuide extends AppCompatActivity {
 
     /**
      * Creates and adds a new text block to the layoutFeed
-     * @param text of the new text block
+     * @param title of the new step block
+     * @param desc of the new step block
      * @return true if success, otherwise false
      */
-    public boolean addText(String text){
+    public boolean addStep(String title, String desc){
         try{
             LinearLayout newStepBlock = new LinearLayout(CreateNewGuide.this);
+            LinearLayout newTitleBlock = new LinearLayout(CreateNewGuide.this);
             newStepBlock.setOrientation(LinearLayout.VERTICAL);
+            newTitleBlock.setOrientation(LinearLayout.HORIZONTAL);
 
-            TextView textView = new TextView(CreateNewGuide.this);
-            textView.setText(Html.fromHtml(text));
-            textView.setTag(TEXT_TAG);
+            TextView mStepNumber = new TextView(CreateNewGuide.this);
+            mStepNumber.setTypeface(null, Typeface.BOLD);
+            mStepNumber.setTextSize(24);
+            mStepNumber.setTextColor(Color.BLACK);
+            TextView mStepTitle = new TextView(CreateNewGuide.this);
+            mStepTitle.setTypeface(null, Typeface.BOLD);
+            mStepTitle.setTextSize(24);
+            mStepTitle.setTextColor(Color.BLACK);
+            TextView mStepDesc = new TextView(CreateNewGuide.this);
+            mStepDesc.setTextSize(17);
+            mStepDesc.setTextColor(Color.DKGRAY);
+            mStepDesc.setPadding(5, 10, 5, 10);
 
+            Button addImage = new Button(CreateNewGuide.this);
+            addImage.setText("Add Image to step " + currentStep);
+            Button addDesc = new Button (CreateNewGuide.this);
+            addDesc.setText("Add Text to Step " + currentStep);
+
+            mStepNumber.setText("Step" +currentStep + " : ");
+            mStepTitle.setText(title);
+            mStepDesc.setText(desc);
+
+            //we can use this later on to
+            /*
             textView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     DecideText(v);
                 }
             });
+            */
 
-            //modifies the texts size, color and padding
-            textView.setTextSize(18);
-            textView.setTextColor(Color.BLACK);
-            textView.setPadding(5,10,5,10);
+            //Set up the views to show everything
+            newTitleBlock.addView(mStepNumber);
+            newTitleBlock.addView(mStepTitle);
+            newStepBlock.addView(newTitleBlock);
+            newStepBlock.addView(mStepDesc);
+            newStepBlock.addView(addImage);
+            newStepBlock.addView(addDesc);
 
-            //newStepBlock.addView(textView);
-            layoutFeed.addView(textView, currentIndex);
+            layoutFeed.addView(newStepBlock, currentIndex);
 
+            //creates an object which holds all the data for the text in the step
             TextData mTextData = new TextData();
-            mTextData.setText(textView.getText().toString());
+            mTextData.setText(desc);
             mTextData.setPlacement(currentIndex);
             mTextData.setType("Text");
-
+            //adds the textdata object to our arraylist of data objects for firebase upload
             mGuideDataArrayList.add(mTextData);
             currentIndex++;
             currentStep++;
@@ -542,12 +601,13 @@ public class CreateNewGuide extends AppCompatActivity {
             else if (requestCode == SELECT_FILE){
                 Uri selectedImageUri = data.getData();
                 addImage(selectedImageUri);
-            } else if (requestCode == WRITE_TEXT){
+            } else if (requestCode == WRITE_STEP){
                 if (data == null){
                     return;
                 }
-                newText = TextBlockWriterActivity.getTextBlockWritten(data);
-                addText(newText);
+                newStepTitle = AddStepActivity.getTitle(data);
+                newStepDesc = AddStepActivity.getDesc(data);
+                addStep(newStepTitle, newStepDesc);
             }
         }
     }

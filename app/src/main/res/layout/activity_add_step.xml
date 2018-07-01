@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="top|center"
+    android:orientation="vertical"
+    tools:context="com.wew.azizchr.guidezprototype.AddStepActivity">
+
+    <TextView
+        android:id="@+id/txtNewStepHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:background="#8e55d3"
+        android:fontFamily="sans-serif-condensed"
+        android:paddingBottom="15dp"
+        android:paddingTop="15dp"
+        android:text="Add Step"
+        android:textAlignment="center"
+        android:textColor="#FFFFFF"
+        android:textSize="25dp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/txtStepTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Step Title: "
+        android:textColor="@android:color/black"
+        android:textSize="24sp" />
+
+    <EditText
+        android:id="@+id/etNewStepTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="(Ex. Gather materials ... )"
+        android:inputType="textPersonName"
+        android:selectAllOnFocus="false"
+        android:singleLine="false" />
+
+    <TextView
+        android:id="@+id/txtTextDesc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Step Description:"
+        android:textColor="@android:color/black"
+        android:textSize="24sp" />
+
+    <EditText
+        android:id="@+id/etNewStepDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="(Ex. In this step, ... )"
+        android:inputType="textMultiLine" />
+
+    <Button
+        android:id="@+id/btnDoneAddStep"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/border_button_done"
+        android:fontFamily="sans-serif-condensed"
+        android:onClick="onDoneClick"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="Done"
+        android:textAlignment="center"
+        android:textColor="#8e55d3"
+        android:textSize="25dp"
+        android:textStyle="bold" />
+</LinearLayout>

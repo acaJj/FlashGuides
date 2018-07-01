@@ -46,6 +46,7 @@ public class SettingsActivity extends AppCompatActivity {
         mFirestore = FirebaseFirestore.getInstance();
 
         userAccountRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
+        //gets user account info from db and sets it to our object
         userAccountRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {

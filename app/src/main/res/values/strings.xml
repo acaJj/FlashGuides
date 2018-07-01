@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Guidez Prototype</string>
+    <string name="default_item_text">This is a collection item</string>
 </resources>
