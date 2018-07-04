@@ -70,6 +70,7 @@ public class CreateNewGuide extends AppCompatActivity {
     private String outputPath;
     private String newStepTitle;
     private String newStepDesc;
+    private String newDesc;
 
     private int guideNum = 0;//the current guide index thing
     private int textBlockNum; //the current number of textBlocks
@@ -78,10 +79,15 @@ public class CreateNewGuide extends AppCompatActivity {
     private int currentStep;
     private int totalEntries;
     private int currentPictureSwap;
+
     private Boolean isSwapping;
+    private Boolean isEditingText;
 
     private CameraImagePicker camera;
     public LinearLayout layoutFeed;
+    public LinearLayout selectedLayout;
+    public TextView selectedTextView;
+
     private LayoutInflater inflater = new LayoutInflater(CreateNewGuide.this) {
         @Override
         public LayoutInflater cloneInContext(Context context) {
@@ -178,9 +184,7 @@ public class CreateNewGuide extends AppCompatActivity {
         totalEntries = 0;
         isSwapping = false;
         layoutFeed = (LinearLayout) findViewById(R.id.newGuideLayoutFeed);
-        //mAddImage = (Button) findViewById(R.id.btnAddImage);
         mSave = findViewById(R.id.btnSaveGuide);
-        //mAddImage.setVisibility(View.GONE);
 
         mSave.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -188,10 +192,6 @@ public class CreateNewGuide extends AppCompatActivity {
                 saveGuide();
             }
         });
-    }
-
-    public void onClickGallery(View view) {
-        SelectImage();
     }
 
     public void onClickStep(View view) {
@@ -291,12 +291,12 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setPadding(3, 10, 3, 10);
 
             if(isSwapping){
-                layoutFeed.addView(newImgView, currentPictureSwap);
-                layoutFeed.removeViewAt(currentPictureSwap + 1);
+                selectedLayout.addView(newImgView, currentPictureSwap);
+                selectedLayout.removeViewAt(currentPictureSwap + 1);
                 currentPictureSwap = 0;
                 isSwapping = false;
             }else {
-                layoutFeed.addView(newImgView, currentIndex);
+                selectedLayout.addView(newImgView, selectedLayout.getChildCount() - 2);
                 currentIndex++;
             }
 
@@ -315,7 +315,8 @@ public class CreateNewGuide extends AppCompatActivity {
      */
     public boolean addStep(String title, String desc){
         try{
-            LinearLayout newStepBlock = new LinearLayout(CreateNewGuide.this);
+            final LinearLayout newStepBlock = new LinearLayout(CreateNewGuide.this);
+            newStepBlock.generateViewId();
             LinearLayout newTitleBlock = new LinearLayout(CreateNewGuide.this);
             newStepBlock.setOrientation(LinearLayout.VERTICAL);
             newTitleBlock.setOrientation(LinearLayout.HORIZONTAL);
@@ -335,22 +336,35 @@ public class CreateNewGuide extends AppCompatActivity {
 
             Button addImage = new Button(CreateNewGuide.this);
             addImage.setText("Add Image to step " + currentStep);
+            addImage.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    selectedLayout = newStepBlock;
+                    SelectImage();
+                }
+            });
+
             Button addDesc = new Button (CreateNewGuide.this);
             addDesc.setText("Add Text to Step " + currentStep);
+            addDesc.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    isEditingText = false;
+                    selectedLayout = newStepBlock;
+                    Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
+                    intent.putExtra("CurrStep", currentStep);
+                    intent.putExtra("isEditing", isEditingText);
+                    startActivityForResult(intent,WRITE_DESC);
+                }
+            });
 
-            mStepNumber.setText("Step" +currentStep + " : ");
+            mStepNumber.setText("Step " +currentStep + " : ");
             mStepTitle.setText(title);
             mStepDesc.setText(desc);
-
-            //we can use this later on to
-            /*
-            textView.setOnClickListener(new View.OnClickListener() {
+            mStepDesc.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     DecideText(v);
                 }
             });
-            */
 
             //Set up the views to show everything
             newTitleBlock.addView(mStepNumber);
@@ -360,7 +374,8 @@ public class CreateNewGuide extends AppCompatActivity {
             newStepBlock.addView(addImage);
             newStepBlock.addView(addDesc);
 
-            layoutFeed.addView(newStepBlock, currentIndex);
+            layoutFeed.addView(newStepBlock, layoutFeed.getChildCount()-1);
+            currentStep++;
 
             //creates an object which holds all the data for the text in the step
             TextData mTextData = new TextData();
@@ -372,9 +387,6 @@ public class CreateNewGuide extends AppCompatActivity {
             currentIndex++;
             currentStep++;
 
-            if(currentStep > 1){
-                mAddImage.setVisibility(View.VISIBLE);
-            }
         }catch (Exception ex){
             ex.getMessage();
             return false;
@@ -382,6 +394,35 @@ public class CreateNewGuide extends AppCompatActivity {
         return true;
     }
 
+    private boolean addDescription(String newStepDesc) {
+        try{
+            //if the user is editing a textview, change the text
+            if(isEditingText){
+                selectedTextView.setText(newStepDesc);
+            }
+            //if not, create a textview and add it to the selected layout
+            else{
+                TextView mDescription = new TextView(CreateNewGuide.this);
+                mDescription.setTextSize(17);
+                mDescription.setTextColor(Color.DKGRAY);
+                mDescription.setPadding(5, 10, 5, 10);
+                mDescription.setText(newStepDesc);
+                mDescription.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        DecideText(v);
+                    }
+                });
+
+                selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
+            }
+        }catch (Exception ex){
+            ex.getMessage();
+            return false;
+        }
+
+        return true;
+    }
 
     /**
      * Builds and displays a menu of options for selecting a photo in the guide
@@ -396,8 +437,7 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Delete Picture")){
                     //Remove picture, indexes shift up
-                    layoutFeed.removeView(v);
-                    currentIndex--;
+                    ((LinearLayout) v.getParent()).removeView(v);
                 }else if(items[i].equals("View Picture")){
                     //calls the activty to view the picture and passes the URI
                     Intent intent = new Intent(CreateNewGuide.this, ViewPhoto.class);
@@ -409,7 +449,8 @@ public class CreateNewGuide extends AppCompatActivity {
                     startActivity(intent);
                 }else if(items[i].equals("Swap Picture")){
                     isSwapping = true;
-                    currentPictureSwap = layoutFeed.indexOfChild(v);
+                    selectedLayout = ((LinearLayout) v.getParent());
+                    currentPictureSwap = ((LinearLayout) v.getParent()).indexOfChild(v);
                     SelectImage();
                 }else if(items[i].equals("Cancel")){
                     dialogInterface.dismiss();
@@ -431,19 +472,16 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Delete Text")) {
-                    //Remove text, indexes shift up
-
-                    //add functionality to cannot remove the first step
-                        layoutFeed.removeView(v);
-                        currentIndex--;
-                        currentStep--;
+                    ((LinearLayout) v.getParent()).removeView(v);
+                    currentIndex--;
                 }else if(items[i].equals("Edit Text")){
-                    //needs to do something similar to swap picture where you can set the mode to edidting and replace text instead of adding a new index.
-
-                    //TextView text = (TextView) v;
-                    //Intent intent = new Intent(CreateNewGuide.this, ViewPhoto.class);
-                    //intent.putExtra("CURRENT TEXT", text.getText().toString());
-                    //startActivity(intent);
+                    isEditingText = true;
+                    selectedTextView = (TextView)v;
+                    String currText = selectedTextView.getText().toString();
+                    Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
+                    intent.putExtra("CurrText", currText);
+                    intent.putExtra("isEditing", isEditingText);
+                    startActivityForResult(intent,WRITE_DESC);
                 }else if(items[i].equals("Cancel")){
                     dialogInterface.dismiss();
                 }
@@ -496,7 +534,10 @@ public class CreateNewGuide extends AppCompatActivity {
                 .show();
     }
 
-    //Uploads a text block to the firestore database
+    /**
+     * Uploads a text block to the firestore database
+     * @param text object to be uploaded
+     */
     public void uploadText(TextData text){
         Log.i("UPLOADTEXT: ", "STARTING UPLOAD");
         if (text.getText().isEmpty()){return;}
@@ -519,7 +560,11 @@ public class CreateNewGuide extends AppCompatActivity {
         textBlockNum++;
     }
 
-    //Uploads an image reference to firebase storage and the firestore database
+    /**
+     * Uploads an image reference to firebase storage and the firestore database
+     * @param img object to be uploaded
+     * @param picUri the uri string of the picture being uploaded to storage
+     */
     public void uploadImage(final PictureData img, String picUri){
         Log.i("UPLOADIMAGE: ","Starting upload");
 
@@ -602,6 +647,12 @@ public class CreateNewGuide extends AppCompatActivity {
                 newStepTitle = AddStepActivity.getTitle(data);
                 newStepDesc = AddStepActivity.getDesc(data);
                 addStep(newStepTitle, newStepDesc);
+            } else if (requestCode == WRITE_DESC){
+                if (data == null){
+                    return;
+                }
+                newDesc = AddDescriptionActivity.getNewDesc(data);
+                addDescription(newDesc);
             }
         }
     }
@@ -611,7 +662,7 @@ public class CreateNewGuide extends AppCompatActivity {
         //need a save path in case the activity is killed
         //will need to re-initialize cameraimagepicker
         outstate.putString("ImagePath",outputPath);
-        //outstate.putInt("guideNum",guideNum);
+        outstate.putInt("guideNum",guideNum);
         //outstate.putInt("TEXTBLOCKNUM",textBlockNum);
        // outstate.putInt("IMGBLOCKNUM",imgBlockNum);
         super.onSaveInstanceState(outstate);
@@ -623,6 +674,7 @@ public class CreateNewGuide extends AppCompatActivity {
         // in order to re-initialize CameraImagePicker
         if(savedInstanceState != null){
             outputPath = savedInstanceState.getString("ImagePath", null);
+            guideNum = savedInstanceState.getInt("guideNum",0);
         }
         super.onRestoreInstanceState(savedInstanceState);
     }
