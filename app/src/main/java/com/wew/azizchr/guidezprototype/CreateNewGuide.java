@@ -142,8 +142,8 @@ public class CreateNewGuide extends AppCompatActivity {
         }
         mNewGuideTitle.setText(guideTitle);
 
-        newGuide.setAuthor(mCurrentUser.getDisplayName());
-        newGuide.setTitle(mCurrentUser.getDisplayName()+" / "+guideTitle);
+        newGuide.setAuthor(mCurrentUser.getEmail());
+        newGuide.setTitle(mCurrentUser.getEmail()+" / "+guideTitle);
 
         userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
         userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -151,13 +151,12 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 DocumentSnapshot documentSnapshot = task.getResult();
                 guideNum = documentSnapshot.getLong("numGuides").intValue();
+                guideNum++;
+                textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
+                picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
             }
 
         });
-
-        guideNum++;
-        textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
-        picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
 
         //Sets up the Camera Image Picker values
         camera = new CameraImagePicker(CreateNewGuide.this);
@@ -222,14 +221,9 @@ public class CreateNewGuide extends AppCompatActivity {
             }
         }
 
-        updateGuideCount();
-    }
-
-    /**
-     * Updates users guideNum value in db so the guide names can be different: 'guide0', 'guide1', etc
-     */
-    private void updateGuideCount() {
+        //update the users guide count so the guides can be named differently, 'guide0', 'guide1', etc
         userRef.update("numGuides", guideNum);
+        Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
     }
 
     /**

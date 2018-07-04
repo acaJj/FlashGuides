@@ -1,12 +1,15 @@
 package com.wew.azizchr.guidezprototype;
 
+import android.content.DialogInterface;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -35,6 +38,7 @@ public class SettingsActivity extends AppCompatActivity {
     private DocumentReference userAccountRef;
 
     private User mUser = new User();
+    private Boolean changesMade = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,9 +86,19 @@ public class SettingsActivity extends AppCompatActivity {
         mConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //TODO: Make a menu that prompts the user to confirm their choices before updating firestore
-
-                updateUserSettings();
+                if (changesMade){
+                    //TODO: Make a menu that prompts the user to confirm their choices before updating firestore
+                    new AlertDialog.Builder(SettingsActivity.this)
+                            .setMessage("Pressing Yes will save all changes, are you sure you want to change these settings?")
+                            .setCancelable(false)
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    updateUserSettings();
+                                }
+                            })
+                            .setNegativeButton("No", null)
+                            .show();
+                }
             }
         });
 
@@ -126,5 +140,7 @@ public class SettingsActivity extends AppCompatActivity {
                 mPassword.setError("Password must be between 6 and 20 characters!");
             }
         }
+
+        Toast.makeText(SettingsActivity.this,"Settings Saved!",Toast.LENGTH_LONG).show();
     }
 }
