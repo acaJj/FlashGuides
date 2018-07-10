@@ -14,7 +14,8 @@ public class GuideData {
     private String type;
     private int placement;
     private String guideId;
-    private Object data;
+    private String stepTitle;
+    private String stepNumber;
 
     public GuideData(){}
 
@@ -25,12 +26,12 @@ public class GuideData {
         this.guideId = guideId;
     }
 
-    public GuideData(String id, String type, int placement, String guideId, Object data) {
+    public GuideData(String id, String type, int placement, String guideId, String stepTitle) {
         this.id = id;
         this.type = type;
         this.placement = placement;
         this.guideId = guideId;
-        this.data = data;
+        this.stepTitle = stepTitle;
     }
 
     public String getId() {
@@ -65,11 +66,19 @@ public class GuideData {
         this.guideId = guideId;
     }
 
-    public Object getData() {
-        return data;
+    public String getStepTitle() {
+        return stepTitle;
     }
 
-    public void setData(Object data) {
-        this.data = data;
+    public void setStepTitle(String stepTitle) {
+        this.stepTitle = stepTitle;
+    }
+
+    public String getStepNumber() {
+        return stepNumber;
+    }
+
+    public void setStepNumber(String stepNumber) {
+        this.stepNumber = stepNumber;
     }
 }

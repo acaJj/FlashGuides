@@ -379,6 +379,8 @@ public class CreateNewGuide extends AppCompatActivity {
 
             //creates an object which holds all the data for the text in the step
             TextData mTextData = new TextData();
+            mTextData.setStepNumber(mStepNumber.getText().toString());
+            mTextData.setStepTitle(title);
             mTextData.setText(desc);
             mTextData.setPlacement(currentIndex);
             mTextData.setType("Text");
