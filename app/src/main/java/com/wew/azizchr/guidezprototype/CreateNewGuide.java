@@ -52,6 +52,8 @@ import com.kbeanie.multipicker.api.Picker;
 import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
 import com.kbeanie.multipicker.api.entity.ChosenImage;
 
+import org.w3c.dom.Text;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
@@ -76,8 +78,6 @@ public class CreateNewGuide extends AppCompatActivity {
     private int textBlockNum; //the current number of textBlocks
     private int imgBlockNum;//the current number of image blocks
     private int currentIndex;
-    private int currentStep;
-    private int totalEntries;
     private int currentPictureSwap;
 
     private Boolean isSwapping;
@@ -180,8 +180,6 @@ public class CreateNewGuide extends AppCompatActivity {
         });
 
         currentIndex = 0;
-        currentStep = 1;
-        totalEntries = 0;
         isSwapping = false;
         layoutFeed = (LinearLayout) findViewById(R.id.newGuideLayoutFeed);
         mSave = findViewById(R.id.btnSaveGuide);
@@ -196,8 +194,13 @@ public class CreateNewGuide extends AppCompatActivity {
 
     public void onClickStep(View view) {
         Intent intent = new Intent(CreateNewGuide.this,AddStepActivity.class);
-        intent.putExtra("CurrStep", currentStep);
+        intent.putExtra("CurrStep", layoutFeed.getChildCount());
         startActivityForResult(intent,WRITE_STEP);
+    }
+
+
+    public void onClickGuideTitle(View view) {
+        editTitle(view);
     }
 
     private void saveGuide(){
@@ -317,10 +320,11 @@ public class CreateNewGuide extends AppCompatActivity {
         try{
             final LinearLayout newStepBlock = new LinearLayout(CreateNewGuide.this);
             newStepBlock.generateViewId();
-            LinearLayout newTitleBlock = new LinearLayout(CreateNewGuide.this);
+            final LinearLayout newTitleBlock = new LinearLayout(CreateNewGuide.this);
             newStepBlock.setOrientation(LinearLayout.VERTICAL);
             newTitleBlock.setOrientation(LinearLayout.HORIZONTAL);
 
+            //Creates the various text views and changes their visual properties
             TextView mStepNumber = new TextView(CreateNewGuide.this);
             mStepNumber.setTypeface(null, Typeface.BOLD);
             mStepNumber.setTextSize(24);
@@ -334,8 +338,14 @@ public class CreateNewGuide extends AppCompatActivity {
             mStepDesc.setTextColor(Color.DKGRAY);
             mStepDesc.setPadding(5, 10, 5, 10);
 
+            newTitleBlock.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    DecideStep(newTitleBlock.getChildAt(1));
+                }
+            });
+            //Creates the add image button and its on click listener
             Button addImage = new Button(CreateNewGuide.this);
-            addImage.setText("Add Image to step " + currentStep);
+            addImage.setText("Add Image to step " + layoutFeed.getChildCount());
             addImage.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     selectedLayout = newStepBlock;
@@ -343,20 +353,23 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
             });
 
+            //Creates the add description button and its on click listener
             Button addDesc = new Button (CreateNewGuide.this);
-            addDesc.setText("Add Text to Step " + currentStep);
+            addDesc.setText("Add Text to Step " + layoutFeed.getChildCount());
             addDesc.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     isEditingText = false;
                     selectedLayout = newStepBlock;
                     Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
-                    intent.putExtra("CurrStep", currentStep);
+                    intent.putExtra("CurrStep", layoutFeed.getChildCount());
                     intent.putExtra("isEditing", isEditingText);
                     startActivityForResult(intent,WRITE_DESC);
                 }
             });
 
-            mStepNumber.setText("Step " +currentStep + " : ");
+            int num = layoutFeed.getChildCount();
+
+            mStepNumber.setText("Step " +num + " : ");
             mStepTitle.setText(title);
             mStepDesc.setText(desc);
             mStepDesc.setOnClickListener(new View.OnClickListener() {
@@ -374,12 +387,12 @@ public class CreateNewGuide extends AppCompatActivity {
             newStepBlock.addView(addImage);
             newStepBlock.addView(addDesc);
 
+            //Adds the new step block to the end of the main layout, before the button
             layoutFeed.addView(newStepBlock, layoutFeed.getChildCount()-1);
-            currentStep++;
 
             //creates an object which holds all the data for the text in the step
             TextData mTextData = new TextData();
-            mTextData.setStepNumber(mStepNumber.getText().toString());
+            mTextData.setStepNumber(num);
             mTextData.setStepTitle(title);
             mTextData.setText(desc);
             mTextData.setPlacement(currentIndex);
@@ -387,7 +400,6 @@ public class CreateNewGuide extends AppCompatActivity {
             //adds the textdata object to our arraylist of data objects for firebase upload
             mGuideDataArrayList.add(mTextData);
             currentIndex++;
-            currentStep++;
 
         }catch (Exception ex){
             ex.getMessage();
@@ -396,11 +408,21 @@ public class CreateNewGuide extends AppCompatActivity {
         return true;
     }
 
+
+    //TODO: Update the guidedataArrayList whenever text is edited or new textviews are added in
     private boolean addDescription(String newStepDesc) {
         try{
             //if the user is editing a textview, change the text
             if(isEditingText){
                 selectedTextView.setText(newStepDesc);
+                String num = (String)selectedTextView.getTag();
+                for (int i = 0; i < mGuideDataArrayList.size();i++){
+                    TextData data = (TextData)mGuideDataArrayList.get(i);
+                    if (data.getId() == num){
+                        data.setText(newStepDesc);
+                        break;
+                    }
+                }
             }
             //if not, create a textview and add it to the selected layout
             else{
@@ -474,11 +496,14 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Delete Text")) {
+                    //Removes the selected Textview
                     ((LinearLayout) v.getParent()).removeView(v);
-                    currentIndex--;
                 }else if(items[i].equals("Edit Text")){
+                    //Sets the is editing text to true for use in the Add Description method
                     isEditingText = true;
+                    //Stores the selected text view to edit later
                     selectedTextView = (TextView)v;
+                    //Starts a new activity
                     String currText = selectedTextView.getText().toString();
                     Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
                     intent.putExtra("CurrText", currText);
@@ -492,22 +517,43 @@ public class CreateNewGuide extends AppCompatActivity {
         builder.show();
     }
 
+    private void DecideStep(final View v){
+        final CharSequence[] items = {"Edit step title","Delete entire step", "Cancel"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
+        builder.setTitle("What would you like to do?");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if(items[i].equals("Edit step title")) {
+                    editTitle(v);
+                }else if(items[i].equals("Delete entire step")){
+                    DeleteStep(v);
+                }else if(items[i].equals("Cancel")){
+                    dialogInterface.dismiss();
+                }
+            }
+        });
+        builder.show();
+    }
+
     /**
      * Builds and displays a edittext to allow the user to edit the title
      */
-    public void onClickGuideTitle(View view) {
-        String newGuideTitle = mNewGuideTitle.getText().toString();
+    public void editTitle(View v){
+        final TextView textview = (TextView) v;
+        String currentText = textview.getText().toString();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Guide Title");
+        builder.setTitle("Rename Title");
         final EditText input = new EditText(this);
-        input.setText(newGuideTitle);
+        input.setText(currentText);
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         builder.setView(input);
 
         builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                mNewGuideTitle.setText(input.getText().toString());
+                textview.setText(input.getText().toString());
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -517,23 +563,6 @@ public class CreateNewGuide extends AppCompatActivity {
             }
         });
         builder.show();
-    }
-
-    /**
-     * Asks the user if they really want to go back and erease all unsaved data
-     */
-    @Override
-    public void onBackPressed() {
-        new AlertDialog.Builder(this)
-                .setMessage("Are you sure you want to go back? Any unsaved changes will be lost.")
-                .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        CreateNewGuide.this.finish();
-                    }
-                })
-                .setNegativeButton("No", null)
-                .show();
     }
 
     /**
@@ -570,7 +599,13 @@ public class CreateNewGuide extends AppCompatActivity {
     public void uploadImage(final PictureData img, String picUri){
         Log.i("UPLOADIMAGE: ","Starting upload");
 
-        Uri newUri = Uri.fromFile(new File(picUri));
+        //Uri newUri = Uri.fromFile(new File(picUri));
+        Uri newUri = Uri.parse(picUri);
+        /*
+        TODO: Uploading images should be given its own background thread so that the app does not freeze for a long time
+        TODO: Look up what threads are and how to use them
+        TODO: When uploading images, only the last image has the imgPath saved to the object, dont know why (all images are still uploaded to storage)
+         */
 
         Glide.with(CreateNewGuide.this)
                 .asBitmap()
@@ -578,20 +613,27 @@ public class CreateNewGuide extends AppCompatActivity {
                 .into(new SimpleTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        //create a byte array output stream to prepare the image bitmap for upload
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        //resource bitmap is compressed and stored into baos
                         resource.compress(Bitmap.CompressFormat.PNG,100,baos);
-                        byte[] data = baos.toByteArray();
+                        byte[] data = baos.toByteArray();//outstream is converted into byte array for upload
 
+                        //the path of the image in firebase storage, is set as the imgPath for our PictureData obj for retrieval purposes
                         String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + UUID.randomUUID() + ".png";
                         img.setImgPath(path);
                         StorageReference imgRef = mStorage.getReference(path);
 
+                        //metadata is set for the image to be uploaded
                         StorageMetadata metadata = new StorageMetadata.Builder()
                                 .setCustomMetadata(mFirebaseAuth.getUid(),"guide"+guideNum+"/imgBlock" + imgBlockNum)
                                 .build();
 
+                        //image byte array is uploaded with our metadata
                         UploadTask uploadTask = imgRef.putBytes(data,metadata);
                         Log.i("UPLOADIMAGE: ","uploadtask");
+
+                        //on success, do something, otherwise go to the error page and tell us what went wrong
                         uploadTask.addOnSuccessListener(CreateNewGuide.this,new OnSuccessListener<UploadTask.TaskSnapshot>() {
                             @Override
                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
@@ -613,6 +655,45 @@ public class CreateNewGuide extends AppCompatActivity {
         imgBlockRef.set(img);
         Log.i("UPLOADIMAGE: ","please be done");
         imgBlockNum++;
+    }
+
+    /**
+     * Fixes the step numbers when a step is deleted
+     */
+    private void ReorderSteps(){
+        //Loops through the layout Feed and its children to set the step number to the correct step
+        for(int i = 0; i < layoutFeed.getChildCount() - 1; i++){
+            LinearLayout stepLayout = (LinearLayout) layoutFeed.getChildAt(i);
+            LinearLayout titleLayout = (LinearLayout) stepLayout.getChildAt(0);
+            TextView stepTitle = (TextView) titleLayout.getChildAt(0);
+            stepTitle.setText("Step " + (i + 1) + " : ");
+
+            //Changes the buttons text to the correct step number
+            Button addStep = (Button) stepLayout.getChildAt(stepLayout.getChildCount() - 2);
+            addStep.setText("Add Image to step " + (i + 1));
+            Button addDesc = (Button) stepLayout.getChildAt(stepLayout.getChildCount() - 1);
+            addDesc.setText("Add Text to Step " + (i + 1));
+        }
+    }
+
+    /**
+     * Asks the user if they want to delete the selected step, then does it.
+     */
+    public void DeleteStep(final View v){
+        new AlertDialog.Builder(this)
+                .setMessage("Are you sure you want to delete this step? All unsaved changes will be lost.")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //Gets the parent of the parent layout and deletes the whole parent (step layout)
+                        LinearLayout titleLayout = ((LinearLayout) v.getParent());
+                        LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());
+                        ((LinearLayout) stepLayout.getParent()).removeView(stepLayout);
+                        ReorderSteps();
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 
     /**
@@ -657,6 +738,23 @@ public class CreateNewGuide extends AppCompatActivity {
                 addDescription(newDesc);
             }
         }
+    }
+
+    /**
+     * Asks the user if they really want to go back and erease all unsaved data
+     */
+    @Override
+    public void onBackPressed() {
+        new AlertDialog.Builder(this)
+                .setMessage("Are you sure you want to go back? Any unsaved changes will be lost.")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        CreateNewGuide.this.finish();
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 
     @Override

@@ -15,7 +15,7 @@ public class GuideData {
     private int placement;
     private String guideId;
     private String stepTitle;
-    private String stepNumber;
+    private int stepNumber;
 
     public GuideData(){}
 
@@ -74,11 +74,11 @@ public class GuideData {
         this.stepTitle = stepTitle;
     }
 
-    public String getStepNumber() {
+    public int getStepNumber() {
         return stepNumber;
     }
 
-    public void setStepNumber(String stepNumber) {
+    public void setStepNumber(int stepNumber) {
         this.stepNumber = stepNumber;
     }
 }

@@ -19,8 +19,8 @@ public class PictureData extends GuideData {
     public PictureData() {
     }
 
-    public PictureData(String id, String type, int placement, String guideId, Object data) {
-        super(id, type, placement, guideId, data);
+    public PictureData(String id, String type, int placement, String guideId) {
+        super(id, type, placement, guideId);
     }
 
     /*public byte[] getImageData(){
