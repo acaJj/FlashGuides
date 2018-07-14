@@ -152,6 +152,7 @@ public class CreateNewGuide extends AppCompatActivity {
         newGuide.setTitle(mCurrentUser.getEmail()+" / "+guideTitle);
 
         userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
+
         userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -274,9 +275,16 @@ public class CreateNewGuide extends AppCompatActivity {
                             //creates object to hold picture data
                             PictureData picData = new PictureData();
                             picData.setUri(imageUri.toString());
-                            picData.setPlacement(currentIndex);
                             picData.setType("Picture");
-                            mGuideDataArrayList.add(picData);
+                            //if we are swapping out a picture, replace the old location with new pic, otherwise just add it to end
+                            if (isSwapping){
+                                picData.setPlacement(currentPictureSwap);
+                                mGuideDataArrayList.add(currentPictureSwap,picData);
+                                mGuideDataArrayList.remove(currentPictureSwap + 1);
+                            }else{
+                                picData.setPlacement(currentIndex);
+                                mGuideDataArrayList.add(picData);
+                            }
                         }
                     });
 
@@ -410,15 +418,21 @@ public class CreateNewGuide extends AppCompatActivity {
 
 
     //TODO: Update the guidedataArrayList whenever text is edited or new textviews are added in
+    //TODO: IF THE CODE CRASHES DUE TO THE FOR LOOPS YOU CAN COMMENT THEM OUT SO YOU CAN WORK - JJ
     private boolean addDescription(String newStepDesc) {
         try{
             //if the user is editing a textview, change the text
             if(isEditingText){
                 selectedTextView.setText(newStepDesc);
-                String num = (String)selectedTextView.getTag();
+                String num = (String)selectedTextView.getTag();//get the tag of the textview, which is the view's id
+                //iterate through the data list and update the view in it with the new text
                 for (int i = 0; i < mGuideDataArrayList.size();i++){
+                    //we are only updating text data here, if the type is picture then go to next iteration
+                    if (mGuideDataArrayList.get(i).getType() == "Picture"){
+                        continue;
+                    }
                     TextData data = (TextData)mGuideDataArrayList.get(i);
-                    if (data.getId() == num){
+                    if (data.getId().equals(num)){
                         data.setText(newStepDesc);
                         break;
                     }
@@ -438,7 +452,29 @@ public class CreateNewGuide extends AppCompatActivity {
                     }
                 });
 
+                String num = (String)selectedTextView.getTag();//get the tag of the textview, which is the view's id
+                //add the new textdata object to the data list in the appropriate spot
+                for (int i = 0; i < mGuideDataArrayList.size();i++){
+                    //we are only updating text data here, if the type is picture then go to next iteration
+                    if (mGuideDataArrayList.get(i).getType() == "Picture"){
+                        continue;
+                    }
+                    TextData data = (TextData)mGuideDataArrayList.get(i);
+                    //TODO: test the if conditions, they will probably crash
+                    //new text is always added to the end of the step by default, we can only know when we reached it when
+                    //we iterate onto the first object of the next step.
+                    if (!data.getId().equals(num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
+                        TextData dataToAdd = new TextData("Text",i-1,data.getGuideId(),
+                                mGuideDataArrayList.get(i-1).getStepTitle(),mGuideDataArrayList.get(i-1).getStepNumber(),newStepDesc,
+                                false,false,Color.DKGRAY,17);
+                        dataToAdd.setId(dataToAdd.getGuideId()+"TEXT"+(i-1));
+                        mGuideDataArrayList.add(i-1,dataToAdd);
+                        break;
+                    }
+                }
+
                 selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
+
             }
         }catch (Exception ex){
             ex.getMessage();

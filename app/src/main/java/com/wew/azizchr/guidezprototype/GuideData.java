@@ -26,12 +26,12 @@ public class GuideData {
         this.guideId = guideId;
     }
 
-    public GuideData(String id, String type, int placement, String guideId, String stepTitle) {
-        this.id = id;
+    public GuideData(String type, int placement, String guideId, String stepTitle, int stepNumber) {
         this.type = type;
         this.placement = placement;
         this.guideId = guideId;
         this.stepTitle = stepTitle;
+        this.stepNumber = stepNumber;
     }
 
     public String getId() {
