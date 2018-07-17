@@ -7,6 +7,8 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
@@ -57,6 +59,7 @@ import org.w3c.dom.Text;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -114,6 +117,14 @@ public class CreateNewGuide extends AppCompatActivity {
     //ArrayList stores metadata for the guide text and picture components
     private ArrayList<GuideData> mGuideDataArrayList = new ArrayList<>();
     private Guide newGuide;
+
+    //Handler object to handle all of the background threads
+    private static Handler handler_ = new Handler(){
+        @Override
+        public void handleMessage(Message msg){
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -219,9 +230,19 @@ public class CreateNewGuide extends AppCompatActivity {
                 textDataPkg.setPlacement(i);//sets the placement to the current index
                 uploadText(textDataPkg);
             }else if (dataToSave.getType().equals("Picture")){
-                PictureData picDataPkg = (PictureData)dataToSave;
+                final PictureData picDataPkg = (PictureData)dataToSave;
                 picDataPkg.setPlacement(i);
-                uploadImage(picDataPkg,picDataPkg.getUri());
+
+                //Creates a new thread for the processing and storage of an image
+                //THIS WILL PROBS CRASH
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        uploadImage(picDataPkg,picDataPkg.getUri());
+                    }
+                });
+
+                thread.start();
             }
         }
 
@@ -434,6 +455,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     TextData data = (TextData)mGuideDataArrayList.get(i);
                     if (data.getId().equals(num)){
                         data.setText(newStepDesc);
+                        Log.i("TEXT CHANGED FOR : ",data.getId());
                         break;
                     }
                 }
@@ -543,7 +565,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     String currText = selectedTextView.getText().toString();
                     Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
                     intent.putExtra("CurrText", currText);
-                    intent.putExtra("isEditing", isEditingText);
+                    intent.putExtra("isEditing", true);
                     startActivityForResult(intent,WRITE_DESC);
                 }else if(items[i].equals("Cancel")){
                     dialogInterface.dismiss();
@@ -553,6 +575,9 @@ public class CreateNewGuide extends AppCompatActivity {
         builder.show();
     }
 
+    /**
+     * Builds and displays a menu of options for selecting the step title
+     */
     private void DecideStep(final View v){
         final CharSequence[] items = {"Edit step title","Delete entire step", "Cancel"};
 
@@ -611,7 +636,16 @@ public class CreateNewGuide extends AppCompatActivity {
         //Map<String,Object> dataToSave = new HashMap<String, Object>();
         //dataToSave.put(TEXT_VALUE_KEY,text);
         //dataToSave.put(PLACEMENT_KEY,place);
-        DocumentReference textBlockRef = textData.document("textBlock" + textBlockNum);
+
+        //Check to see if the current step has an object saved in the db
+        uploadStep(text);
+
+        //if the text object does not have an id, that means that its new and hasn't been saved into the db
+        //give it an id so that in future saves we won't create a new doc in db and will instead overwrite old save
+        if (text.getId() == null || text.getId() == ""){
+            text.setId(UUID.randomUUID().toString());
+        }
+        DocumentReference textBlockRef = textData.document("textBlock-" + text.getId());
         /*mDocRef.set(dataToSave).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -627,6 +661,31 @@ public class CreateNewGuide extends AppCompatActivity {
         textBlockNum++;
     }
 
+    private void uploadStep(final GuideData data) {
+        //if the current step has not had an object representing it stored in the db
+        //then we will make one here before saving the text
+        final DocumentReference step = mFirestore.document(
+                "Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/stepData/step" + data.getStepNumber());
+        step.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()){
+                    DocumentSnapshot documentSnapshot = task.getResult();
+                    if (documentSnapshot.exists()){
+                        //step exists so we don't have to do anything more
+                        return;
+                    }else{
+                        //step doesn't exist so we create it
+                        Map<String,Object> dataToSave = new HashMap<String,Object>();
+                        dataToSave.put("stepNumber",data.getStepNumber());
+                        dataToSave.put("stepTitle",data.getStepTitle());
+                        step.set(dataToSave);
+                    }
+                }
+            }
+        });
+    }
+
     /**
      * Uploads an image reference to firebase storage and the firestore database
      * @param img object to be uploaded
@@ -634,6 +693,9 @@ public class CreateNewGuide extends AppCompatActivity {
      */
     public void uploadImage(final PictureData img, String picUri){
         Log.i("UPLOADIMAGE: ","Starting upload");
+
+        //Check to see if the current step has an object saved in the db
+        uploadStep(img);
 
         //Uri newUri = Uri.fromFile(new File(picUri));
         Uri newUri = Uri.parse(picUri);
@@ -695,14 +757,42 @@ public class CreateNewGuide extends AppCompatActivity {
 
     /**
      * Fixes the step numbers when a step is deleted
+     * When the steps are reordered that means we have to update the step numbers in the data list so I've tried to do that
      */
     private void ReorderSteps(){
+        int dataListPointer = 0;//used to iterate through the datalist by stepCount instead of one by one
+
         //Loops through the layout Feed and its children to set the step number to the correct step
         for(int i = 0; i < layoutFeed.getChildCount() - 1; i++){
             LinearLayout stepLayout = (LinearLayout) layoutFeed.getChildAt(i);
             LinearLayout titleLayout = (LinearLayout) stepLayout.getChildAt(0);
             TextView stepTitle = (TextView) titleLayout.getChildAt(0);
             stepTitle.setText("Step " + (i + 1) + " : ");
+
+            //get the first object of the current step
+            GuideData data = mGuideDataArrayList.get(i+dataListPointer);
+
+            //if data's number is more than the number we are changing to, then correct it
+            //ex. removed step 1, step 2 is now the new step 1, therefore we must decrement all blocks from step 2,
+            //otherwise its already correct so leave it
+            int currStepNum = data.getStepNumber();//the step num of the current data block we are on
+            int stepToCheck = currStepNum;//the current step whose data blocks we are working on
+            while (currStepNum > (i+1)){
+                data.setStepNumber(currStepNum-1);//lower the step number by 1 to its proper number
+                //get the next data object in the list so we can see if its in the same step as our current object
+                dataListPointer++;//we are moving to the next data object in the list
+                //if we have reached the last element, break the loop
+                if ((i+dataListPointer) >= mGuideDataArrayList.size()){
+                    break;
+                }
+                data = mGuideDataArrayList.get(i+dataListPointer);
+                currStepNum = data.getStepNumber();
+                //if this is not true, then we have reached a data object of the next step, break and move on
+                if (currStepNum != stepToCheck){
+                    dataListPointer--;
+                    break;
+                }
+            }
 
             //Changes the buttons text to the correct step number
             Button addStep = (Button) stepLayout.getChildAt(stepLayout.getChildCount() - 2);
@@ -721,6 +811,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 .setCancelable(false)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
+                        //TODO: ALWAYS DELETES THE LAST NUMBERED STEP, NOT THE WE CLICKED ON
                         //Gets the parent of the parent layout and deletes the whole parent (step layout)
                         LinearLayout titleLayout = ((LinearLayout) v.getParent());
                         LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());

@@ -60,7 +60,7 @@ public class SettingsActivity extends AppCompatActivity {
                 mUser.setFirstName(documentSnapshot.getString("firstName"));
                 mUser.setFirstName(documentSnapshot.getString("lastName"));
                 int num = documentSnapshot.getLong("numGuides").intValue();
-                mUser.setGuideNum(num);
+                mUser.setNumGuides(num);
                 mUser.setId(documentSnapshot.getString("id"));
                 mUser.setEmail("email");
             }
