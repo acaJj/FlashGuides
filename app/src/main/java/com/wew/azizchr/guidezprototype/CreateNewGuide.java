@@ -232,17 +232,7 @@ public class CreateNewGuide extends AppCompatActivity {
             }else if (dataToSave.getType().equals("Picture")){
                 final PictureData picDataPkg = (PictureData)dataToSave;
                 picDataPkg.setPlacement(i);
-
-                //Creates a new thread for the processing and storage of an image
-                //THIS WILL PROBS CRASH
-                Thread thread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        uploadImage(picDataPkg,picDataPkg.getUri());
-                    }
-                });
-
-                thread.start();
+                uploadImage(picDataPkg,picDataPkg.getUri());
             }
         }
 
@@ -615,6 +605,7 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 textview.setText(input.getText().toString());
+                newGuide.setTitle(input.getText().toString());
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -736,6 +727,10 @@ public class CreateNewGuide extends AppCompatActivity {
                             @Override
                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                                 //Can create a hashmap to upload but instead we use custom objects
+                                DocumentReference imgBlockRef = picData.document("imgBlock" + imgBlockNum);
+                                imgBlockRef.set(img);
+                                Log.i("UPLOADIMAGE: ","please be done");
+                                imgBlockNum++;
                             }
                         }).addOnFailureListener(CreateNewGuide.this, new OnFailureListener() {
                             @Override
@@ -749,10 +744,6 @@ public class CreateNewGuide extends AppCompatActivity {
                     }
                 });
 
-        DocumentReference imgBlockRef = picData.document("imgBlock" + imgBlockNum);
-        imgBlockRef.set(img);
-        Log.i("UPLOADIMAGE: ","please be done");
-        imgBlockNum++;
     }
 
     /**
@@ -811,7 +802,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 .setCancelable(false)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        //TODO: ALWAYS DELETES THE LAST NUMBERED STEP, NOT THE WE CLICKED ON
+                        //TODO: ALWAYS DELETES THE LAST NUMBERED STEP, NOT THE ONE WE CLICKED ON
                         //Gets the parent of the parent layout and deletes the whole parent (step layout)
                         LinearLayout titleLayout = ((LinearLayout) v.getParent());
                         LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());

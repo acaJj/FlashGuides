@@ -33,6 +33,7 @@
         <activity android:name=".EditPhoto" />
         <activity android:name=".AddStepActivity" />
         <activity android:name=".AddDescriptionActivity"></activity>
+        <activity android:name=".UserCollectionActivity"/>
     </application>
 
 </manifest>
