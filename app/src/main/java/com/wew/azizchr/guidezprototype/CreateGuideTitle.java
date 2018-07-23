@@ -34,5 +34,6 @@ public class CreateGuideTitle extends AppCompatActivity {
         Intent intent = new Intent(CreateGuideTitle.this,CreateNewGuide.class);
         intent.putExtra("GUIDE_TITLE", mGuideTitle.getText().toString());
         startActivity(intent);
+        finish();
     }
 }

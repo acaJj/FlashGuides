@@ -804,6 +804,7 @@ public class CreateNewGuide extends AppCompatActivity {
         }
     }
 
+
     /**
      * Asks the user if they want to delete the selected step, then does it.
      */
@@ -814,6 +815,8 @@ public class CreateNewGuide extends AppCompatActivity {
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         //TODO: ALWAYS DELETES THE LAST NUMBERED STEP, NOT THE ONE WE CLICKED ON
+                        //IT WORKS NOW TRUST ME - CA (July 23. 2018)
+                        
                         //Gets the parent of the parent layout and deletes the whole parent (step layout)
                         LinearLayout titleLayout = ((LinearLayout) v.getParent());
                         LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());
