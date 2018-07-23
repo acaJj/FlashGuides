@@ -275,6 +275,7 @@ public class CreateNewGuide extends AppCompatActivity {
      */
     public boolean addImage(final Uri imageUri){
         try{
+            //Creates the new imageview
             ImageView newImgView = new ImageView(CreateNewGuide.this);
             Glide.with(this).load(imageUri).into(newImgView);
             Glide.with(CreateNewGuide.this)
@@ -305,7 +306,9 @@ public class CreateNewGuide extends AppCompatActivity {
                     DecideImage(imageUri, v);
                 }
             });
-            newImgView.setTag(IMG_TAG);
+
+            //Adds the tag to the new imageview (the tag is the step number)
+            newImgView.setTag(selectedLayout.getTag());
 
             //fits the image to the sides, fixes the view bounds, adds padding
             newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -388,6 +391,11 @@ public class CreateNewGuide extends AppCompatActivity {
 
             int num = layoutFeed.getChildCount();
 
+            //Sets the tag for the step block and step description textview
+            //The tag is the step number
+            newStepBlock.setTag(num);
+            mStepDesc.setTag(num);
+
             mStepNumber.setText("Step " +num + " : ");
             mStepTitle.setText(title);
             mStepDesc.setText(desc);
@@ -452,7 +460,10 @@ public class CreateNewGuide extends AppCompatActivity {
             }
             //if not, create a textview and add it to the selected layout
             else{
+                //Creates a new textview and sets the tag (the tag is the current step number)
                 TextView mDescription = new TextView(CreateNewGuide.this);
+                mDescription.setTag(selectedLayout.getTag());
+
                 mDescription.setTextSize(17);
                 mDescription.setTextColor(Color.DKGRAY);
                 mDescription.setPadding(5, 10, 5, 10);
@@ -463,6 +474,9 @@ public class CreateNewGuide extends AppCompatActivity {
                         DecideText(v);
                     }
                 });
+
+                //adds the new textblock with the text to the selected step
+                selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
 
                 String num = (String)selectedTextView.getTag();//get the tag of the textview, which is the view's id
                 //add the new textdata object to the data list in the appropriate spot
@@ -484,9 +498,6 @@ public class CreateNewGuide extends AppCompatActivity {
                         break;
                     }
                 }
-
-                selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
-
             }
         }catch (Exception ex){
             ex.getMessage();
