@@ -80,4 +80,11 @@ public class TextData extends GuideData {
     public void setSize(int size) {
         this.size = size;
     }
+
+    public void setTextStyle(boolean bold, boolean italic, int color, int size){
+        isBold = bold;
+        isItalic = italic;
+        this.color = color;
+        this.size = size;
+    }
 }

@@ -60,6 +60,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -230,9 +231,10 @@ public class CreateNewGuide extends AppCompatActivity {
                 textDataPkg.setPlacement(i);//sets the placement to the current index
                 uploadText(textDataPkg);
             }else if (dataToSave.getType().equals("Picture")){
-                final PictureData picDataPkg = (PictureData)dataToSave;
+                PictureData picDataPkg = (PictureData)dataToSave;
                 picDataPkg.setPlacement(i);
-                uploadImage(picDataPkg,picDataPkg.getUri());
+                String picDataPkgUri = picDataPkg.getUri();
+                uploadImage(picDataPkg,picDataPkgUri);
             }
         }
 
@@ -443,7 +445,7 @@ public class CreateNewGuide extends AppCompatActivity {
             //if the user is editing a textview, change the text
             if(isEditingText){
                 selectedTextView.setText(newStepDesc);
-                String num = (String)selectedTextView.getTag();//get the tag of the textview, which is the view's id
+                int num = (int)selectedTextView.getTag();//get the tag of the textview, which is the view's id
                 //iterate through the data list and update the view in it with the new text
                 for (int i = 0; i < mGuideDataArrayList.size();i++){
                     //we are only updating text data here, if the type is picture then go to next iteration
@@ -451,7 +453,7 @@ public class CreateNewGuide extends AppCompatActivity {
                         continue;
                     }
                     TextData data = (TextData)mGuideDataArrayList.get(i);
-                    if (data.getId().equals(num)){
+                    if (data.getStepNumber() == num){
                         data.setText(newStepDesc);
                         Log.i("TEXT CHANGED FOR : ",data.getId());
                         break;
@@ -478,25 +480,48 @@ public class CreateNewGuide extends AppCompatActivity {
                 //adds the new textblock with the text to the selected step
                 selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
 
-                String num = (String)selectedTextView.getTag();//get the tag of the textview, which is the view's id
+                int num = (int)selectedLayout.getTag();//get the tag of the textview, which is the view's id
+                TextData dataToAdd = new TextData();
+                boolean foundCorrectStep = false;//when we found the step we want to add text to, set to true
                 //add the new textdata object to the data list in the appropriate spot
                 for (int i = 0; i < mGuideDataArrayList.size();i++){
                     //we are only updating text data here, if the type is picture then go to next iteration
                     if (mGuideDataArrayList.get(i).getType() == "Picture"){
+                        Log.i("PICTURE OBJ: ","found pic");
                         continue;
                     }
                     TextData data = (TextData)mGuideDataArrayList.get(i);
+
+                    //set to true when we have found the step we are adding text to
+                    if (data.getStepNumber() == num){
+                        foundCorrectStep = true;
+                    }
+
                     //TODO: test the if conditions, they will probably crash
                     //new text is always added to the end of the step by default, we can only know when we reached it when
                     //we iterate onto the first object of the next step.
-                    if (!data.getId().equals(num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
-                        TextData dataToAdd = new TextData("Text",i-1,data.getGuideId(),
+                    if (foundCorrectStep && (data.getStepNumber()!=num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
+                        dataToAdd = new TextData("Text",i-1,data.getGuideId(),
                                 mGuideDataArrayList.get(i-1).getStepTitle(),mGuideDataArrayList.get(i-1).getStepNumber(),newStepDesc,
                                 false,false,Color.DKGRAY,17);
                         dataToAdd.setId(dataToAdd.getGuideId()+"TEXT"+(i-1));
                         mGuideDataArrayList.add(i-1,dataToAdd);
                         break;
                     }
+                }
+                //if we didn't find the next step, that means theres only 1 step, put the data object at the end of the data list
+                if (!mGuideDataArrayList.contains(dataToAdd)){
+                    GuideData lastDataObj = mGuideDataArrayList.get(mGuideDataArrayList.size()-1);
+                    dataToAdd.setType("Text");
+                    dataToAdd.setPlacement(mGuideDataArrayList.size());
+                    dataToAdd.setGuideId(lastDataObj.getGuideId());
+                    dataToAdd.setStepTitle(lastDataObj.getStepTitle());
+                    dataToAdd.setStepNumber(lastDataObj.getStepNumber());
+                    dataToAdd.setText(newStepDesc);
+                    dataToAdd.setTextStyle(false,false,Color.DKGRAY,17);
+                    dataToAdd.setId(dataToAdd.getGuideId()+"TEXT" + mGuideDataArrayList.size());
+                    mGuideDataArrayList.add(dataToAdd);
+                    Log.i("END OF DATA LIST","OBJECT ADDED!!!!:)!!!");
                 }
             }
         }catch (Exception ex){
@@ -590,7 +615,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 if(items[i].equals("Edit step title")) {
                     editTitle(v);
                 }else if(items[i].equals("Delete entire step")){
-                    DeleteStep(v);
+                    deleteStep(v);
                 }else if(items[i].equals("Cancel")){
                     dialogInterface.dismiss();
                 }
@@ -759,9 +784,10 @@ public class CreateNewGuide extends AppCompatActivity {
 
     /**
      * Fixes the step numbers when a step is deleted
-     * When the steps are reordered that means we have to update the step numbers in the data list so I've tried to do that
+     * When the steps are reordered that means we have to update the step numbers for each item
+     * in the data list and the tags for each data view so those edits are done too
      */
-    private void ReorderSteps(){
+    private void reorderSteps(){
         int dataListPointer = 0;//used to iterate through the datalist by stepCount instead of one by one
 
         //Loops through the layout Feed and its children to set the step number to the correct step
@@ -770,6 +796,7 @@ public class CreateNewGuide extends AppCompatActivity {
             LinearLayout titleLayout = (LinearLayout) stepLayout.getChildAt(0);
             TextView stepTitle = (TextView) titleLayout.getChildAt(0);
             stepTitle.setText("Step " + (i + 1) + " : ");
+            reorderTags(stepLayout,(i+1));//reorders the tags for each view in each step's linear layout
 
             //get the first object of the current step
             GuideData data = mGuideDataArrayList.get(i+dataListPointer);
@@ -804,11 +831,25 @@ public class CreateNewGuide extends AppCompatActivity {
         }
     }
 
+    /**
+     * Called whenever we have to re-order the views in the guide layout
+     * Re-sets the tags of the guide data views to their new proper step values.
+     * @param stepLayout that we are editing the view tags of
+     * @param stepNum the new step number that we are changing the tags to
+     */
+    private void reorderTags(LinearLayout stepLayout, int stepNum){
+        //we start at 1 because the view at index 0 is the title of the step
+        for (int i = 1; i < stepLayout.getChildCount();i++){
+            View view = stepLayout.getChildAt(i);
+            view.setTag(stepNum);//set the tag of the view to the new stepNum
+        }
+    }
+
 
     /**
      * Asks the user if they want to delete the selected step, then does it.
      */
-    public void DeleteStep(final View v){
+    public void deleteStep(final View v){
         new AlertDialog.Builder(this)
                 .setMessage("Are you sure you want to delete this step? All unsaved changes will be lost.")
                 .setCancelable(false)
@@ -820,8 +861,17 @@ public class CreateNewGuide extends AppCompatActivity {
                         //Gets the parent of the parent layout and deletes the whole parent (step layout)
                         LinearLayout titleLayout = ((LinearLayout) v.getParent());
                         LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());
+                        //iterates through the data list and removes all elements of the deleted step
+                        Iterator<GuideData> iterator = mGuideDataArrayList.iterator();
+                        while (iterator.hasNext()){
+                            GuideData data = iterator.next();
+                            if (data.getStepNumber() == (int)stepLayout.getTag()){
+                                iterator.remove();
+                            }
+                        }
                         ((LinearLayout) stepLayout.getParent()).removeView(stepLayout);
-                        ReorderSteps();
+
+                        reorderSteps();
                     }
                 })
                 .setNegativeButton("No", null)
