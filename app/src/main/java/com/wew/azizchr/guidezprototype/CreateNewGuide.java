@@ -72,6 +72,7 @@ public class CreateNewGuide extends AppCompatActivity {
     private static final int SELECT_FILE =0;
     private static final int WRITE_STEP =1;
     private static final int WRITE_DESC =2;
+    private static final int EDIT_DESC = 3;
 
     private String outputPath;
     private String newStepTitle;
@@ -228,11 +229,11 @@ public class CreateNewGuide extends AppCompatActivity {
             GuideData dataToSave = mGuideDataArrayList.get(i);
             if (dataToSave.getType().equals("Text")){
                 TextData textDataPkg = (TextData) dataToSave;
-                textDataPkg.setPlacement(i);//sets the placement to the current index
+                //textDataPkg.setPlacement(i);//sets the placement to the current index
                 uploadText(textDataPkg);
             }else if (dataToSave.getType().equals("Picture")){
                 PictureData picDataPkg = (PictureData)dataToSave;
-                picDataPkg.setPlacement(i);
+                //picDataPkg.setPlacement(i);
                 String picDataPkgUri = picDataPkg.getUri();
                 uploadImage(picDataPkg,picDataPkgUri);
             }
@@ -278,8 +279,8 @@ public class CreateNewGuide extends AppCompatActivity {
     public boolean addImage(final Uri imageUri){
         try{
             //Creates the new imageview
-            ImageView newImgView = new ImageView(CreateNewGuide.this);
-            Glide.with(this).load(imageUri).into(newImgView);
+            final ImageView newImgView = new ImageView(CreateNewGuide.this);
+            //Glide.with(CreateNewGuide.this).load(imageUri).into(newImgView);
             Glide.with(CreateNewGuide.this)
                     .asBitmap()
                     .load(imageUri)
@@ -287,9 +288,11 @@ public class CreateNewGuide extends AppCompatActivity {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
                             //creates object to hold picture data
+                            newImgView.setImageBitmap(resource);
                             PictureData picData = new PictureData();
                             picData.setUri(imageUri.toString());
                             picData.setType("Picture");
+                            picData.setStepNumber((int)selectedLayout.getTag());
                             //if we are swapping out a picture, replace the old location with new pic, otherwise just add it to end
                             if (isSwapping){
                                 picData.setPlacement(currentPictureSwap);
@@ -297,7 +300,8 @@ public class CreateNewGuide extends AppCompatActivity {
                                 mGuideDataArrayList.remove(currentPictureSwap + 1);
                             }else{
                                 picData.setPlacement(currentIndex);
-                                mGuideDataArrayList.add(picData);
+                                //mGuideDataArrayList.add(picData);
+                                addObjectToDataListInOrder(picData);
                             }
                         }
                     });
@@ -305,7 +309,7 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    DecideImage(imageUri, v);
+                    displayImageOptionMenu(imageUri, v);
                 }
             });
 
@@ -404,7 +408,7 @@ public class CreateNewGuide extends AppCompatActivity {
             mStepDesc.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    DecideText(v);
+                    displayTextOptionMenu(v);
                 }
             });
 
@@ -428,6 +432,7 @@ public class CreateNewGuide extends AppCompatActivity {
             mTextData.setType("Text");
             //adds the textdata object to our arraylist of data objects for firebase upload
             mGuideDataArrayList.add(mTextData);
+            addDescription(desc);
             currentIndex++;
 
         }catch (Exception ex){
@@ -437,50 +442,64 @@ public class CreateNewGuide extends AppCompatActivity {
         return true;
     }
 
-
-    //TODO: Update the guidedataArrayList whenever text is edited or new textviews are added in
-    //TODO: IF THE CODE CRASHES DUE TO THE FOR LOOPS YOU CAN COMMENT THEM OUT SO YOU CAN WORK - JJ
-    private boolean addDescription(String newStepDesc) {
-        try{
-            //if the user is editing a textview, change the text
-            if(isEditingText){
-                selectedTextView.setText(newStepDesc);
-                int num = (int)selectedTextView.getTag();//get the tag of the textview, which is the view's id
-                //iterate through the data list and update the view in it with the new text
-                for (int i = 0; i < mGuideDataArrayList.size();i++){
-                    //we are only updating text data here, if the type is picture then go to next iteration
-                    if (mGuideDataArrayList.get(i).getType() == "Picture"){
-                        continue;
-                    }
-                    TextData data = (TextData)mGuideDataArrayList.get(i);
-                    if (data.getStepNumber() == num){
-                        data.setText(newStepDesc);
-                        Log.i("TEXT CHANGED FOR : ",data.getId());
-                        break;
-                    }
+    /**
+     * Edits the text of a chosen text block
+     * @param newStepDesc of the text block that we are editing
+     * @return true if success, otherwise false
+     */
+    private boolean editDescription(String newStepDesc){
+        try {
+            selectedTextView.setText(newStepDesc);
+            int num = (int)selectedTextView.getTag();//get the tag of the textview, which is the view's id
+            //iterate through the data list and update the view in it with the new text
+            for (int i = 0; i < mGuideDataArrayList.size();i++){
+                //we are only updating text data here, if the type is picture then go to next iteration
+                if (mGuideDataArrayList.get(i).getType() == "Picture"){
+                    continue;
+                }
+                TextData data = (TextData)mGuideDataArrayList.get(i);
+                if (data.getStepNumber() == num){
+                    data.setText(newStepDesc);
+                    Log.i("TEXT CHANGED FOR : ",data.getId());
+                    break;
                 }
             }
-            //if not, create a textview and add it to the selected layout
-            else{
-                //Creates a new textview and sets the tag (the tag is the current step number)
-                TextView mDescription = new TextView(CreateNewGuide.this);
-                mDescription.setTag(selectedLayout.getTag());
+        }catch (Exception ex){
+            return false;
+        }
 
-                mDescription.setTextSize(17);
-                mDescription.setTextColor(Color.DKGRAY);
-                mDescription.setPadding(5, 10, 5, 10);
-                mDescription.setText(newStepDesc);
-                mDescription.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        DecideText(v);
-                    }
-                });
+        return true;
+    }
 
-                //adds the new textblock with the text to the selected step
-                selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
+    private boolean addDescription(String newStepDesc) {
+        try{
+            //Creates a new textview and sets the tag (the tag is the current step number)
+            TextView mDescription = new TextView(CreateNewGuide.this);
+            mDescription.setTag(selectedLayout.getTag());
 
-                int num = (int)selectedLayout.getTag();//get the tag of the textview, which is the view's id
+            mDescription.setTextSize(17);
+            mDescription.setTextColor(Color.DKGRAY);
+            mDescription.setPadding(5, 10, 5, 10);
+            mDescription.setText(newStepDesc);
+            mDescription.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    displayTextOptionMenu(v);
+                }
+            });
+
+            //adds the new textblock with the text to the selected step
+            selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
+            TextData dataToAdd = new TextData();
+            dataToAdd.setType("Text");
+            dataToAdd.setPlacement(mGuideDataArrayList.size());
+            dataToAdd.setStepNumber((int) selectedLayout.getTag());
+            dataToAdd.setText(newStepDesc);
+            dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
+            dataToAdd.setId(dataToAdd.getGuideId() + "TEXT" + mGuideDataArrayList.size());
+
+            addObjectToDataListInOrder(dataToAdd);
+                /*int num = (int)selectedLayout.getTag();//get the tag of the textview, which is the view's id
                 TextData dataToAdd = new TextData();
                 boolean foundCorrectStep = false;//when we found the step we want to add text to, set to true
                 //add the new textdata object to the data list in the appropriate spot
@@ -490,14 +509,13 @@ public class CreateNewGuide extends AppCompatActivity {
                         Log.i("PICTURE OBJ: ","found pic");
                         continue;
                     }
-                    TextData data = (TextData)mGuideDataArrayList.get(i);
+                    GuideData data = mGuideDataArrayList.get(i);
 
                     //set to true when we have found the step we are adding text to
                     if (data.getStepNumber() == num){
                         foundCorrectStep = true;
                     }
 
-                    //TODO: test the if conditions, they will probably crash
                     //new text is always added to the end of the step by default, we can only know when we reached it when
                     //we iterate onto the first object of the next step.
                     if (foundCorrectStep && (data.getStepNumber()!=num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
@@ -522,8 +540,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     dataToAdd.setId(dataToAdd.getGuideId()+"TEXT" + mGuideDataArrayList.size());
                     mGuideDataArrayList.add(dataToAdd);
                     Log.i("END OF DATA LIST","OBJECT ADDED!!!!:)!!!");
-                }
-            }
+                }*/
         }catch (Exception ex){
             ex.getMessage();
             return false;
@@ -532,10 +549,71 @@ public class CreateNewGuide extends AppCompatActivity {
         return true;
     }
 
+    /*
+    TODO: Each image added to a step has to also have an PictureData object added to the data list
+    TODO: basically do the same thing you did for the text objects but for pictures
+     */
+
+    /**
+     * this function takes a GuideData object and adds it to our overall guide data list
+     * in the correct index according to the object's position in the actual guide
+     * @param data the object we are adding to the data list
+     * @return true if successfully added
+     */
+    private boolean addObjectToDataListInOrder(GuideData data){
+        try{
+            int num = (int)selectedLayout.getTag();//get the tag of the textview, which is the view's id
+            boolean foundCorrectStep = false;//when we found the step we want to add text to, set to true
+            //add the new textdata object to the data list in the appropriate spot
+            for (int i = 0; i < mGuideDataArrayList.size();i++){
+                //we are only updating text data here, if the type is picture then go to next iteration
+
+                GuideData currentObj = mGuideDataArrayList.get(i);
+
+                //set to true when we have found the step we are adding text to
+                if (currentObj.getStepNumber() == num){
+                    foundCorrectStep = true;
+                }
+
+                //new text is always added to the end of the step by default, we can only know when we reached it when
+                //we iterate onto the first object of the next step.
+                if (foundCorrectStep && (currentObj.getStepNumber()!=num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
+                    String newDataId = "";
+                    if (data.getType() == "Text")newDataId=data.getGuideId()+"TEXT"+mGuideDataArrayList.size();
+                    else if (data.getType() == "Picture")newDataId=data.getGuideId()+"IMG"+mGuideDataArrayList.size();
+                    data.setId(newDataId);
+                    mGuideDataArrayList.add(i-1,data);
+                    break;
+                }
+            }
+            //if we didn't find the next step we haven't added the data to the list
+            //that means the step we are adding to is the last step, put the data object at the end of the data list
+            if (foundCorrectStep && !mGuideDataArrayList.contains(data)){
+                GuideData lastDataObj = mGuideDataArrayList.get(mGuideDataArrayList.size()-1);
+                /*dataToAdd.setType("Text");
+                dataToAdd.setPlacement(mGuideDataArrayList.size());
+                dataToAdd.setGuideId(lastDataObj.getGuideId());
+                dataToAdd.setStepTitle(lastDataObj.getStepTitle());
+                */
+                data.setStepNumber(lastDataObj.getStepNumber());
+                data.setPlacement(mGuideDataArrayList.size());
+                String newDataId = "";
+                if (data.getType() == "Text")newDataId=data.getGuideId()+"TEXT"+mGuideDataArrayList.size();
+                else if (data.getType() == "Picture")newDataId=data.getGuideId()+"IMG"+mGuideDataArrayList.size();
+                data.setId(newDataId);
+                mGuideDataArrayList.add(data);
+                Log.i("END OF DATA LIST","OBJECT ADDED!!!!:)!!!");
+            }
+        }catch (Exception ex){
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Builds and displays a menu of options for selecting a photo in the guide
      */
-    private void DecideImage(final Uri imageUri, final View v){
+    private void displayImageOptionMenu(final Uri imageUri, final View v){
         final CharSequence[] items = {"Delete Picture","View Picture","Edit Picture", "Swap Picture", "Cancel"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
@@ -571,7 +649,7 @@ public class CreateNewGuide extends AppCompatActivity {
     /**
      * Builds and displays a menu of options for selecting a text block in the guide
      */
-    private void DecideText(final View v){
+    private void displayTextOptionMenu(final View v){
         final CharSequence[] items = {"Delete Text","Edit Text", "Cancel"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
@@ -592,7 +670,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
                     intent.putExtra("CurrText", currText);
                     intent.putExtra("isEditing", true);
-                    startActivityForResult(intent,WRITE_DESC);
+                    startActivityForResult(intent,EDIT_DESC);
                 }else if(items[i].equals("Cancel")){
                     dialogInterface.dismiss();
                 }
@@ -855,12 +933,12 @@ public class CreateNewGuide extends AppCompatActivity {
                 .setCancelable(false)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        //TODO: ALWAYS DELETES THE LAST NUMBERED STEP, NOT THE ONE WE CLICKED ON
                         //IT WORKS NOW TRUST ME - CA (July 23. 2018)
                         
                         //Gets the parent of the parent layout and deletes the whole parent (step layout)
                         LinearLayout titleLayout = ((LinearLayout) v.getParent());
                         LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());
+
                         //iterates through the data list and removes all elements of the deleted step
                         Iterator<GuideData> iterator = mGuideDataArrayList.iterator();
                         while (iterator.hasNext()){
@@ -918,6 +996,12 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
                 newDesc = AddDescriptionActivity.getNewDesc(data);
                 addDescription(newDesc);
+            }else if (requestCode == EDIT_DESC){
+                if (data == null){
+                    return;
+                }
+                newDesc = AddDescriptionActivity.getNewDesc(data);
+                editDescription(newDesc);
             }
         }
     }
