@@ -93,17 +93,11 @@ public class CreateNewGuide extends AppCompatActivity {
     public LinearLayout selectedLayout;
     public TextView selectedTextView;
 
-    private LayoutInflater inflater = new LayoutInflater(CreateNewGuide.this) {
-        @Override
-        public LayoutInflater cloneInContext(Context context) {
-            return null;
-        }
-    };
-
     TextView mNewGuideTitle;
     Button mAddImage;
     private Button mSave;
 
+    //The title of the guide, initialized as NULL so we can easily check through string methods if it hasn't been set
     String guideTitle = "NULL";
 
     //Firebase Instance Variables
@@ -118,15 +112,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
     //ArrayList stores metadata for the guide text and picture components
     private ArrayList<GuideData> mGuideDataArrayList = new ArrayList<>();
-    private Guide newGuide;
-
-    //Handler object to handle all of the background threads
-    private static Handler handler_ = new Handler(){
-        @Override
-        public void handleMessage(Message msg){
-
-        }
-    };
+    private Guide newGuide; //guide object that stores descriptive info on the guide being made
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,16 +148,19 @@ public class CreateNewGuide extends AppCompatActivity {
         mNewGuideTitle.setText(guideTitle);
 
         newGuide.setAuthor(mCurrentUser.getEmail());
-        newGuide.setTitle(mCurrentUser.getEmail()+" / "+guideTitle);
+        newGuide.setTitle(guideTitle);
 
         userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
 
+        //gets the number of guides the user has
         userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 DocumentSnapshot documentSnapshot = task.getResult();
                 guideNum = documentSnapshot.getLong("numGuides").intValue();
-                guideNum++;
+                guideNum++;// increments guideNum by 1 because we are making a new guide so there is 1 more than before
+
+                //sets these 2 collections to point to the folders for the guide data of the new guide. for later uploading
                 textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
                 picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
             }
@@ -242,6 +231,9 @@ public class CreateNewGuide extends AppCompatActivity {
         //update the users guide count so the guides can be named differently, 'guide0', 'guide1', etc
         userRef.update("numGuides", guideNum);
         Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
+        for (int i = 0; i< mGuideDataArrayList.size();i++){
+            Log.i("GUIDEDATA OBJ: ",mGuideDataArrayList.get(i).getType());
+        }
     }
 
     /**
@@ -492,55 +484,14 @@ public class CreateNewGuide extends AppCompatActivity {
             selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
             TextData dataToAdd = new TextData();
             dataToAdd.setType("Text");
-            dataToAdd.setPlacement(mGuideDataArrayList.size());
+            //dataToAdd.setPlacement(mGuideDataArrayList.size());
             dataToAdd.setStepNumber((int) selectedLayout.getTag());
             dataToAdd.setText(newStepDesc);
             dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
             dataToAdd.setId(dataToAdd.getGuideId() + "TEXT" + mGuideDataArrayList.size());
 
             addObjectToDataListInOrder(dataToAdd);
-                /*int num = (int)selectedLayout.getTag();//get the tag of the textview, which is the view's id
-                TextData dataToAdd = new TextData();
-                boolean foundCorrectStep = false;//when we found the step we want to add text to, set to true
-                //add the new textdata object to the data list in the appropriate spot
-                for (int i = 0; i < mGuideDataArrayList.size();i++){
-                    //we are only updating text data here, if the type is picture then go to next iteration
-                    if (mGuideDataArrayList.get(i).getType() == "Picture"){
-                        Log.i("PICTURE OBJ: ","found pic");
-                        continue;
-                    }
-                    GuideData data = mGuideDataArrayList.get(i);
 
-                    //set to true when we have found the step we are adding text to
-                    if (data.getStepNumber() == num){
-                        foundCorrectStep = true;
-                    }
-
-                    //new text is always added to the end of the step by default, we can only know when we reached it when
-                    //we iterate onto the first object of the next step.
-                    if (foundCorrectStep && (data.getStepNumber()!=num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
-                        dataToAdd = new TextData("Text",i-1,data.getGuideId(),
-                                mGuideDataArrayList.get(i-1).getStepTitle(),mGuideDataArrayList.get(i-1).getStepNumber(),newStepDesc,
-                                false,false,Color.DKGRAY,17);
-                        dataToAdd.setId(dataToAdd.getGuideId()+"TEXT"+(i-1));
-                        mGuideDataArrayList.add(i-1,dataToAdd);
-                        break;
-                    }
-                }
-                //if we didn't find the next step, that means theres only 1 step, put the data object at the end of the data list
-                if (!mGuideDataArrayList.contains(dataToAdd)){
-                    GuideData lastDataObj = mGuideDataArrayList.get(mGuideDataArrayList.size()-1);
-                    dataToAdd.setType("Text");
-                    dataToAdd.setPlacement(mGuideDataArrayList.size());
-                    dataToAdd.setGuideId(lastDataObj.getGuideId());
-                    dataToAdd.setStepTitle(lastDataObj.getStepTitle());
-                    dataToAdd.setStepNumber(lastDataObj.getStepNumber());
-                    dataToAdd.setText(newStepDesc);
-                    dataToAdd.setTextStyle(false,false,Color.DKGRAY,17);
-                    dataToAdd.setId(dataToAdd.getGuideId()+"TEXT" + mGuideDataArrayList.size());
-                    mGuideDataArrayList.add(dataToAdd);
-                    Log.i("END OF DATA LIST","OBJECT ADDED!!!!:)!!!");
-                }*/
         }catch (Exception ex){
             ex.getMessage();
             return false;
@@ -548,11 +499,6 @@ public class CreateNewGuide extends AppCompatActivity {
 
         return true;
     }
-
-    /*
-    TODO: Each image added to a step has to also have an PictureData object added to the data list
-    TODO: basically do the same thing you did for the text objects but for pictures
-     */
 
     /**
      * this function takes a GuideData object and adds it to our overall guide data list
@@ -577,11 +523,12 @@ public class CreateNewGuide extends AppCompatActivity {
 
                 //new text is always added to the end of the step by default, we can only know when we reached it when
                 //we iterate onto the first object of the next step.
-                if (foundCorrectStep && (currentObj.getStepNumber()!=num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
+                if (foundCorrectStep && (currentObj.getStepNumber() >= num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
                     String newDataId = "";
                     if (data.getType() == "Text")newDataId=data.getGuideId()+"TEXT"+mGuideDataArrayList.size();
                     else if (data.getType() == "Picture")newDataId=data.getGuideId()+"IMG"+mGuideDataArrayList.size();
                     data.setId(newDataId);
+                    data.setPlacement(i-1);
                     mGuideDataArrayList.add(i-1,data);
                     break;
                 }
@@ -590,11 +537,6 @@ public class CreateNewGuide extends AppCompatActivity {
             //that means the step we are adding to is the last step, put the data object at the end of the data list
             if (foundCorrectStep && !mGuideDataArrayList.contains(data)){
                 GuideData lastDataObj = mGuideDataArrayList.get(mGuideDataArrayList.size()-1);
-                /*dataToAdd.setType("Text");
-                dataToAdd.setPlacement(mGuideDataArrayList.size());
-                dataToAdd.setGuideId(lastDataObj.getGuideId());
-                dataToAdd.setStepTitle(lastDataObj.getStepTitle());
-                */
                 data.setStepNumber(lastDataObj.getStepNumber());
                 data.setPlacement(mGuideDataArrayList.size());
                 String newDataId = "";
@@ -738,9 +680,6 @@ public class CreateNewGuide extends AppCompatActivity {
     public void uploadText(TextData text){
         Log.i("UPLOADTEXT: ", "STARTING UPLOAD");
         if (text.getText().isEmpty()){return;}
-        //Map<String,Object> dataToSave = new HashMap<String, Object>();
-        //dataToSave.put(TEXT_VALUE_KEY,text);
-        //dataToSave.put(PLACEMENT_KEY,place);
 
         //Check to see if the current step has an object saved in the db
         uploadStep(text);
@@ -751,17 +690,6 @@ public class CreateNewGuide extends AppCompatActivity {
             text.setId(UUID.randomUUID().toString());
         }
         DocumentReference textBlockRef = textData.document("textBlock-" + text.getId());
-        /*mDocRef.set(dataToSave).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if (task.isSuccessful()){
-                    Log.d("UPLOADTEXT: ", "onComplete: Text Block has been saved");
-                }else{
-                    Log.e("UPLOADTEXT: ", "onComplete: ",task.getException() );
-                }
-            }
-        });
-*/
         textBlockRef.set(text);
         textBlockNum++;
     }
