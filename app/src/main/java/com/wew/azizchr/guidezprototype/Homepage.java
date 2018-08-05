@@ -22,6 +22,7 @@ import java.util.Locale;
 public class Homepage extends AppCompatActivity {
 
     private static final String NEW_GUIDE = "NEW_GUIDE";
+    private static final String EDIT_MODE = "MODE";
 
     private Button btnMakeGuide, btnSettings, btnCollection;
     private FirebaseAuth mAuth;
@@ -55,6 +56,7 @@ public class Homepage extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(Homepage.this,CreateGuideTitle.class);
                 intent.putExtra(NEW_GUIDE, true);
+                intent.putExtra(EDIT_MODE,"CREATE");
                 startActivity(intent);
             }
         });

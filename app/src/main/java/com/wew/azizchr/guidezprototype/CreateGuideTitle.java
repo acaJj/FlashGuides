@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 public class CreateGuideTitle extends AppCompatActivity {
 
+    private static final String NEW_GUIDE = "NEW_GUIDE";
     EditText mGuideTitle;
 
     @Override
@@ -33,6 +34,7 @@ public class CreateGuideTitle extends AppCompatActivity {
 
         Intent intent = new Intent(CreateGuideTitle.this,CreateNewGuide.class);
         intent.putExtra("GUIDE_TITLE", mGuideTitle.getText().toString());
+        intent.putExtra("MODE","CREATE");//tells the activity that we are starting from scratch
         startActivity(intent);
         finish();
     }

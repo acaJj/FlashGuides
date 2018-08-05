@@ -44,6 +44,8 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
@@ -59,6 +61,7 @@ import org.w3c.dom.Text;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -69,15 +72,16 @@ public class CreateNewGuide extends AppCompatActivity {
 
     private static final String TEXT_TAG = "TEXT";
     private static final String IMG_TAG = "IMG";
-    private static final int SELECT_FILE =0;
-    private static final int WRITE_STEP =1;
-    private static final int WRITE_DESC =2;
-    private static final int EDIT_DESC = 3;
+    private static final int SELECT_FILE =0;//used when selecting an image file
+    private static final int WRITE_STEP =1;//used when making a new step
+    private static final int WRITE_DESC =2;//used when making a new text block
+    private static final int EDIT_DESC = 3;//used when editing a text block
 
     private String outputPath;
     private String newStepTitle;
     private String newStepDesc;
     private String newDesc;
+    private String mode;//used to determine whether we are making a new guide or editing an old one
 
     private int guideNum = 0;//the current guide index thing
     private int textBlockNum; //the current number of textBlocks
@@ -86,7 +90,6 @@ public class CreateNewGuide extends AppCompatActivity {
     private int currentPictureSwap;
 
     private Boolean isSwapping;
-    private Boolean isEditingText;
 
     private CameraImagePicker camera;
     public LinearLayout layoutFeed;
@@ -94,7 +97,6 @@ public class CreateNewGuide extends AppCompatActivity {
     public TextView selectedTextView;
 
     TextView mNewGuideTitle;
-    Button mAddImage;
     private Button mSave;
 
     //The title of the guide, initialized as NULL so we can easily check through string methods if it hasn't been set
@@ -142,15 +144,25 @@ public class CreateNewGuide extends AppCompatActivity {
         Bundle bundle = intent.getExtras();
         if(bundle != null){
             guideTitle = bundle.getString("GUIDE_TITLE");
+            mode = bundle.getString("MODE");
         } else{
             guideTitle = "Guide (No title)";
+            mode = "CREATE";
+        }
+
+        userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
+
+        if (mode.equals("CREATE")){
+            newGuide.setId(UUID.randomUUID().toString());
+        }else if (mode.equals("EDIT")){
+            newGuide.setId(bundle.getString("GUIDEID"));
+            loadGuide(newGuide.getId());
         }
         mNewGuideTitle.setText(guideTitle);
 
         newGuide.setAuthor(mCurrentUser.getEmail());
         newGuide.setTitle(guideTitle);
-
-        userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
+        //newGuide.setDateCreated();
 
         //gets the number of guides the user has
         userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -191,6 +203,27 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 saveGuide();
+            }
+        });
+    }
+
+    private void loadGuide(String id) {
+        //References to the guide we are editing and its component collections
+        DocumentReference guideToEdit = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
+        CollectionReference guideSteps = mFirestore.collection(guideToEdit + "stepData");
+        CollectionReference guideText = mFirestore.collection(guideToEdit + "textData");
+        CollectionReference guideImgs = mFirestore.collection(guideToEdit + "imageData");
+
+        guideSteps.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()){
+                    for (QueryDocumentSnapshot doc: task.getResult()){
+
+                    }
+                }else{
+                    Log.i("SOMEONE FUCKED UP: ","IT WAS JEFFREY!");
+                }
             }
         });
     }
@@ -293,7 +326,9 @@ public class CreateNewGuide extends AppCompatActivity {
                             }else{
                                 picData.setPlacement(currentIndex);
                                 //mGuideDataArrayList.add(picData);
+                                Log.i("BORBOT MOGI: ","picture aok");
                                 addObjectToDataListInOrder(picData);
+                                Log.i("BORBOT MOGI: ","picture aokkkkk");
                             }
                         }
                     });
@@ -378,11 +413,10 @@ public class CreateNewGuide extends AppCompatActivity {
             addDesc.setText("Add Text to Step " + layoutFeed.getChildCount());
             addDesc.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    isEditingText = false;
                     selectedLayout = newStepBlock;
                     Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
                     intent.putExtra("CurrStep", layoutFeed.getChildCount());
-                    intent.putExtra("isEditing", isEditingText);
+                    intent.putExtra("isEditing", false);
                     startActivityForResult(intent,WRITE_DESC);
                 }
             });
@@ -424,7 +458,13 @@ public class CreateNewGuide extends AppCompatActivity {
             mTextData.setType("Text");
             //adds the textdata object to our arraylist of data objects for firebase upload
             mGuideDataArrayList.add(mTextData);
-            addDescription(desc);
+
+            //adds the starting description to the step block if not null/empty
+            if (!desc.equals("")){
+                //selectedLayout = newStepBlock;
+                //addDescription(desc);
+            }
+
             currentIndex++;
 
         }catch (Exception ex){
@@ -482,14 +522,17 @@ public class CreateNewGuide extends AppCompatActivity {
 
             //adds the new textblock with the text to the selected step
             selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
+            LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
+            TextView title = (TextView)titleBlock.getChildAt(1);
             TextData dataToAdd = new TextData();
             dataToAdd.setType("Text");
             //dataToAdd.setPlacement(mGuideDataArrayList.size());
             dataToAdd.setStepNumber((int) selectedLayout.getTag());
+            dataToAdd.setStepTitle(title.getText().toString());
             dataToAdd.setText(newStepDesc);
             dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
             dataToAdd.setId(dataToAdd.getGuideId() + "TEXT" + mGuideDataArrayList.size());
-
+            Log.i("BORBOT MOGI: ","text aok");
             addObjectToDataListInOrder(dataToAdd);
 
         }catch (Exception ex){
@@ -507,12 +550,18 @@ public class CreateNewGuide extends AppCompatActivity {
      * @return true if successfully added
      */
     private boolean addObjectToDataListInOrder(GuideData data){
+        Log.i("Add OBJ TO DATA LIST: ",data.getType());
         try{
-            int num = (int)selectedLayout.getTag();//get the tag of the textview, which is the view's id
+            int num = (int)selectedLayout.getTag();//get the tag of the stepLayout, which is the view's id
             boolean foundCorrectStep = false;//when we found the step we want to add text to, set to true
-            //add the new textdata object to the data list in the appropriate spot
-            for (int i = 0; i < mGuideDataArrayList.size();i++){
-                //we are only updating text data here, if the type is picture then go to next iteration
+            //add the new data object to the data list in the appropriate spot
+            for (int i = 0; i <= mGuideDataArrayList.size();i++){
+                //if the list is empty
+                if (mGuideDataArrayList.isEmpty()){
+                    mGuideDataArrayList.add(data);
+                    Log.i("BORBOT MOGI EMPTY",data.getType());
+                    break;
+                }
 
                 GuideData currentObj = mGuideDataArrayList.get(i);
 
@@ -530,12 +579,13 @@ public class CreateNewGuide extends AppCompatActivity {
                     data.setId(newDataId);
                     data.setPlacement(i-1);
                     mGuideDataArrayList.add(i-1,data);
+                    Log.i("BORBOT MOGI MIDDLE",data.getType());
                     break;
                 }
             }
             //if we didn't find the next step we haven't added the data to the list
             //that means the step we are adding to is the last step, put the data object at the end of the data list
-            if (foundCorrectStep && !mGuideDataArrayList.contains(data)){
+            if (!mGuideDataArrayList.contains(data)){
                 GuideData lastDataObj = mGuideDataArrayList.get(mGuideDataArrayList.size()-1);
                 data.setStepNumber(lastDataObj.getStepNumber());
                 data.setPlacement(mGuideDataArrayList.size());
@@ -544,6 +594,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 else if (data.getType() == "Picture")newDataId=data.getGuideId()+"IMG"+mGuideDataArrayList.size();
                 data.setId(newDataId);
                 mGuideDataArrayList.add(data);
+                Log.i("BORBOT MOGI END",data.getType());
                 Log.i("END OF DATA LIST","OBJECT ADDED!!!!:)!!!");
             }
         }catch (Exception ex){
@@ -603,8 +654,6 @@ public class CreateNewGuide extends AppCompatActivity {
                     //Removes the selected Textview
                     ((LinearLayout) v.getParent()).removeView(v);
                 }else if(items[i].equals("Edit Text")){
-                    //Sets the is editing text to true for use in the Add Description method
-                    isEditingText = true;
                     //Stores the selected text view to edit later
                     selectedTextView = (TextView)v;
                     //Starts a new activity

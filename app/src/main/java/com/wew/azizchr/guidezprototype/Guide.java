@@ -14,6 +14,10 @@ public class Guide {
 
     public Guide(){}
 
+    public Guide(String title){
+        this.title = title;
+    }
+
     public Guide(String id, String title, String author, String description, String dateCreated) {
         this.id = id;
         this.title = title;

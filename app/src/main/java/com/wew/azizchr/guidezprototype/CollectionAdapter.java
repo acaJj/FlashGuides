@@ -17,7 +17,7 @@ import android.widget.TextView;
 //TODO: Modify the adapter code so that it uses the proper data we use, not string arrays
 
 public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.ViewHolder> {
-    private String[] mDataset;
+    private Guide[] mDataset;
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -27,12 +27,12 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Vi
         public TextView mTextView;
         public ViewHolder(View v) {
             super(v);
-            mTextView = (TextView)v.findViewById(R.id.item_description);
+            mTextView = v.findViewById(R.id.item_description);
         }
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public CollectionAdapter(String[] myDataset) {
+    public CollectionAdapter(Guide[] myDataset) {
         mDataset = myDataset;
     }
 
@@ -51,7 +51,11 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Vi
     public void onBindViewHolder(ViewHolder holder, int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        holder.mTextView.setText(mDataset[position]);
+        Guide guide = mDataset[position];
+        String title = guide.getTitle();
+        String tag = guide.getId();
+        holder.mTextView.setTag(tag);
+        holder.mTextView.setText(title);
 
     }
 
