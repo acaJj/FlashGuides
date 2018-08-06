@@ -7,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.List;
+
 /**
  * Created by Jeffrey on 2018-06-24.
  * This Adapter is necessary to model the data objects in the recyclerview
@@ -17,7 +19,12 @@ import android.widget.TextView;
 //TODO: Modify the adapter code so that it uses the proper data we use, not string arrays
 
 public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.ViewHolder> {
-    private Guide[] mDataset;
+    public interface OnItemClickListener{
+        void OnItemClick(Guide item);
+    }
+
+    private List<Guide> mGuideList;
+    private OnItemClickListener mOnItemClickListener;
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -29,11 +36,24 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Vi
             super(v);
             mTextView = v.findViewById(R.id.item_description);
         }
+
+        //sets the data for each list item into their viewholder
+        public void bindData(final Guide guide,final OnItemClickListener listener){
+            mTextView.setTag(guide.getId());
+            mTextView.setText(guide.getTitle());
+            mTextView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    listener.OnItemClick(guide);
+                }
+            });
+        }
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public CollectionAdapter(Guide[] myDataset) {
-        mDataset = myDataset;
+    public CollectionAdapter(List<Guide> guides, OnItemClickListener listener) {
+        this.mGuideList = guides;
+        this.mOnItemClickListener = listener;
     }
 
     // Create new views (invoked by the layout manager)
@@ -46,22 +66,24 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Vi
         return new ViewHolder(v);
     }
 
-    // Replace the contents of a view (invoked by the layout manager)
+    // Pass our data into the view holder (invoked by the layout manager)
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        Guide guide = mDataset[position];
-        String title = guide.getTitle();
-        String tag = guide.getId();
-        holder.mTextView.setTag(tag);
-        holder.mTextView.setText(title);
+        holder.bindData(mGuideList.get(position),mOnItemClickListener);
+
 
     }
 
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return mDataset.length;
+        return mGuideList.size();
+    }
+
+    @Override
+    public int getItemViewType(final int position){
+        return R.layout.collection_item;
     }
 }

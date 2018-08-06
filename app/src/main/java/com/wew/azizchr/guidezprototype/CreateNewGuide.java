@@ -44,6 +44,7 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -138,6 +139,10 @@ public class CreateNewGuide extends AppCompatActivity {
         FirebaseUser mCurrentUser = mFirebaseAuth.getCurrentUser();
         mStorage = FirebaseStorage.getInstance();
         mFirestore = FirebaseFirestore.getInstance();
+        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
+                .setTimestampsInSnapshotsEnabled(true)
+                .build();
+        mFirestore.setFirestoreSettings(settings);
 
         //Gets the guide name variable from previous activity and puts it in the title
         Intent intent = getIntent();
@@ -156,7 +161,8 @@ public class CreateNewGuide extends AppCompatActivity {
             newGuide.setId(UUID.randomUUID().toString());
         }else if (mode.equals("EDIT")){
             newGuide.setId(bundle.getString("GUIDEID"));
-            loadGuide(newGuide.getId());
+            //loadGuide(newGuide.getId());
+            Log.i("BORBOT EDITs",newGuide.getId());
         }
         mNewGuideTitle.setText(guideTitle);
 
@@ -532,7 +538,7 @@ public class CreateNewGuide extends AppCompatActivity {
             dataToAdd.setText(newStepDesc);
             dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
             dataToAdd.setId(dataToAdd.getGuideId() + "TEXT" + mGuideDataArrayList.size());
-            Log.i("BORBOT MOGI: ","text aok");
+            Log.i("BORBOT AddDesc: ","text aok");
             addObjectToDataListInOrder(dataToAdd);
 
         }catch (Exception ex){
@@ -550,7 +556,7 @@ public class CreateNewGuide extends AppCompatActivity {
      * @return true if successfully added
      */
     private boolean addObjectToDataListInOrder(GuideData data){
-        Log.i("Add OBJ TO DATA LIST: ",data.getType());
+        Log.i("BORBOT MOGI ","add this "+data.getType() + " to data list");
         try{
             int num = (int)selectedLayout.getTag();//get the tag of the stepLayout, which is the view's id
             boolean foundCorrectStep = false;//when we found the step we want to add text to, set to true
@@ -572,7 +578,8 @@ public class CreateNewGuide extends AppCompatActivity {
 
                 //new text is always added to the end of the step by default, we can only know when we reached it when
                 //we iterate onto the first object of the next step.
-                if (foundCorrectStep && (currentObj.getStepNumber() >= num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
+                Log.i("BORBOT COMPARE ",currentObj.getStepNumber() + ", " + num);
+                if (foundCorrectStep && (currentObj.getStepNumber() > num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
                     String newDataId = "";
                     if (data.getType() == "Text")newDataId=data.getGuideId()+"TEXT"+mGuideDataArrayList.size();
                     else if (data.getType() == "Picture")newDataId=data.getGuideId()+"IMG"+mGuideDataArrayList.size();
