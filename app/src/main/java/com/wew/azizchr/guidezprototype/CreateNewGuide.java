@@ -77,6 +77,7 @@ public class CreateNewGuide extends AppCompatActivity {
     private static final int WRITE_STEP =1;//used when making a new step
     private static final int WRITE_DESC =2;//used when making a new text block
     private static final int EDIT_DESC = 3;//used when editing a text block
+    public static int PESDK_RESULT = 4;
 
     private String outputPath;
     private String newStepTitle;
@@ -162,7 +163,7 @@ public class CreateNewGuide extends AppCompatActivity {
         }else if (mode.equals("EDIT")){
             newGuide.setId(bundle.getString("GUIDEID"));
             //loadGuide(newGuide.getId());
-            Log.i("BORBOT EDITs",newGuide.getId());
+            Log.i("BORBOT EDITs","" + newGuide.getId());
         }
         mNewGuideTitle.setText(guideTitle);
 
@@ -287,7 +288,9 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Camera")){
-                    outputPath = camera.pickImage();
+                    //outputPath = camera.pickImage();
+                    Intent intent = new Intent(CreateNewGuide.this,CameraViewActivity.class);
+                    startActivityForResult(intent,PESDK_RESULT);
                 }else if(items[i].equals("Gallery")){
                     Intent intent = new Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     intent.setType("image/*");
@@ -348,6 +351,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
             //Adds the tag to the new imageview (the tag is the step number)
             newImgView.setTag(selectedLayout.getTag());
+            Log.i("BORBOT IMG TAG", ""+newImgView.getTag());
 
             //fits the image to the sides, fixes the view bounds, adds padding
             newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -394,14 +398,14 @@ public class CreateNewGuide extends AppCompatActivity {
             mStepTitle.setTypeface(null, Typeface.BOLD);
             mStepTitle.setTextSize(24);
             mStepTitle.setTextColor(Color.BLACK);
-            TextView mStepDesc = new TextView(CreateNewGuide.this);
-            mStepDesc.setTextSize(17);
-            mStepDesc.setTextColor(Color.DKGRAY);
-            mStepDesc.setPadding(5, 10, 5, 10);
+//            TextView mStepDesc = new TextView(CreateNewGuide.this);
+//            mStepDesc.setTextSize(17);
+//            mStepDesc.setTextColor(Color.DKGRAY);
+//            mStepDesc.setPadding(5, 10, 5, 10);
 
             newTitleBlock.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    DecideStep(newTitleBlock.getChildAt(1));
+                    displayStepOptionsMenu(newTitleBlock.getChildAt(1));
                 }
             });
             //Creates the add image button and its on click listener
@@ -432,23 +436,23 @@ public class CreateNewGuide extends AppCompatActivity {
             //Sets the tag for the step block and step description textview
             //The tag is the step number
             newStepBlock.setTag(num);
-            mStepDesc.setTag(num);
+//            mStepDesc.setTag(num);
 
             mStepNumber.setText("Step " +num + " : ");
             mStepTitle.setText(title);
-            mStepDesc.setText(desc);
-            mStepDesc.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    displayTextOptionMenu(v);
-                }
-            });
+//            mStepDesc.setText(desc);
+//            mStepDesc.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    displayTextOptionsMenu(v);
+//                }
+//            });
 
             //Set up the views to show everything
             newTitleBlock.addView(mStepNumber);
             newTitleBlock.addView(mStepTitle);
             newStepBlock.addView(newTitleBlock);
-            newStepBlock.addView(mStepDesc);
+//            newStepBlock.addView(mStepDesc);
             newStepBlock.addView(addImage);
             newStepBlock.addView(addDesc);
 
@@ -456,19 +460,19 @@ public class CreateNewGuide extends AppCompatActivity {
             layoutFeed.addView(newStepBlock, layoutFeed.getChildCount()-1);
 
             //creates an object which holds all the data for the text in the step
-            TextData mTextData = new TextData();
-            mTextData.setStepNumber(num);
-            mTextData.setStepTitle(title);
-            mTextData.setText(desc);
-            mTextData.setPlacement(currentIndex);
-            mTextData.setType("Text");
+//            TextData mTextData = new TextData();
+//            mTextData.setStepNumber(num);
+//            mTextData.setStepTitle(title);
+//            mTextData.setText(desc);
+//            mTextData.setPlacement(currentIndex);
+//            mTextData.setType("Text");
             //adds the textdata object to our arraylist of data objects for firebase upload
-            mGuideDataArrayList.add(mTextData);
+//            mGuideDataArrayList.add(mTextData);
 
             //adds the starting description to the step block if not null/empty
             if (!desc.equals("")){
-                //selectedLayout = newStepBlock;
-                //addDescription(desc);
+                selectedLayout = newStepBlock;
+                addDescription(desc);
             }
 
             currentIndex++;
@@ -522,7 +526,7 @@ public class CreateNewGuide extends AppCompatActivity {
             mDescription.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    displayTextOptionMenu(v);
+                    displayTextOptionsMenu(v);
                 }
             });
 
@@ -564,6 +568,7 @@ public class CreateNewGuide extends AppCompatActivity {
             for (int i = 0; i <= mGuideDataArrayList.size();i++){
                 //if the list is empty
                 if (mGuideDataArrayList.isEmpty()){
+                    data.setPlacement(0);
                     mGuideDataArrayList.add(data);
                     Log.i("BORBOT MOGI EMPTY",data.getType());
                     break;
@@ -630,10 +635,11 @@ public class CreateNewGuide extends AppCompatActivity {
                     intent.putExtra("imageUri", imageUri);
                     startActivity(intent);
                 }else if(items[i].equals("Edit Picture")){
-                    Intent intent = new Intent(CreateNewGuide.this, EditPhoto.class);
-                    intent.putExtra("imageUri", imageUri);
-                    startActivity(intent);
+//                    Intent intent = new Intent(CreateNewGuide.this, EditPhoto.class);
+//                    intent.putExtra("imageUri", imageUri);
+//                    startActivity(intent);
                 }else if(items[i].equals("Swap Picture")){
+                    //sets isSwapping check to true and then calls SelectImage to replace the image we want in the layout hierarchy
                     isSwapping = true;
                     selectedLayout = ((LinearLayout) v.getParent());
                     currentPictureSwap = ((LinearLayout) v.getParent()).indexOfChild(v);
@@ -649,7 +655,7 @@ public class CreateNewGuide extends AppCompatActivity {
     /**
      * Builds and displays a menu of options for selecting a text block in the guide
      */
-    private void displayTextOptionMenu(final View v){
+    private void displayTextOptionsMenu(final View v){
         final CharSequence[] items = {"Delete Text","Edit Text", "Cancel"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
@@ -680,7 +686,7 @@ public class CreateNewGuide extends AppCompatActivity {
     /**
      * Builds and displays a menu of options for selecting the step title
      */
-    private void DecideStep(final View v){
+    private void displayStepOptionsMenu(final View v){
         final CharSequence[] items = {"Edit step title","Delete entire step", "Cancel"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
@@ -986,6 +992,10 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
                 newDesc = AddDescriptionActivity.getNewDesc(data);
                 editDescription(newDesc);
+            }else if (requestCode == PESDK_RESULT){
+                if (data == null)return;
+                Uri imageUri = CameraViewActivity.getSourceUri(data);
+                addImage(imageUri);
             }
         }
     }

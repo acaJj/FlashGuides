@@ -32,8 +32,9 @@
         <activity android:name=".SettingsActivity" />
         <activity android:name=".EditPhoto" />
         <activity android:name=".AddStepActivity" />
-        <activity android:name=".AddDescriptionActivity"></activity>
-        <activity android:name=".UserCollectionActivity"/>
+        <activity android:name=".AddDescriptionActivity" />
+        <activity android:name=".UserCollectionActivity" />
+        <activity android:name=".CameraViewActivity"></activity>
     </application>
 
 </manifest>
