@@ -11,9 +11,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-        <activity
-            android:name=".MainPage"
-            android:screenOrientation="portrait" />
         <activity android:name=".TextBlockWriterActivity" />
         <activity android:name=".ViewPhoto" />
         <activity android:name=".AuthActivity" />
@@ -30,7 +27,6 @@
         <activity android:name=".CreateGuideTitle" />
         <activity android:name=".CreateNewGuide" />
         <activity android:name=".SettingsActivity" />
-        <activity android:name=".EditPhoto" />
         <activity android:name=".AddStepActivity" />
         <activity android:name=".AddDescriptionActivity" />
         <activity android:name=".UserCollectionActivity" />

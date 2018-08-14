@@ -12,12 +12,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import jp.wasabeef.richeditor.RichEditor;
+//import jp.wasabeef.richeditor.RichEditor;
 
 public class TextBlockWriterActivity extends AppCompatActivity {
 
     private EditText mEditText;
-    private RichEditor mEditor;
+    //private RichEditor mEditor;
     private TextView mPreview;
     private Button mbtnDone;
     private String text;
@@ -41,20 +41,20 @@ public class TextBlockWriterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_text_block_writer);
 
         //mEditText = findViewById(R.id.newTxtBlock);
-        mEditor = findViewById(R.id.editor);
+       // mEditor = findViewById(R.id.editor);
         mPreview = findViewById(R.id.preview);
         mbtnDone = findViewById(R.id.btnDone);
         text = getIntent().getStringExtra("newtext");
 
-        mEditor.setEditorHeight(200);
-        mEditor.setEditorFontSize(20);
-        mEditor.setEditorFontColor(Color.BLACK);
-        mEditor.setPlaceholder("Insert text here...");
+        //mEditor.setEditorHeight(200);
+        //mEditor.setEditorFontSize(20);
+        //mEditor.setEditorFontColor(Color.BLACK);
+        //mEditor.setPlaceholder("Insert text here...");
 
         if (savedInstanceState != null){
             text = savedInstanceState.getString("Text");
         }
-
+/*
         mEditor.setOnTextChangeListener(new RichEditor.OnTextChangeListener() {
             @Override
             public void onTextChange(String text){ }
@@ -116,7 +116,7 @@ public class TextBlockWriterActivity extends AppCompatActivity {
                     ex.getMessage();
                 }
             }
-        });
+        });*/
     }
 
     private void setTextResult(String text){

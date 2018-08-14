@@ -81,4 +81,9 @@ public class GuideData {
     public void setStepNumber(int stepNumber) {
         this.stepNumber = stepNumber;
     }
+
+    public void setStep(int stepNumber, String stepTitle){
+        this.stepNumber = stepNumber;
+        this.stepTitle = stepTitle;
+    }
 }

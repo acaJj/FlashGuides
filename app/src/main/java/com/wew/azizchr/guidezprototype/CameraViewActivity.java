@@ -10,7 +10,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
-
+/*
+import ly.img.android.acs.CameraView;
 import ly.img.android.pesdk.assets.filter.basic.FilterPackBasic;
 import ly.img.android.pesdk.assets.font.basic.FontPackBasic;
 import ly.img.android.pesdk.assets.overlay.basic.OverlayPackBasic;
@@ -25,9 +26,9 @@ import ly.img.android.pesdk.ui.model.state.UiConfigFilter;
 import ly.img.android.pesdk.ui.model.state.UiConfigOverlay;
 import ly.img.android.pesdk.ui.model.state.UiConfigText;
 import ly.img.android.pesdk.ui.utils.PermissionRequest;
-
-public class CameraViewActivity extends Activity implements PermissionRequest.Response {
-
+*/
+public class CameraViewActivity extends Activity  {
+/*
     public CameraPreviewActivity camera;
 
     // Important permission request for Android 6.0 and above, don't forget to add this!
@@ -45,7 +46,7 @@ public class CameraViewActivity extends Activity implements PermissionRequest.Re
     @Override
     public void permissionDenied() {
         /* TODO: The Permission was rejected by the user. The Editor was not opened,
-         * Show a hint to the user and try again. */
+         * Show a hint to the user and try again.
         Toast.makeText(CameraViewActivity.this,"Permission Denied",Toast.LENGTH_LONG).show();
     }
 
@@ -109,15 +110,18 @@ public class CameraViewActivity extends Activity implements PermissionRequest.Re
     }
 
     /*TODO: The app crashes when the user takes a picture or picks one from the gallery, need fixin
-      Get error "try to use a virtual method on a null object reference" i think it has something to do with the settings list */
+      Get error "try to use a virtual method on a null object reference" i think it has something to do with the settings list
 //Code never returns a result so it never gets to here
     @Override
     protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        Toast.makeText(CameraViewActivity.this,"Good shit",Toast.LENGTH_LONG).show();
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && requestCode == PESDK_RESULT) {
             // Editor has saved an Image.
-            Uri resultURI = data.getParcelableExtra(ImgLyIntent.RESULT_IMAGE_URI);
-            Uri sourceURI = data.getParcelableExtra(ImgLyIntent.SOURCE_IMAGE_URI);
+            // lel
+
+            Uri resultURI = Uri.parse(data.getStringExtra(ImgLyIntent.RESULT_IMAGE_URI));
+            Uri sourceURI = Uri.parse(data.getStringExtra(ImgLyIntent.SOURCE_IMAGE_URI));
 
             // Scan result uri to show it up in the Gallery
             //tried commenting these 2 out, doesnt effect it
@@ -138,6 +142,7 @@ public class CameraViewActivity extends Activity implements PermissionRequest.Re
             setResult(RESULT_OK,intent);
 
 
+
         } else if (resultCode == RESULT_CANCELED && requestCode == PESDK_RESULT) {
             Log.i("SettingsCheck","Result Cancelled");
             Uri sourceURI = data.getParcelableExtra(ImgLyIntent.SOURCE_IMAGE_URI);
@@ -147,4 +152,5 @@ public class CameraViewActivity extends Activity implements PermissionRequest.Re
     public static Uri getSourceUri(Intent data){
         return Uri.parse(data.getStringExtra("URI"));
     }
+    */
 }
