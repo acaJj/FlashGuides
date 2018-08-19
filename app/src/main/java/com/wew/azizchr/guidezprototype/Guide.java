@@ -6,6 +6,7 @@ package com.wew.azizchr.guidezprototype;
  */
 
 public class Guide {
+    private String key;
     private String id;
     private String title;
     private String author;
@@ -24,6 +25,14 @@ public class Guide {
         this.author = author;
         this.description = description;
         this.dateCreated = dateCreated;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public String getId() {

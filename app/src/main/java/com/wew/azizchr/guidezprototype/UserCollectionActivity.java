@@ -68,11 +68,12 @@ public class UserCollectionActivity extends AppCompatActivity {
                     for (QueryDocumentSnapshot doc:task.getResult()){
                         //For each document in the collection, populate the list with info for adapter
                         Guide guide = new Guide(doc.getString("title"));
+                        guide.setKey(doc.getId());
                         guide.setId(doc.getString("id"));
                         guideList.add(counter ,guide);
                         counter++;
                     }
-                    Log.i("BORBOT LIST",""+guideList.get(0).getId());
+
                     //set the adapter to the recycler view
                     mAdapter = new CollectionAdapter(guideList, new CollectionAdapter.OnItemClickListener() {
                         @Override
@@ -80,6 +81,7 @@ public class UserCollectionActivity extends AppCompatActivity {
                             Intent intent = new Intent(UserCollectionActivity.this,CreateNewGuide.class);
                             //the guide Id is used for lookup on which specific guide to get while EDIT mode tells the activity we are not making a guide from scratch
                             intent.putExtra("GUIDEID",item.getId());
+                            intent.putExtra("Key",item.getKey());
                             intent.putExtra("MODE","EDIT");
                             startActivity(intent);
                         }
