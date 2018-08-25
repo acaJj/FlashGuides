@@ -2,7 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.wew.azizchr.guidezprototype">
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA"
+        android:required="true" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:required="true" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -30,7 +35,10 @@
         <activity android:name=".AddStepActivity" />
         <activity android:name=".AddDescriptionActivity" />
         <activity android:name=".UserCollectionActivity" />
-        <activity android:name=".CameraViewActivity"></activity>
+        <activity android:name=".CameraViewActivity" />
+        <activity
+            android:name=".EditorActivity"
+            android:exported="true"></activity>
     </application>
 
 </manifest>

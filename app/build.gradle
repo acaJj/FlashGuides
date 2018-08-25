@@ -1,5 +1,5 @@
 apply plugin: 'com.android.application'
-/*
+
 // Apply the PESDKPlugin
 apply plugin: 'ly.img.android.pesdk'
 
@@ -9,8 +9,9 @@ pesdkConfig {
     // Name of the Licence file in the asset folder
     licencePath "LICENSE"
 
+    //THIS IS OLD JUST LEAVE IT ALONE FOR NOW
     // Has to be the latest SDK version
-    pesdkVersion "6.0.0"
+    //pesdkVersion "6.0.0"
 
     // If you use another supportLibVersion ('com.android.support'), change this version here to update your own supportLibVersion
     supportLibVersion "27.1.1"
@@ -19,21 +20,26 @@ pesdkConfig {
     modules {
         // Add all the backend modules you need
         include 'ly.img.android.pesdk.operation:text'
+        include 'ly.img.android.pesdk.operation:frame'
         include 'ly.img.android.pesdk.operation:focus'
         include 'ly.img.android.pesdk.operation:brush'
         include 'ly.img.android.pesdk.operation:camera'
         include 'ly.img.android.pesdk.operation:filter'
+        include 'ly.img.android.pesdk.operation:sticker'
         include 'ly.img.android.pesdk.operation:overlay'
         include 'ly.img.android.pesdk.operation:adjustment'
         include 'ly.img.android.pesdk.operation:text-design'
+        include 'ly.img.android.pesdk.operation:abstract-sticker'
 
         // Add all the UI modules you are need
         include 'ly.img.android.pesdk.ui.mobile_ui:core'
         include 'ly.img.android.pesdk.ui.mobile_ui:text'
         include 'ly.img.android.pesdk.ui.mobile_ui:focus'
+        include 'ly.img.android.pesdk.ui.mobile_ui:frame'
         include 'ly.img.android.pesdk.ui.mobile_ui:brush'
         include 'ly.img.android.pesdk.ui.mobile_ui:filter'
         include 'ly.img.android.pesdk.ui.mobile_ui:camera'
+        include 'ly.img.android.pesdk.ui.mobile_ui:sticker'
         include 'ly.img.android.pesdk.ui.mobile_ui:overlay'
         include 'ly.img.android.pesdk.ui.mobile_ui:transform'
         include 'ly.img.android.pesdk.ui.mobile_ui:adjustment'
@@ -45,10 +51,13 @@ pesdkConfig {
         // Add asset packs if you need
         include 'ly.img.android.pesdk.assets:font-basic'
         include 'ly.img.android.pesdk.assets:font-text-design'
+        include 'ly.img.android.pesdk.assets:frame-basic'
         include 'ly.img.android.pesdk.assets:filter-basic'
         include 'ly.img.android.pesdk.assets:overlay-basic'
+        include 'ly.img.android.pesdk.assets:sticker-shapes'
+        include 'ly.img.android.pesdk.assets:sticker-emoticons'
     }
-}*/
+}
 
 android {
     compileSdkVersion 27

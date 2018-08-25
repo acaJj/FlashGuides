@@ -69,7 +69,7 @@ public class CreateNewGuide extends AppCompatActivity {
     private static final int WRITE_STEP =1;//used when making a new step
     private static final int WRITE_DESC =2;//used when making a new text block
     private static final int EDIT_DESC = 3;//used when editing a text block
-    public static int PESDK_RESULT = 4;
+    public static final int PESDK_RESULT = 4;
 
     private String outputPath;
     private String newStepTitle;
@@ -101,6 +101,7 @@ public class CreateNewGuide extends AppCompatActivity {
     private FirebaseAuth mFirebaseAuth;
 
     //Cloud Firestore Reference Variables
+    private CollectionReference stepData;
     private CollectionReference textData;
     private CollectionReference picData;
     private DocumentReference userRef;
@@ -325,6 +326,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 }else{
                     //sheeeeit
                     Log.i("SOMEONE FUCKED UP: ","IT WAS JEFFREY!");
+                    Log.i("ITS ALRIGHT: ","BE NICE TO JEFF");
                 }
 
 
@@ -392,6 +394,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     Intent intent = new Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     intent.setType("image/*");
                     startActivityForResult(intent.createChooser(intent,"Select File"),SELECT_FILE);
+
                 }else if(items[i].equals("Cancel")){
                     if(isSwapping){isSwapping = false;}
                     dialogInterface.dismiss();
@@ -778,9 +781,13 @@ public class CreateNewGuide extends AppCompatActivity {
                     intent.putExtra("imageUri", imageUri);
                     startActivity(intent);
                 }else if(items[i].equals("Edit Picture")){
-//                    Intent intent = new Intent(CreateNewGuide.this, EditPhoto.class);
-//                    intent.putExtra("imageUri", imageUri);
-//                    startActivity(intent);
+                    isSwapping = true;
+                    selectedLayout = ((LinearLayout) v.getParent());
+                    currentPictureSwap = ((LinearLayout) v.getParent()).indexOfChild(v);
+                    Intent intent = new Intent(CreateNewGuide.this, EditorActivity.class);
+                    intent.putExtra("imageUri", imageUri);
+                    intent.putExtra("isNewPic", false);
+                    startActivityForResult(intent, PESDK_RESULT);
                 }else if(items[i].equals("Swap Picture")){
                     //sets isSwapping check to true and then calls SelectImage to replace the image we want in the layout hierarchy
                     isSwapping = true;
@@ -1132,9 +1139,9 @@ public class CreateNewGuide extends AppCompatActivity {
                 newDesc = AddDescriptionActivity.getNewDesc(data);
                 editDescription(newDesc);
             }else if (requestCode == PESDK_RESULT){
-                if (data == null)return;
-                //Uri imageUri = CameraViewActivity.getSourceUri(data);
-                //addImage(imageUri);
+                String editedImage = data.getStringExtra("resultURI");
+                Uri editiedUri = Uri.parse(editedImage);
+                addImage(editiedUri);
             }
         }
     }
