@@ -161,7 +161,6 @@ public class CreateNewGuide extends AppCompatActivity {
                 guideNum++;// increments guideNum by 1 because we are making a new guide so there is 1 more than before
 
                 //sets these 2 collections to point to the folders for the guide data of the new guide. for later uploading
-                stepData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/stepData");
                 textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
                 picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
 
@@ -172,7 +171,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
         mNewGuideTitle.setText(guideTitle);
 
-        newGuide.setAuthor(mCurrentUser.getEmail());
+        newGuide.setAuthor(mCurrentUser.getUid());
         newGuide.setTitle(guideTitle);
         //newGuide.setDateCreated();
 
@@ -204,6 +203,10 @@ public class CreateNewGuide extends AppCompatActivity {
         });
     }
 
+    /**
+     * sets initial guide parameters depending on what mode we enter the editor in
+     * @param bundle contains info about the guide like its id.
+     */
     private void editorSetup(Bundle bundle){
         if (mode.equals("CREATE")){
             newGuide.setId(UUID.randomUUID().toString());
@@ -215,6 +218,11 @@ public class CreateNewGuide extends AppCompatActivity {
         }
     }
 
+    /**
+     * Loads up a guide in storage for further editing
+     * @param id of the guide we are editing
+     * @param key the name of the guide in the firestore database
+     */
     private void loadGuide(String id,String key) {
         //References to the guide we are editing and its component collections
         DocumentReference guideToEdit = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+key);
@@ -343,13 +351,19 @@ public class CreateNewGuide extends AppCompatActivity {
         editTitle(view);
     }
 
+    /**
+     * Saves the guide into firestore
+     */
     private void saveGuide(){
 
         DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
         guideRef.set(newGuide);
 
-        //all data is stored in custom objects and added to an array list, we iterate through that to upload
-        //the order the objects are stored in the array is the order they're laid out in the layout
+        //informs the user that the save process is starting
+        Toast.makeText(CreateNewGuide.this,"Saving to storage...\n Please wait",Toast.LENGTH_LONG).show();
+
+        //all data is stored in custom objects and added to an array list, we iterate through that to upload.
+        //the order the objects are stored in the array is the order they're laid out in the layout.
         for (int i = 0; i < mGuideDataArrayList.size(); i++){
             //gets the next data object and uploads depending on the type of data we have
             GuideData dataToSave = mGuideDataArrayList.get(i);

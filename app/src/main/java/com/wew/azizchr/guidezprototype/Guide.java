@@ -10,6 +10,7 @@ public class Guide {
     private String id;
     private String title;
     private String author;
+    private boolean published;
     private String description;
     private String dateCreated;
 
@@ -73,5 +74,13 @@ public class Guide {
 
     public void setDateCreated(String dateCreated) {
         this.dateCreated = dateCreated;
+    }
+
+    public boolean getPublishedStatus(){
+        return published;
+    }
+
+    public void setPublishedStatus(boolean published){
+        this.published = published;
     }
 }
