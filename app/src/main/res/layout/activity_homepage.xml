@@ -34,6 +34,12 @@
             android:text="Your Guides" />
 
         <Button
+            android:id="@+id/btnSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Search"/>
+
+        <Button
             android:id="@+id/btnMakeGuide"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -24,7 +24,7 @@ public class Homepage extends AppCompatActivity {
     private static final String NEW_GUIDE = "NEW_GUIDE";
     private static final String EDIT_MODE = "MODE";
 
-    private Button btnMakeGuide, btnSettings, btnCollection;
+    private Button btnMakeGuide, btnSettings, btnCollection, btnSearch;
     private FirebaseAuth mAuth;
     Calendar calendar;
     TextView mGreeting;
@@ -46,6 +46,7 @@ public class Homepage extends AppCompatActivity {
         btnMakeGuide = findViewById(R.id.btnMakeGuide);
         btnSettings = findViewById(R.id.btnSettings);
         btnCollection = findViewById(R.id.btnGuideCollection);
+        btnSearch = findViewById(R.id.btnSearch);
         mAuth = FirebaseAuth.getInstance();
         mGreeting = (TextView) findViewById(R.id.txtHomePageGreet);
         calendar = Calendar.getInstance(Locale.getDefault());
@@ -73,6 +74,14 @@ public class Homepage extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(Homepage.this, UserCollectionActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        btnSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(Homepage.this, SearchActivity.class);
                 startActivity(intent);
             }
         });

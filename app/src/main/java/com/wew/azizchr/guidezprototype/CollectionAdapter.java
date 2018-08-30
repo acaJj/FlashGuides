@@ -56,6 +56,14 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Vi
         this.mOnItemClickListener = listener;
     }
 
+    public CollectionAdapter(OnItemClickListener listener) {
+        this.mOnItemClickListener = listener;
+    }
+
+    public void setItems(List<Guide> guides){
+        this.mGuideList = guides;
+    }
+
     // Create new views (invoked by the layout manager)
     @Override
     public CollectionAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
@@ -85,5 +93,15 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Vi
     @Override
     public int getItemViewType(final int position){
         return R.layout.collection_item;
+    }
+
+    public void clear(){
+        int size = mGuideList.size();
+        if (size > 0){
+            for (int i = 0; i < size; i++){
+                mGuideList.remove(0);
+            }
+        }
+        this.notifyItemRangeRemoved(0,size);
     }
 }
