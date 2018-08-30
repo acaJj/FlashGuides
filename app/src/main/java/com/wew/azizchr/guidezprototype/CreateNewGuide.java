@@ -196,11 +196,38 @@ public class CreateNewGuide extends AppCompatActivity {
         isSwapping = false;
         layoutFeed = findViewById(R.id.newGuideLayoutFeed);
         Button mSave = findViewById(R.id.btnSaveGuide);
+        Button mPublish = findViewById(R.id.btnPublishGuide);
 
         mSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 saveGuide();
+            }
+        });
+
+        mPublish.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (haveSaved){
+                    newGuide.setPublishedStatus(true);
+                }else{
+                    new AlertDialog.Builder(CreateNewGuide.this)
+                            .setMessage("You must save your work before publishing, would you like to save now?")
+                            .setCancelable(false)
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    saveGuide();
+                                    newGuide.setPublishedStatus(true);
+                                }
+                            })
+                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    Toast.makeText(CreateNewGuide.this,"Guide not published",Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .show();
+                }
             }
         });
     }

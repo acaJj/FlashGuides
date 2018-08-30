@@ -20,6 +20,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -51,6 +52,10 @@ public class SearchActivity extends AppCompatActivity {
         FirebaseUser mCurrentUser = mAuth.getCurrentUser();
         mStorage = FirebaseStorage.getInstance();
         mFirestore = FirebaseFirestore.getInstance();
+        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
+                .setTimestampsInSnapshotsEnabled(true)
+                .build();
+        mFirestore.setFirestoreSettings(settings);
 
         spinner = findViewById(R.id.userIdSpinner);
         btnSearch = findViewById(R.id.btnSearch);
@@ -77,12 +82,12 @@ public class SearchActivity extends AppCompatActivity {
                 }
             }
         });
-        //TODO: Get each guide that is published from the user that is being selected in the spinner
+
         btnSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String id = spinner.getSelectedItem().toString();
-                mAdapter.clear();
+                //mAdapter.clear();
                 retrievePublishedGuides(id);
             }
         });
@@ -91,7 +96,7 @@ public class SearchActivity extends AppCompatActivity {
     private void retrievePublishedGuides(String id) {
         CollectionReference userGuides = mFirestore.collection("Users/" +id+"/guides");
 
-        userGuides.whereEqualTo("publishedStatus",true).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+        userGuides.whereEqualTo("published",true).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 if (task.isSuccessful()) {
