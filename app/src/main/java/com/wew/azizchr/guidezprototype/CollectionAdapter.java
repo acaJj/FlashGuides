@@ -16,8 +16,6 @@ import java.util.List;
  * Ours would be more complex with strings and maybe a view for a preview pic
  */
 
-//TODO: Modify the adapter code so that it uses the proper data we use, not string arrays
-
 public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.ViewHolder> {
     public interface OnItemClickListener{
         void OnItemClick(Guide item);

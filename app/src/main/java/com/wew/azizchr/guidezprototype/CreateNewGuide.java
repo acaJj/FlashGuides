@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Picture;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
@@ -44,6 +45,7 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -60,6 +62,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+
+import io.grpc.Context;
 
 public class CreateNewGuide extends AppCompatActivity {
 
@@ -97,6 +101,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
     //Firebase Instance Variables
     private FirebaseStorage mStorage;
+    private StorageReference imgStorage;
     private FirebaseFirestore mFirestore;
     private FirebaseAuth mFirebaseAuth;
 
@@ -108,6 +113,8 @@ public class CreateNewGuide extends AppCompatActivity {
 
     //ArrayList stores metadata for the guide text and picture components
     private ArrayList<GuideData> mGuideDataArrayList = new ArrayList<>();
+    //stores all documents that we are going to delete when we save a guide
+    private ArrayList<DocumentReference> deletedDataList = new ArrayList<>();
     private Guide newGuide; //guide object that stores descriptive info on the guide being made
 
     //used when saving so we know not to save the copies of the same data objects in db
@@ -134,6 +141,7 @@ public class CreateNewGuide extends AppCompatActivity {
         mFirebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser mCurrentUser = mFirebaseAuth.getCurrentUser();
         mStorage = FirebaseStorage.getInstance();
+        imgStorage = mStorage.getReference();
         mFirestore = FirebaseFirestore.getInstance();
         FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
                 .setTimestampsInSnapshotsEnabled(true)
@@ -159,7 +167,8 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 DocumentSnapshot documentSnapshot = task.getResult();
                 guideNum = documentSnapshot.getLong("numGuides").intValue();
-                guideNum++;// increments guideNum by 1 because we are making a new guide so there is 1 more than before
+
+                if (mode.equals("CREATE"))guideNum++;// increments guideNum by 1 because we are making a new guide so there is 1 more than before
 
                 //sets these 2 collections to point to the folders for the guide data of the new guide. for later uploading
                 textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
@@ -259,6 +268,7 @@ public class CreateNewGuide extends AppCompatActivity {
         final CollectionReference guideText = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+key + "/textData");
         final CollectionReference guideImgs = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+key + "/imageData");
 
+        //get the title
         guideToEdit.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -337,8 +347,9 @@ public class CreateNewGuide extends AppCompatActivity {
                             @Override
                             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                                 if (task.isSuccessful()){
-                                    //get each pic's data, make an object for it, and add it to the data list
+                                    //get each pic's data, make an object for it, add it to the data list, then load the image
                                     for (QueryDocumentSnapshot snap: task.getResult()){
+                                        //get the data from fire store and add a data object to the data list
                                         String id = snap.get("id").toString();
                                         String guideId = "";
                                         String stepTitle = snap.get("stepTitle").toString();
@@ -353,7 +364,11 @@ public class CreateNewGuide extends AppCompatActivity {
                                         data.setImgPath(imgPath);
                                         selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);;
                                         addObjectToDataListInOrder(data);
-                                        addImage(Uri.parse(uri));
+
+                                        //load the image from storage into the layout
+                                        String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + id + ".png";
+                                        StorageReference imageToLoad = imgStorage.child(path);
+                                        loadImage(imageToLoad);
                                     }
                                 }
                             }
@@ -368,6 +383,51 @@ public class CreateNewGuide extends AppCompatActivity {
 
             }
         });
+    }
+
+    /**
+     * Loads an image from Firebase Storage into a new image view
+     * @param ref of the image we are getting from storage
+     */
+    public void loadImage(StorageReference ref){
+        try{
+            //Creates the new imageview
+            final ImageView newImgView = new ImageView(CreateNewGuide.this);
+            //Glide.with(CreateNewGuide.this).load(imageUri).into(newImgView);
+            Glide.with(CreateNewGuide.this)
+                    .asBitmap()
+                    .load(ref)
+                    .into(new SimpleTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                            newImgView.setImageBitmap(resource);
+
+                            //gets the mediapath of the image and parses it into a uri we can work with
+                            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                            resource.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+                            String path = MediaStore.Images.Media.insertImage(CreateNewGuide.this.getContentResolver(), resource, UUID.randomUUID().toString() + ".png", "drawing");
+                            final Uri imageUri = Uri.parse(path);
+                            newImgView.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    displayImageOptionMenu(imageUri, v);
+                                }
+                            });
+                        }
+                    });
+
+            //fits the image to the sides, fixes the view bounds, adds padding
+            newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            newImgView.setAdjustViewBounds(true);
+            newImgView.setPadding(3, 10, 3, 10);
+
+            //add it to the layout
+            selectedLayout.addView(newImgView, selectedLayout.getChildCount() - 2);
+            currentIndex++;
+
+        }catch(Exception ex){
+            Log.i("IMAGE ERROR: ", ex.getMessage());
+        }
     }
 
     public void onClickStep(View view) {
@@ -390,38 +450,68 @@ public class CreateNewGuide extends AppCompatActivity {
         guideRef.set(newGuide);
 
         //informs the user that the save process is starting
-        Toast.makeText(CreateNewGuide.this,"Saving to storage...\n Please wait",Toast.LENGTH_LONG).show();
+        Toast.makeText(CreateNewGuide.this,"Saving...\nPlease wait",Toast.LENGTH_LONG).show();
 
-        //all data is stored in custom objects and added to an array list, we iterate through that to upload.
-        //the order the objects are stored in the array is the order they're laid out in the layout.
-        for (int i = 0; i < mGuideDataArrayList.size(); i++){
-            //gets the next data object and uploads depending on the type of data we have
-            GuideData dataToSave = mGuideDataArrayList.get(i);
-            if (dataToSave.getType().equals("Text")){
-                TextData textDataPkg = (TextData) dataToSave;
-                //textDataPkg.setPlacement(i);//sets the placement to the current index
-                uploadText(textDataPkg);
-            }else if (dataToSave.getType().equals("Picture")){
-                PictureData picDataPkg = (PictureData)dataToSave;
-                //picDataPkg.setPlacement(i);
-                String picDataPkgUri = picDataPkg.getUri();
-                uploadImage(picDataPkg,picDataPkgUri);
+        textData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()){
+                    for (DocumentSnapshot doc: task.getResult()){
+                        doc.getReference().delete();
+                    }
+                    //all data is stored in custom objects and added to an array list, we iterate through that to upload.
+                    //the order the objects are stored in the array is the order they're laid out in the layout.
+                    for (int i = 0; i < mGuideDataArrayList.size(); i++){
+                        //gets the next data object and uploads depending on the type of data we have
+                        GuideData dataToSave = mGuideDataArrayList.get(i);
+                        if (dataToSave.getType().equals("Text")){
+                            TextData textDataPkg = (TextData) dataToSave;
+                            //textDataPkg.setPlacement(i);//sets the placement to the current index
+                            uploadText(textDataPkg);
+                        }
+                    }
+                }
+            }
+        });
+
+        picData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    for (DocumentSnapshot doc : task.getResult()) {
+                        doc.getReference().delete();
+                    }
+
+                    //all data is stored in custom objects and added to an array list, we iterate through that to upload.
+                    //the order the objects are stored in the array is the order they're laid out in the layout.
+                    for (int i = 0; i < mGuideDataArrayList.size(); i++){
+                        //gets the next data object and uploads depending on the type of data we have
+                        GuideData dataToSave = mGuideDataArrayList.get(i);
+                        if (dataToSave.getType().equals("Picture")){
+                            PictureData picDataPkg = (PictureData)dataToSave;
+                            //picDataPkg.setPlacement(i);
+                            String picDataPkgUri = picDataPkg.getUri();
+                            uploadImage(picDataPkg,picDataPkgUri);
+                        }
+                    }
+                }
+            }
+        });
+
+        //delete any documents from the db that we no longer want
+        if (!deletedDataList.isEmpty()){
+            for (DocumentReference doc: deletedDataList){
+                doc.delete();
             }
         }
 
         //update the users guide count so the guides can be named differently, 'guide0', 'guide1', etc
         userRef.update("numGuides", guideNum);
+        userRef.update("key", userRef.getId());
         Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
         for (int i = 0; i< mGuideDataArrayList.size();i++){
             Log.i("GUIDEDATA OBJ: ",mGuideDataArrayList.get(i).getType());
         }
-    }
-
-    /**
-     * Sets guide status to published and allows other users to see it
-     */
-    private void publishGuide(){
-        newGuide.setPublishedStatus(true);
     }
 
     /**
@@ -462,6 +552,7 @@ public class CreateNewGuide extends AppCompatActivity {
     public boolean addImage(final Uri imageUri){
         try{
             //Creates the new imageview
+
             final ImageView newImgView = new ImageView(CreateNewGuide.this);
             //Glide.with(CreateNewGuide.this).load(imageUri).into(newImgView);
             Glide.with(CreateNewGuide.this)
@@ -479,6 +570,12 @@ public class CreateNewGuide extends AppCompatActivity {
                             picData.setType("Picture");
                             picData.setStepNumber((int)selectedLayout.getTag());
                             picData.setStepTitle(title.getText().toString());
+                            picData.setId(newGuide.getId()+"IMG"+mGuideDataArrayList.size());
+
+                            //Adds the tag to the new imageview (the tag is the step number + dataId)
+                            String viewTag = selectedLayout.getTag().toString() + "--" + picData.getId();
+                            newImgView.setTag(viewTag);
+                            Log.i("IMG TAG", ""+newImgView.getTag());
                             //if we are swapping out a picture, replace the old location with new pic, otherwise just add it to end
                             if (isSwapping){
                                 //picData.setPlacement(currentPictureSwap);
@@ -498,10 +595,6 @@ public class CreateNewGuide extends AppCompatActivity {
                     displayImageOptionMenu(imageUri, v);
                 }
             });
-
-            //Adds the tag to the new imageview (the tag is the step number)
-            newImgView.setTag(selectedLayout.getTag());
-            Log.i("IMG TAG", ""+newImgView.getTag());
 
             //fits the image to the sides, fixes the view bounds, adds padding
             newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -531,7 +624,7 @@ public class CreateNewGuide extends AppCompatActivity {
      * @param desc of the new step block
      * @return true if success, otherwise false
      */
-    //TODO: Check the placements given to each data object as they are made
+
     public boolean addStep(String title, String desc){
         try{
             final LinearLayout newStepBlock = new LinearLayout(CreateNewGuide.this);
@@ -676,7 +769,8 @@ public class CreateNewGuide extends AppCompatActivity {
         try{
             //Creates a new textview and sets the tag (the tag is the current step number)
             TextView mDescription = new TextView(CreateNewGuide.this);
-            mDescription.setTag(data.getStepNumber());
+            String viewTag = selectedLayout.getTag().toString() + "--" + data.getId();
+            mDescription.setTag(viewTag);
 
             mDescription.setTextSize(data.getSize());
             mDescription.setTextColor(data.getColor());
@@ -710,9 +804,23 @@ public class CreateNewGuide extends AppCompatActivity {
      */
     private boolean addDescription(String newStepDesc) {
         try{
+            LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
+            TextView title = (TextView)titleBlock.getChildAt(1);
+            TextData dataToAdd = new TextData();
+            dataToAdd.setType("Text");
+            //dataToAdd.setPlacement(mGuideDataArrayList.size());
+            dataToAdd.setStepNumber((int) selectedLayout.getTag());
+            dataToAdd.setStepTitle(title.getText().toString());
+            dataToAdd.setText(newStepDesc);
+            dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
+
+            dataToAdd.setId(newGuide.getId() +"TEXT"+mGuideDataArrayList.size());
             //Creates a new textview and sets the tag (the tag is the current step number)
             TextView mDescription = new TextView(CreateNewGuide.this);
-            mDescription.setTag(selectedLayout.getTag());
+            //set tag to the stepNum as the first section for proper placement in data list
+            //set second section of tag to data id, so we can get the view to manipulate it with the data object simultaneously
+            String viewTag = selectedLayout.getTag().toString() + "--" + dataToAdd.getId();
+            mDescription.setTag(viewTag);
 
             mDescription.setTextSize(17);
             mDescription.setTextColor(Color.DKGRAY);
@@ -725,18 +833,9 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
             });
 
-            //adds the new textblock with the text to the selected step
+            //adds the new text block with the text to the selected step
             selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
-            LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
-            TextView title = (TextView)titleBlock.getChildAt(1);
-            TextData dataToAdd = new TextData();
-            dataToAdd.setType("Text");
-            //dataToAdd.setPlacement(mGuideDataArrayList.size());
-            dataToAdd.setStepNumber((int) selectedLayout.getTag());
-            dataToAdd.setStepTitle(title.getText().toString());
-            dataToAdd.setText(newStepDesc);
-            dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
-            dataToAdd.setId(dataToAdd.getGuideId() + "TEXT" + mGuideDataArrayList.size());
+
             addObjectToDataListInOrder(dataToAdd);
 
         }catch (Exception ex){
@@ -768,10 +867,10 @@ public class CreateNewGuide extends AppCompatActivity {
 
                 //if we found the items proper placement in the step, i.e. its right before the current block in the guide layout
                 if ((data.getPlacement() != 0 ) && (currentObj.getPlacement() >= data.getPlacement())){
-                    String newDataId = "";
-                    if (data.getType().equals("Text"))newDataId=newGuide.getId()+"TEXT"+mGuideDataArrayList.size();
-                    else if (data.getType().equals("Picture"))newDataId=newGuide.getId()+"IMG"+mGuideDataArrayList.size();
-                    data.setId(newDataId);
+                    //String newDataId = "";
+                    //if (data.getType().equals("Text"))newDataId=newGuide.getId()+"TEXT"+mGuideDataArrayList.size();
+                    //else if (data.getType().equals("Picture"))newDataId=newGuide.getId()+"IMG"+mGuideDataArrayList.size();
+                    //data.setId(newDataId);
                     mGuideDataArrayList.add(i-1,data);
                     break;
                 }
@@ -779,10 +878,6 @@ public class CreateNewGuide extends AppCompatActivity {
                 //new text is always added to the end of the step by default, we can only know when we reached it when
                 //we iterate onto the first object of the next step.
                 if (foundCorrectStep && (currentObj.getStepNumber() > num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
-                    String newDataId = "";
-                    if (data.getType().equals("Text"))newDataId=newGuide.getId()+"TEXT"+mGuideDataArrayList.size();
-                    else if (data.getType().equals("Picture"))newDataId=newGuide.getId()+"IMG"+mGuideDataArrayList.size();
-                    data.setId(newDataId);
                     data.setPlacement(i);
                     mGuideDataArrayList.add(i,data);
                     mGuideDataArrayList.remove(currentObj);
@@ -797,10 +892,6 @@ public class CreateNewGuide extends AppCompatActivity {
             if (!mGuideDataArrayList.contains(data)){
                 data.setStepNumber(num);
                 data.setPlacement(mGuideDataArrayList.size());
-                String newDataId = "";
-                if (data.getType().equals("Text"))newDataId=newGuide.getId()+"TEXT"+mGuideDataArrayList.size();
-                else if (data.getType().equals("Picture"))newDataId=newGuide.getId()+"IMG"+mGuideDataArrayList.size();
-                data.setId(newDataId);
                 mGuideDataArrayList.add(data);
             }
         }catch (Exception ex){
@@ -822,8 +913,10 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Delete Picture")){
                     //Remove picture, indexes shift up
+                    String dataId = (String)v.getTag();
+                    String[] strings = dataId.split("--");
+                    removeFromDataList(strings[1]);
                     ((LinearLayout) v.getParent()).removeView(v);
-                    //TODO: when the view is deleted we should also remove the data object of the view from the list
                 }else if(items[i].equals("View Picture")){
                     //calls the activty to view the picture and passes the URI
                     Intent intent = new Intent(CreateNewGuide.this, ViewPhoto.class);
@@ -851,6 +944,31 @@ public class CreateNewGuide extends AppCompatActivity {
         builder.show();
     }
 
+    private void removeFromDataList(String dataId) {
+        boolean elementDeleted = false;
+        GuideData dataToDelete = new GuideData();
+        //go through list until we have found the element we want to delete
+        //once it is deleted, we need to lower the placement # of all elements after it by 1
+        for (GuideData data: mGuideDataArrayList){
+            if (elementDeleted){
+                int newPlacement = data.getPlacement()-1;
+                data.setPlacement(newPlacement);
+            }else{
+                if (data.getId().equals(dataId)){
+                    //mGuideDataArrayList.remove(data);
+                    dataToDelete = data;//get reference to the object we want to remove
+                    elementDeleted = true;
+                }
+            }
+        }
+
+        //add the ref to the list, if we are editing a guide previously saved, then we will delete any docs that we no longer want in the db
+        DocumentReference deletedDataRef = mFirestore.document(textData+"/textBlock-"+dataToDelete.getId());
+        deletedDataList.add(deletedDataRef);
+
+        mGuideDataArrayList.remove(dataToDelete);
+    }
+
     /**
      * Builds and displays a menu of options for selecting a text block in the guide
      */
@@ -863,9 +981,13 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Delete Text")) {
-                    //Removes the selected Textview
+                    //Removes the selected Textview from the layout and its corresponding data obj from our data list
+                    //TODO: After deleting a step, the data list disappears, and the tag just becomes the step number, WTF
+                    Log.i("BORBOT TAG",v.getTag().toString());
+                    String dataId = (String)v.getTag();
+                    String[] strings = dataId.split("--");
+                    removeFromDataList(strings[1]);
                     ((LinearLayout) v.getParent()).removeView(v);
-                    //TODO: when the view is deleted we should also remove the data object of the view from the list
                 }else if(items[i].equals("Edit Text")){
                     //Stores the selected text view to edit later
                     selectedTextView = (TextView)v;
@@ -965,12 +1087,14 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 if (task.isSuccessful()){
                     DocumentSnapshot documentSnapshot = task.getResult();
+                    Map<String,Object> dataToSave = new HashMap<>();
+                    dataToSave.put("stepNumber",data.getStepNumber());
+                    dataToSave.put("stepTitle",data.getStepTitle());
                     if (!documentSnapshot.exists()){
                         //step doesn't exist so we create it
-                        Map<String,Object> dataToSave = new HashMap<>();
-                        dataToSave.put("stepNumber",data.getStepNumber());
-                        dataToSave.put("stepTitle",data.getStepTitle());
                         step.set(dataToSave);
+                    }else{
+                        step.update(dataToSave);
                     }
                 }
             }
@@ -986,14 +1110,8 @@ public class CreateNewGuide extends AppCompatActivity {
 
         //Check to see if the current step has an object saved in the db
         uploadStep(img);
-
         //Uri newUri = Uri.fromFile(new File(picUri));
         Uri newUri = Uri.parse(picUri);
-        /*
-        TODO: Uploading images should be given its own background thread so that the app does not freeze for a long time
-        TODO: Look up what threads are and how to use them
-        TODO: When uploading images, only the last image has the imgPath saved to the object, dont know why (all images are still uploaded to storage)
-         */
 
         Glide.with(CreateNewGuide.this)
                 .asBitmap()
@@ -1008,7 +1126,7 @@ public class CreateNewGuide extends AppCompatActivity {
                         byte[] data = baos.toByteArray();//outstream is converted into byte array for upload
 
                         //the path of the image in firebase storage, is set as the imgPath for our PictureData obj for retrieval purposes
-                        String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + UUID.randomUUID() + ".png";
+                        String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + img.getId() + ".png";
                         img.setImgPath(path);
                         StorageReference imgRef = mStorage.getReference(path);
 
@@ -1035,6 +1153,12 @@ public class CreateNewGuide extends AppCompatActivity {
                                 Intent intent = new Intent(CreateNewGuide.this, ErrorActivity.class);
                                 intent.putExtra("ERRORS", e.getLocalizedMessage());
                                 startActivity(intent);
+                            }
+                        }).addOnProgressListener(CreateNewGuide.this, new OnProgressListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                                //display the progress to the user
+                                long progress = taskSnapshot.getBytesTransferred();
                             }
                         });
                     }
@@ -1124,14 +1248,30 @@ public class CreateNewGuide extends AppCompatActivity {
                         LinearLayout titleLayout = ((LinearLayout) v.getParent());
                         LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());
 
-                        //iterates through the data list and removes all elements of the deleted step
-                        Iterator<GuideData> iterator = mGuideDataArrayList.iterator();
-                        while (iterator.hasNext()){
-                            GuideData data = iterator.next();
-                            if (data.getStepNumber() == (int)stepLayout.getTag()){
-                                iterator.remove();
+                        ArrayList<GuideData> newDataList = new ArrayList<GuideData>();
+
+                        for (int i =0;i<mGuideDataArrayList.size();i++){
+                            GuideData data = mGuideDataArrayList.get(i);
+                            if (data.getStepNumber() !=(int)stepLayout.getTag()){
+                                newDataList.add(data);
                             }
                         }
+
+                        mGuideDataArrayList = newDataList;
+
+                        //iterates through the data list and removes all elements of the deleted step
+                        /*Iterator<GuideData> iterator = mGuideDataArrayList.iterator();
+                        try{
+                            while (iterator.hasNext()){
+                                GuideData data = iterator.next();
+                                if (data.getStepNumber() == (int)stepLayout.getTag()){
+                                    iterator.remove();
+                                }
+                            }
+                        }catch(Exception ex){
+                            Log.e("FUCKING ERRORS:",ex.getMessage());
+                        }
+*/
                         ((LinearLayout) stepLayout.getParent()).removeView(stepLayout);
 
                         reorderSteps();
@@ -1189,8 +1329,8 @@ public class CreateNewGuide extends AppCompatActivity {
                 editDescription(newDesc);
             }else if (requestCode == PESDK_RESULT){
                 String editedImage = data.getStringExtra("resultURI");
-                Uri editiedUri = Uri.parse(editedImage);
-                addImage(editiedUri);
+                Uri editedUri = Uri.parse(editedImage);
+                addImage(editedUri);
             }
         }
     }

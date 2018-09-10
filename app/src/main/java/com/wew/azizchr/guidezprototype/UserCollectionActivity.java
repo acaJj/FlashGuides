@@ -81,6 +81,7 @@ public class UserCollectionActivity extends AppCompatActivity {
                             Intent intent = new Intent(UserCollectionActivity.this,CreateNewGuide.class);
                             //the guide Id is used for lookup on which specific guide to get while EDIT mode tells the activity we are not making a guide from scratch
                             intent.putExtra("GUIDEID",item.getId());
+                            intent.putExtra("GUIDE_TITLE",item.getTitle());
                             intent.putExtra("Key",item.getKey());
                             intent.putExtra("MODE","EDIT");
                             startActivity(intent);
