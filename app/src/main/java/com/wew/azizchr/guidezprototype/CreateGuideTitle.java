@@ -1,6 +1,8 @@
 package com.wew.azizchr.guidezprototype;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -8,6 +10,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class CreateGuideTitle extends AppCompatActivity {
 
@@ -31,6 +34,19 @@ public class CreateGuideTitle extends AppCompatActivity {
     }
 
     public void onContinueClick(View view) {
+
+        if (mGuideTitle.getText().toString().isEmpty()){
+            new AlertDialog.Builder(CreateGuideTitle.this)
+                    .setMessage("You have to enter a title first fool")
+                    .setCancelable(false)
+                    .setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                        }
+                    })
+                    .show();
+        }
 
         Intent intent = new Intent(CreateGuideTitle.this,CreateNewGuide.class);
         intent.putExtra("GUIDE_TITLE", mGuideTitle.getText().toString());

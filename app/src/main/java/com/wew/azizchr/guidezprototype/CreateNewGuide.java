@@ -227,6 +227,7 @@ public class CreateNewGuide extends AppCompatActivity {
                                 public void onClick(DialogInterface dialog, int id) {
                                     saveGuide();
                                     newGuide.setPublishedStatus(true);
+                                    Toast.makeText(CreateNewGuide.this,"You've been published!",Toast.LENGTH_SHORT).show();
                                 }
                             })
                             .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -303,7 +304,7 @@ public class CreateNewGuide extends AppCompatActivity {
         guideSteps.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                int stepNum = 0;
+                int stepNum;
                 if (task.isSuccessful()){
                     //for each step in the guide, get its info and recreate the step
                     for (QueryDocumentSnapshot doc: task.getResult()){
@@ -334,7 +335,7 @@ public class CreateNewGuide extends AppCompatActivity {
                                         boolean italic = (boolean)snap.get("italic");
                                         TextData data = new TextData(type,placement,guideId,stepTitle,num,text,bold,italic,color,size);
                                         data.setId(id);
-                                        selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);
+                                        //selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);
                                         addObjectToDataListInOrder(data);
                                         addDescription(data);
                                     }
@@ -362,13 +363,16 @@ public class CreateNewGuide extends AppCompatActivity {
                                         data.setStep(num,stepTitle);
                                         data.setUri(uri);
                                         data.setImgPath(imgPath);
-                                        selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);;
+                                       // selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);
                                         addObjectToDataListInOrder(data);
 
                                         //load the image from storage into the layout
                                         String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + id + ".png";
                                         StorageReference imageToLoad = imgStorage.child(path);
-                                        loadImage(imageToLoad);
+                                        //get reference to the layout we are adding the picture to
+                                        int dataStep = data.getStepNumber() - 1;
+                                        LinearLayout theSelectedLayout = (LinearLayout) layoutFeed.getChildAt(dataStep);
+                                        loadImage(imageToLoad, theSelectedLayout);
                                     }
                                 }
                             }
@@ -389,7 +393,7 @@ public class CreateNewGuide extends AppCompatActivity {
      * Loads an image from Firebase Storage into a new image view
      * @param ref of the image we are getting from storage
      */
-    public void loadImage(StorageReference ref){
+    public void loadImage(StorageReference ref, LinearLayout layout){
         try{
             //Creates the new imageview
             final ImageView newImgView = new ImageView(CreateNewGuide.this);
@@ -422,7 +426,8 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setPadding(3, 10, 3, 10);
 
             //add it to the layout
-            selectedLayout.addView(newImgView, selectedLayout.getChildCount() - 2);
+
+            layout.addView(newImgView, layout.getChildCount() - 2);
             currentIndex++;
 
         }catch(Exception ex){
@@ -642,10 +647,6 @@ public class CreateNewGuide extends AppCompatActivity {
             mStepTitle.setTypeface(null, Typeface.BOLD);
             mStepTitle.setTextSize(24);
             mStepTitle.setTextColor(Color.BLACK);
-//            TextView mStepDesc = new TextView(CreateNewGuide.this);
-//            mStepDesc.setTextSize(17);
-//            mStepDesc.setTextColor(Color.DKGRAY);
-//            mStepDesc.setPadding(5, 10, 5, 10);
 
             newTitleBlock.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -687,34 +688,14 @@ public class CreateNewGuide extends AppCompatActivity {
             String newStepNum = "Step " +num + " : ";
             mStepNumber.setText(newStepNum);
             mStepTitle.setText(title);
-//            mStepDesc.setText(desc);
-//            mStepDesc.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    displayTextOptionsMenu(v);
-//                }
-//            });
-
-            //Set up the views to show everything
             newTitleBlock.addView(mStepNumber);
             newTitleBlock.addView(mStepTitle);
             newStepBlock.addView(newTitleBlock);
-//            newStepBlock.addView(mStepDesc);
             newStepBlock.addView(addImage);
             newStepBlock.addView(addDesc);
 
             //Adds the new step block to the end of the main layout, before the button
             layoutFeed.addView(newStepBlock, layoutFeed.getChildCount()-1);
-
-            //creates an object which holds all the data for the text in the step
-//            TextData mTextData = new TextData();
-//            mTextData.setStepNumber(num);
-//            mTextData.setStepTitle(title);
-//            mTextData.setText(desc);
-//            mTextData.setPlacement(currentIndex);
-//            mTextData.setType("Text");
-            //adds the textdata object to our arraylist of data objects for firebase upload
-//            mGuideDataArrayList.add(mTextData);
 
             selectedLayout = newStepBlock;
             //adds the starting description to the step block if not null/empty
@@ -769,7 +750,9 @@ public class CreateNewGuide extends AppCompatActivity {
         try{
             //Creates a new textview and sets the tag (the tag is the current step number)
             TextView mDescription = new TextView(CreateNewGuide.this);
-            String viewTag = selectedLayout.getTag().toString() + "--" + data.getId();
+            int dataStep = data.getStepNumber() - 1;
+            LinearLayout theSelectedLayout = (LinearLayout) layoutFeed.getChildAt(dataStep);
+            String viewTag = theSelectedLayout.getTag().toString() + "--" + data.getId();
             mDescription.setTag(viewTag);
 
             mDescription.setTextSize(data.getSize());
@@ -784,9 +767,7 @@ public class CreateNewGuide extends AppCompatActivity {
             });
 
             //adds the new textblock with the text to the selected step
-            selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
-
-            //addObjectToDataListInOrder(data);
+            theSelectedLayout.addView(mDescription, theSelectedLayout.getChildCount() - 2);
 
         }catch (Exception ex){
             ex.getMessage();
@@ -854,7 +835,9 @@ public class CreateNewGuide extends AppCompatActivity {
      */
     private boolean addObjectToDataListInOrder(GuideData data){
         try{
-            int num = (int)selectedLayout.getTag();//get the tag of the stepLayout, which is the view's id
+            int dataStep = data.getStepNumber() - 1;
+            LinearLayout theSelectedLayout = (LinearLayout) layoutFeed.getChildAt(dataStep);
+            int num = (int)theSelectedLayout.getTag();//get the tag of the stepLayout, which is the view's id
             boolean foundCorrectStep = false;//when we found the step we want to add text to, set to true
             //add the new data object to the data list in the appropriate spot
             for (int i = 0; i < mGuideDataArrayList.size();i++){
