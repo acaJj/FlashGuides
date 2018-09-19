@@ -2,9 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.wew.azizchr.guidezprototype">
 
-    <uses-permission
-        android:name="android.permission.CAMERA"
-        android:required="true" />
+    <uses-permission android:name="android.permission.CAMERA"
+        android:requiredFeature="true"></uses-permission>
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:required="true" />
