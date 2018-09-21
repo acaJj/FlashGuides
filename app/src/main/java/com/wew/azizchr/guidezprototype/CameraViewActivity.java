@@ -27,6 +27,10 @@ import ly.img.android.pesdk.ui.model.state.UiConfigOverlay;
 import ly.img.android.pesdk.ui.model.state.UiConfigText;
 import ly.img.android.pesdk.ui.utils.PermissionRequest;
 */
+
+/*
+TODO: GET RID OF THIS
+ */
 public class CameraViewActivity extends Activity  {
 /*
     public CameraPreviewActivity camera;

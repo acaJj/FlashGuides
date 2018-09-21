@@ -13,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
@@ -333,7 +334,8 @@ public class CreateNewGuide extends AppCompatActivity {
                                         int color = snap.getLong("color").intValue();
                                         boolean bold = (boolean)snap.get("bold");
                                         boolean italic = (boolean)snap.get("italic");
-                                        TextData data = new TextData(type,placement,guideId,stepTitle,num,text,bold,italic,color,size);
+                                        TextData data = new TextData(type,placement,guideId,stepTitle,num);
+                                        data.stringToBlob(text);
                                         data.setId(id);
                                         //selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);
                                         addObjectToDataListInOrder(data);
@@ -671,7 +673,7 @@ public class CreateNewGuide extends AppCompatActivity {
             addDesc.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     selectedLayout = newStepBlock;
-                    Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
+                    Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
                     intent.putExtra("CurrStep", layoutFeed.getChildCount());
                     intent.putExtra("isEditing", false);
                     startActivityForResult(intent,WRITE_DESC);
@@ -718,18 +720,17 @@ public class CreateNewGuide extends AppCompatActivity {
      */
     private boolean editDescription(String newStepDesc){
         try {
-            selectedTextView.setText(newStepDesc);
+            selectedTextView.setText(Html.fromHtml(newStepDesc));
             int num = (int)selectedTextView.getTag();//get the tag of the textview, which is the view's id
             //iterate through the data list and update the view in it with the new text
             for (int i = 0; i < mGuideDataArrayList.size();i++){
                 //we are only updating text data here, if the type is picture then go to next iteration
-                if (mGuideDataArrayList.get(i).getType() == "Picture"){
-                    continue;
-                }
+                if (mGuideDataArrayList.get(i).getType() == "Picture") continue;
+
                 //Cast the GuideData as TextData so we can change the text
                 TextData data = (TextData)mGuideDataArrayList.get(i);
                 if (data.getStepNumber() == num){
-                    data.setText(newStepDesc);
+                    data.stringToBlob(newStepDesc);
                     break;
                 }
             }
@@ -758,7 +759,7 @@ public class CreateNewGuide extends AppCompatActivity {
             mDescription.setTextSize(data.getSize());
             mDescription.setTextColor(data.getColor());
             mDescription.setPadding(5, 10, 5, 10);
-            mDescription.setText(data.getText());
+            mDescription.setText(Html.fromHtml(data.getStringFromBlob()));
             mDescription.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -792,7 +793,7 @@ public class CreateNewGuide extends AppCompatActivity {
             //dataToAdd.setPlacement(mGuideDataArrayList.size());
             dataToAdd.setStepNumber((int) selectedLayout.getTag());
             dataToAdd.setStepTitle(title.getText().toString());
-            dataToAdd.setText(newStepDesc);
+            dataToAdd.stringToBlob(newStepDesc);
             dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
 
             dataToAdd.setId(newGuide.getId() +"TEXT"+mGuideDataArrayList.size());
@@ -806,7 +807,7 @@ public class CreateNewGuide extends AppCompatActivity {
             mDescription.setTextSize(17);
             mDescription.setTextColor(Color.DKGRAY);
             mDescription.setPadding(5, 10, 5, 10);
-            mDescription.setText(newStepDesc);
+            mDescription.setText(Html.fromHtml(newStepDesc));
             mDescription.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -975,8 +976,9 @@ public class CreateNewGuide extends AppCompatActivity {
                     //Stores the selected text view to edit later
                     selectedTextView = (TextView)v;
                     //Starts a new activity
+                    //TODO: Have to find way to get text from a webview
                     String currText = selectedTextView.getText().toString();
-                    Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
+                    Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
                     intent.putExtra("CurrText", currText);
                     intent.putExtra("isEditing", true);
                     startActivityForResult(intent,EDIT_DESC);
@@ -1040,12 +1042,14 @@ public class CreateNewGuide extends AppCompatActivity {
         builder.show();
     }
 
+    //TODO:These 3 upload functions should be put into a firestore connection factory class
+
     /**
      * Uploads a text block to the firestore database
      * @param text object to be uploaded
      */
     public void uploadText(TextData text){
-        if (text.getText().isEmpty()){return;}
+        if (text.getStringFromBlob().isEmpty()){return;}
 
         //Check to see if the current step has an object saved in the db
         uploadStep(text);
@@ -1302,13 +1306,13 @@ public class CreateNewGuide extends AppCompatActivity {
                 if (data == null){
                     return;
                 }
-                newDesc = AddDescriptionActivity.getNewDesc(data);
+                newDesc = TextBlockWriterActivity.getNewDesc(data);
                 addDescription(newDesc);
             }else if (requestCode == EDIT_DESC){
                 if (data == null){
                     return;
                 }
-                newDesc = AddDescriptionActivity.getNewDesc(data);
+                newDesc = TextBlockWriterActivity.getNewDesc(data);
                 editDescription(newDesc);
             }else if (requestCode == PESDK_RESULT){
                 String editedImage = data.getStringExtra("resultURI");
