@@ -1,5 +1,6 @@
 package com.wew.azizchr.guidezprototype;
 
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -13,11 +14,16 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.InputType;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -92,7 +98,8 @@ public class CreateNewGuide extends AppCompatActivity {
     private CameraImagePicker camera;
     public LinearLayout layoutFeed;
     public LinearLayout selectedLayout;
-    public TextView selectedTextView;
+    //public TextView selectedTextView;
+    public WebView selectedWebView; //changed from text to web view for better memory consumption and text formatting
 
     TextView mNewGuideTitle;
 
@@ -242,6 +249,20 @@ public class CreateNewGuide extends AppCompatActivity {
         });
     }
 
+    //JavaScript interface used to get html content from our webviews so that we can do stuff with them like editing
+    public class WebViewJavascriptInterface{
+        private String Html;
+
+        public WebViewJavascriptInterface(String html){
+            this.Html = html;
+        }
+
+        @JavascriptInterface
+        public void processContent(String htmlContent){
+            Html = htmlContent;
+        }
+    }
+
     /**
      * sets initial guide parameters depending on what mode we enter the editor in
      * @param bundle contains info about the guide like its id.
@@ -333,7 +354,8 @@ public class CreateNewGuide extends AppCompatActivity {
                                         int color = snap.getLong("color").intValue();
                                         boolean bold = (boolean)snap.get("bold");
                                         boolean italic = (boolean)snap.get("italic");
-                                        TextData data = new TextData(type,placement,guideId,stepTitle,num,text,bold,italic,color,size);
+                                        TextData data = new TextData(type,placement,guideId,stepTitle,num);
+                                        data.stringToBlob(text);
                                         data.setId(id);
                                         //selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);
                                         addObjectToDataListInOrder(data);
@@ -441,7 +463,6 @@ public class CreateNewGuide extends AppCompatActivity {
         startActivityForResult(intent,WRITE_STEP);
     }
 
-
     public void onClickGuideTitle(View view) {
         editTitle(view);
     }
@@ -547,7 +568,6 @@ public class CreateNewGuide extends AppCompatActivity {
         });
         builder.show();
     }
-
 
     /**
      * Creates and adds a new ImageView to the guide's layoutFeed
@@ -671,7 +691,7 @@ public class CreateNewGuide extends AppCompatActivity {
             addDesc.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     selectedLayout = newStepBlock;
-                    Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
+                    Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
                     intent.putExtra("CurrStep", layoutFeed.getChildCount());
                     intent.putExtra("isEditing", false);
                     startActivityForResult(intent,WRITE_DESC);
@@ -718,18 +738,17 @@ public class CreateNewGuide extends AppCompatActivity {
      */
     private boolean editDescription(String newStepDesc){
         try {
-            selectedTextView.setText(newStepDesc);
-            int num = (int)selectedTextView.getTag();//get the tag of the textview, which is the view's id
+            selectedWebView.loadData(newStepDesc,"text/html","UTF-8");
+            int num = (int)selectedWebView.getTag();//get the tag of the textview, which is the view's id
             //iterate through the data list and update the view in it with the new text
             for (int i = 0; i < mGuideDataArrayList.size();i++){
                 //we are only updating text data here, if the type is picture then go to next iteration
-                if (mGuideDataArrayList.get(i).getType() == "Picture"){
-                    continue;
-                }
+                if (mGuideDataArrayList.get(i).getType() == "Picture") continue;
+
                 //Cast the GuideData as TextData so we can change the text
                 TextData data = (TextData)mGuideDataArrayList.get(i);
                 if (data.getStepNumber() == num){
-                    data.setText(newStepDesc);
+                    data.stringToBlob(newStepDesc);
                     break;
                 }
             }
@@ -749,20 +768,25 @@ public class CreateNewGuide extends AppCompatActivity {
     private boolean addDescription(TextData data){
         try{
             //Creates a new textview and sets the tag (the tag is the current step number)
-            TextView mDescription = new TextView(CreateNewGuide.this);
+            WebView mDescription = new WebView(CreateNewGuide.this);
             int dataStep = data.getStepNumber() - 1;
             LinearLayout theSelectedLayout = (LinearLayout) layoutFeed.getChildAt(dataStep);
             String viewTag = theSelectedLayout.getTag().toString() + "--" + data.getId();
             mDescription.setTag(viewTag);
 
-            mDescription.setTextSize(data.getSize());
-            mDescription.setTextColor(data.getColor());
+            //mDescription.setTextSize(data.getSize());
+            //mDescription.setTextColor(data.getColor());
             mDescription.setPadding(5, 10, 5, 10);
-            mDescription.setText(data.getText());
-            mDescription.setOnClickListener(new View.OnClickListener() {
+            mDescription.loadData(data.getStringFromBlob(),"text/html","UTF-8");
+            mDescription.setOnTouchListener(new View.OnTouchListener() {
                 @Override
-                public void onClick(View v) {
-                    displayTextOptionsMenu(v);
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    switch (motionEvent.getAction()){
+                        case MotionEvent.ACTION_UP:
+                            view.performClick();
+                            displayTextOptionsMenu(view);
+                    }
+                    return true;
                 }
             });
 
@@ -792,25 +816,31 @@ public class CreateNewGuide extends AppCompatActivity {
             //dataToAdd.setPlacement(mGuideDataArrayList.size());
             dataToAdd.setStepNumber((int) selectedLayout.getTag());
             dataToAdd.setStepTitle(title.getText().toString());
-            dataToAdd.setText(newStepDesc);
+            dataToAdd.stringToBlob(newStepDesc);
             dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
 
             dataToAdd.setId(newGuide.getId() +"TEXT"+mGuideDataArrayList.size());
             //Creates a new textview and sets the tag (the tag is the current step number)
-            TextView mDescription = new TextView(CreateNewGuide.this);
+            WebView mDescription = new WebView(CreateNewGuide.this);
             //set tag to the stepNum as the first section for proper placement in data list
             //set second section of tag to data id, so we can get the view to manipulate it with the data object simultaneously
             String viewTag = selectedLayout.getTag().toString() + "--" + dataToAdd.getId();
             mDescription.setTag(viewTag);
 
-            mDescription.setTextSize(17);
-            mDescription.setTextColor(Color.DKGRAY);
+           // mDescription.setTextSize(17);
+            //mDescription.setTextColor(Color.DKGRAY);
             mDescription.setPadding(5, 10, 5, 10);
-            mDescription.setText(newStepDesc);
-            mDescription.setOnClickListener(new View.OnClickListener() {
+            mDescription.loadData(newStepDesc,"text/html","UTF-8");
+
+            mDescription.setOnTouchListener(new View.OnTouchListener() {
                 @Override
-                public void onClick(View v) {
-                    displayTextOptionsMenu(v);
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    switch (motionEvent.getAction()){
+                        case MotionEvent.ACTION_UP:
+                            view.performClick();
+                            displayTextOptionsMenu(view);
+                    }
+                    return true;
                 }
             });
 
@@ -973,12 +1003,22 @@ public class CreateNewGuide extends AppCompatActivity {
                     ((LinearLayout) v.getParent()).removeView(v);
                 }else if(items[i].equals("Edit Text")){
                     //Stores the selected text view to edit later
-                    selectedTextView = (TextView)v;
+                    selectedWebView = (WebView) v;
                     //Starts a new activity
-                    String currText = selectedTextView.getText().toString();
-                    Intent intent = new Intent(CreateNewGuide.this,AddDescriptionActivity.class);
+                    //TODO: Have to find way to get text from a web view
+                    String currText = "";
+                    selectedWebView.getSettings().setJavaScriptEnabled(true); //someone can use an XSS attack to screw us while js is enabled
+                    selectedWebView.addJavascriptInterface(new WebViewJavascriptInterface(currText),"INTERFACE");
+                    selectedWebView.setWebViewClient(new WebViewClient(){
+                        @Override
+                        public void onPageFinished(WebView view, String url){
+                            view.loadUrl("javascript:window.INTERFACE.processContent(document.getElementsByTagName('body')[0].innerText);");
+                        }
+                    });
+                    selectedWebView.getSettings().setJavaScriptEnabled(false);// disable js to remove possibility of XSS attack
+                    Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
                     intent.putExtra("CurrText", currText);
-                    intent.putExtra("isEditing", true);
+                    //intent.putExtra("isEditing", true);
                     startActivityForResult(intent,EDIT_DESC);
                 }else if(items[i].equals("Cancel")){
                     dialogInterface.dismiss();
@@ -1040,12 +1080,14 @@ public class CreateNewGuide extends AppCompatActivity {
         builder.show();
     }
 
+    //TODO:These 3 upload functions should be put into a firestore connection factory class
+
     /**
      * Uploads a text block to the firestore database
      * @param text object to be uploaded
      */
     public void uploadText(TextData text){
-        if (text.getText().isEmpty()){return;}
+        if (text.getStringFromBlob().isEmpty()){return;}
 
         //Check to see if the current step has an object saved in the db
         uploadStep(text);
@@ -1302,13 +1344,13 @@ public class CreateNewGuide extends AppCompatActivity {
                 if (data == null){
                     return;
                 }
-                newDesc = AddDescriptionActivity.getNewDesc(data);
+                newDesc = TextBlockWriterActivity.getNewDesc(data);
                 addDescription(newDesc);
             }else if (requestCode == EDIT_DESC){
                 if (data == null){
                     return;
                 }
-                newDesc = AddDescriptionActivity.getNewDesc(data);
+                newDesc = TextBlockWriterActivity.getNewDesc(data);
                 editDescription(newDesc);
             }else if (requestCode == PESDK_RESULT){
                 String editedImage = data.getStringExtra("resultURI");
