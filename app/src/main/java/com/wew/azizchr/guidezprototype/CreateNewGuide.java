@@ -42,6 +42,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.Blob;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -343,7 +344,7 @@ public class CreateNewGuide extends AppCompatActivity {
                                 if (task.isSuccessful()){
                                     //get each text's data, make an object for it, and add it to the data list
                                     for (QueryDocumentSnapshot snap: task.getResult()){
-                                        String text = snap.get("text").toString();
+                                        Blob text = (Blob)snap.get("text");
                                         String id = snap.get("id").toString();
                                         String guideId = "";
                                         String stepTitle = snap.get("stepTitle").toString();
@@ -355,7 +356,8 @@ public class CreateNewGuide extends AppCompatActivity {
                                         boolean bold = (boolean)snap.get("bold");
                                         boolean italic = (boolean)snap.get("italic");
                                         TextData data = new TextData(type,placement,guideId,stepTitle,num);
-                                        data.stringToBlob(text);
+                                        //data.stringToBlob(text);
+                                        data.setText(text);
                                         data.setId(id);
                                         //selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);
                                         addObjectToDataListInOrder(data);
@@ -739,7 +741,9 @@ public class CreateNewGuide extends AppCompatActivity {
     private boolean editDescription(String newStepDesc){
         try {
             selectedWebView.loadData(newStepDesc,"text/html","UTF-8");
-            int num = (int)selectedWebView.getTag();//get the tag of the textview, which is the view's id
+            String dataId = (String)selectedWebView.getTag();
+            String[] strings = dataId.split("--");
+            int num = Integer.parseInt(strings[0]);//get the tag of the textview, which is the view's id
             //iterate through the data list and update the view in it with the new text
             for (int i = 0; i < mGuideDataArrayList.size();i++){
                 //we are only updating text data here, if the type is picture then go to next iteration
@@ -753,6 +757,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
             }
         }catch (Exception ex){
+            Log.e("BORBOT error: ",ex.getMessage());
             return false;
         }
 
@@ -1016,6 +1021,7 @@ public class CreateNewGuide extends AppCompatActivity {
                         }
                     });
                     selectedWebView.getSettings().setJavaScriptEnabled(false);// disable js to remove possibility of XSS attack
+
                     Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
                     intent.putExtra("CurrText", currText);
                     //intent.putExtra("isEditing", true);

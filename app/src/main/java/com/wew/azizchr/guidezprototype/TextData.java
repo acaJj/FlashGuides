@@ -59,9 +59,8 @@ public class TextData extends GuideData {
 
     public String getStringFromBlob(){
         byte[] newBytes = this.text.toBytes();
-        String decodedString = new String(newBytes);
 
-        return decodedString;
+        return new String(newBytes);
     }
 
     public boolean isBold() {
