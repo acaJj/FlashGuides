@@ -34,7 +34,7 @@ public class UserCollectionActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore mFirestore;
-    private FirebaseStorage mStorage;
+    private FirebaseConnection mFirebaseConnection;
 
     private RecyclerView guideCollection;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -45,18 +45,13 @@ public class UserCollectionActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_collection);
 
-        mAuth = FirebaseAuth.getInstance();
-        mFirestore = FirebaseFirestore.getInstance();
-        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
-                .setTimestampsInSnapshotsEnabled(true)
-                .build();
-        mFirestore.setFirestoreSettings(settings);
-        mStorage = FirebaseStorage.getInstance();
+        mFirebaseConnection = new FirebaseConnection();
+        mFirestore = mFirebaseConnection.getFirestoreInstance();
+        mAuth = mFirebaseConnection.getFirebaseAuthInstance();
 
         guideCollection = findViewById(R.id.guideCollection);
         mLayoutManager = new LinearLayoutManager(this);
         guideCollection.setLayoutManager(mLayoutManager);
-        //TODO: Create the getter functions for retrieving guide data from firestore
 
         CollectionReference userGuides = mFirestore.collection("Users/" + mAuth.getUid() +"/guides");
         userGuides.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {

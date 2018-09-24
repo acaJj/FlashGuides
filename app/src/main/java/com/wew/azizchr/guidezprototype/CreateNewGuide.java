@@ -1,11 +1,9 @@
 package com.wew.azizchr.guidezprototype;
 
-import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Picture;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -14,7 +12,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.Html;
 import android.text.InputType;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -34,12 +31,10 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -63,13 +58,9 @@ import com.kbeanie.multipicker.api.entity.ChosenImage;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Executor;
-
-import io.grpc.Context;
 
 public class CreateNewGuide extends AppCompatActivity {
 
@@ -88,7 +79,7 @@ public class CreateNewGuide extends AppCompatActivity {
     private String mode;//used to determine whether we are making a new guide or editing an old one
 
     private int guideNum = 0;//the current guide index thing
-    private int textBlockNum; //the current number of textBlocks
+    //private int textBlockNum; //the current number of textBlocks
     private int imgBlockNum;//the current number of image blocks
     private int currentIndex;
     private int currentPictureSwap;
@@ -111,6 +102,7 @@ public class CreateNewGuide extends AppCompatActivity {
     private StorageReference imgStorage;
     private FirebaseFirestore mFirestore;
     private FirebaseAuth mFirebaseAuth;
+    private FirebaseConnection mFirebaseConnection;
 
     //Cloud Firestore Reference Variables
     private CollectionReference stepData;
@@ -144,16 +136,13 @@ public class CreateNewGuide extends AppCompatActivity {
 
         mNewGuideTitle = (TextView) findViewById(R.id.txtNewGuideTitle);
 
+        mFirebaseConnection = new FirebaseConnection();
+        FirebaseUser mCurrentUser = mFirebaseConnection.getCurrentUser();
         //Initialize firebase variables
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        FirebaseUser mCurrentUser = mFirebaseAuth.getCurrentUser();
-        mStorage = FirebaseStorage.getInstance();
+        mFirebaseAuth = mFirebaseConnection.getFirebaseAuthInstance();
+        mStorage = mFirebaseConnection.getStorageInstance();
         imgStorage = mStorage.getReference();
-        mFirestore = FirebaseFirestore.getInstance();
-        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
-                .setTimestampsInSnapshotsEnabled(true)
-                .build();
-        mFirestore.setFirestoreSettings(settings);
+        mFirestore = mFirebaseConnection.getFirestoreInstance();
 
         //Gets the guide name variable from previous activity and puts it in the title
         Intent intent = getIntent();
@@ -166,25 +155,10 @@ public class CreateNewGuide extends AppCompatActivity {
             mode = "CREATE";
         }
         Log.i("BORBOT MODE",mode);
-        userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
-
-        //gets the number of guides the user has
-        userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                DocumentSnapshot documentSnapshot = task.getResult();
-                guideNum = documentSnapshot.getLong("numGuides").intValue();
-
-                if (mode.equals("CREATE"))guideNum++;// increments guideNum by 1 because we are making a new guide so there is 1 more than before
-
-                //sets these 2 collections to point to the folders for the guide data of the new guide. for later uploading
-                textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
-                picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
-
-                editorSetup(bundle);
-            }
-
-        });
+        mFirebaseConnection.initializeGuideReferences(mode);
+        textData = mFirebaseConnection.getTextData();
+        picData = mFirebaseConnection.getPicData();
+        editorSetup(bundle);
 
         mNewGuideTitle.setText(guideTitle);
 
@@ -475,7 +449,6 @@ public class CreateNewGuide extends AppCompatActivity {
         DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
         guideRef.set(newGuide);
 
-        //informs the user that the save process is starting
         Toast.makeText(CreateNewGuide.this,"Saving...\nPlease wait",Toast.LENGTH_LONG).show();
 
         textData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -493,7 +466,8 @@ public class CreateNewGuide extends AppCompatActivity {
                         if (dataToSave.getType().equals("Text")){
                             TextData textDataPkg = (TextData) dataToSave;
                             //textDataPkg.setPlacement(i);//sets the placement to the current index
-                            uploadText(textDataPkg);
+                            //uploadText(textDataPkg);
+                            mFirebaseConnection.uploadText(textDataPkg);
                         }
                     }
                 }
@@ -517,7 +491,8 @@ public class CreateNewGuide extends AppCompatActivity {
                             PictureData picDataPkg = (PictureData)dataToSave;
                             //picDataPkg.setPlacement(i);
                             String picDataPkgUri = picDataPkg.getUri();
-                            uploadImage(picDataPkg,picDataPkgUri);
+                            //uploadImage(picDataPkg,picDataPkg.getUri());
+                            mFirebaseConnection.uploadImage(picDataPkg,picDataPkg.getUri(),getApplicationContext(),CreateNewGuide.this);
                         }
                     }
                 }
@@ -1081,11 +1056,11 @@ public class CreateNewGuide extends AppCompatActivity {
     }
 
     //TODO:These 3 upload functions should be put into a firestore connection factory class
-
+/*
     /**
      * Uploads a text block to the firestore database
      * @param text object to be uploaded
-     */
+     *
     public void uploadText(TextData text){
         if (text.getStringFromBlob().isEmpty()){return;}
 
@@ -1099,7 +1074,7 @@ public class CreateNewGuide extends AppCompatActivity {
         }
         DocumentReference textBlockRef = textData.document("textBlock-" + text.getId());
         textBlockRef.set(text);
-        textBlockNum++;
+        //textBlockNum++;
     }
 
     private void uploadStep(final GuideData data) {
@@ -1130,7 +1105,7 @@ public class CreateNewGuide extends AppCompatActivity {
      * Uploads an image reference to firebase storage and the firestore database
      * @param img object to be uploaded
      * @param picUri the uri string of the picture being uploaded to storage
-     */
+     *
     public void uploadImage(final PictureData img, String picUri){
 
         //Check to see if the current step has an object saved in the db
@@ -1175,9 +1150,9 @@ public class CreateNewGuide extends AppCompatActivity {
                         }).addOnFailureListener(CreateNewGuide.this, new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
-                                Intent intent = new Intent(CreateNewGuide.this, ErrorActivity.class);
-                                intent.putExtra("ERRORS", e.getLocalizedMessage());
-                                startActivity(intent);
+                                //Intent intent = new Intent(CreateNewGuide.this, ErrorActivity.class);
+                                //intent.putExtra("ERRORS", e.getLocalizedMessage());
+                               // startActivity(intent);
                             }
                         }).addOnProgressListener(CreateNewGuide.this, new OnProgressListener<UploadTask.TaskSnapshot>() {
                             @Override
@@ -1189,7 +1164,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     }
                 });
 
-    }
+    }*/
 
     /**
      * Fixes the step numbers when a step is deleted
