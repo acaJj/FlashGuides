@@ -744,6 +744,7 @@ public class CreateNewGuide extends AppCompatActivity {
             String dataId = (String)selectedWebView.getTag();
             String[] strings = dataId.split("--");
             int num = Integer.parseInt(strings[0]);//get the tag of the textview, which is the view's id
+            String id = strings[1];
             //iterate through the data list and update the view in it with the new text
             for (int i = 0; i < mGuideDataArrayList.size();i++){
                 //we are only updating text data here, if the type is picture then go to next iteration
@@ -751,7 +752,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
                 //Cast the GuideData as TextData so we can change the text
                 TextData data = (TextData)mGuideDataArrayList.get(i);
-                if (data.getStepNumber() == num){
+                if (data.getId().equals(id)){
                     data.stringToBlob(newStepDesc);
                     break;
                 }
