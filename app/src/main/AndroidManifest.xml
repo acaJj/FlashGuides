@@ -38,7 +38,6 @@
         <activity android:name=".AddStepActivity" />
         <activity android:name=".AddDescriptionActivity" />
         <activity android:name=".UserCollectionActivity" />
-        <activity android:name=".CameraViewActivity" />
         <activity
             android:name=".EditorActivity"
             android:exported="true" />

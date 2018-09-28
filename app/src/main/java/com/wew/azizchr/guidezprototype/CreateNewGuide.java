@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Picture;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -62,6 +63,7 @@ import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
 import com.kbeanie.multipicker.api.entity.ChosenImage;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -501,7 +503,8 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
             }
         });
-
+        //TODO: Modify uploadImage method to take in an array of all pictures in the data list rather than one by one
+        //TODO: This array will be passed to the async task where the processing and uploading will be carried out
         picData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
@@ -509,19 +512,23 @@ public class CreateNewGuide extends AppCompatActivity {
                     for (DocumentSnapshot doc : task.getResult()) {
                         doc.getReference().delete();
                     }
-
+                    ArrayList<PictureData> picturesToUpload = new ArrayList<>();
                     //all data is stored in custom objects and added to an array list, we iterate through that to upload.
                     //the order the objects are stored in the array is the order they're laid out in the layout.
                     for (int i = 0; i < mGuideDataArrayList.size(); i++){
                         //gets the next data object and uploads depending on the type of data we have
                         GuideData dataToSave = mGuideDataArrayList.get(i);
                         if (dataToSave.getType().equals("Picture")){
-                            PictureData picDataPkg = (PictureData)dataToSave;
+                            picturesToUpload.add((PictureData) dataToSave);
+
+                           // PictureData picDataPkg = (PictureData)dataToSave;
                             //picDataPkg.setPlacement(i);
-                            String picDataPkgUri = picDataPkg.getUri();
-                            uploadImage(picDataPkg,picDataPkgUri);
+                           // String picDataPkgUri = picDataPkg.getUri();
+                            //uploadImage(picDataPkg,picDataPkgUri);
                         }
                     }
+
+                    uploadImages(picturesToUpload);
                 }
             }
         });
@@ -1133,16 +1140,93 @@ public class CreateNewGuide extends AppCompatActivity {
         });
     }
 
-    /**
-     * Uploads an image reference to firebase storage and the firestore database
-     * @param img object to be uploaded
-     * @param picUri the uri string of the picture being uploaded to storage
-     */
+
+    public void uploadImages(ArrayList<PictureData> images){
+        final ArrayList<Bitmap> bitmaps = new ArrayList<>();
+        final ArrayList<String> paths = new ArrayList<>();
+
+        //get each PictureData obj in guide and extract bitmaps/file paths for async uploading;then store the data in firestore
+        for(PictureData image: images){
+            //Check to see if the current step has an object saved in the db
+            uploadStep(image);
+            Uri imageUri = Uri.parse(image.getUri());
+            Glide.with(CreateNewGuide.this)
+                    .asBitmap()
+                    .load(imageUri)
+                    .into(new SimpleTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                            bitmaps.add(resource);
+                        }
+                    });
+            String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + image.getId() + ".png";
+            image.setImgPath(path);
+            paths.add(path);
+
+            //Can create a hashmap to upload but instead we use custom objects
+            DocumentReference imgBlockRef = picData.document("imgBlock-" + image.getId());
+            imgBlockRef.set(image);
+        }
+        Log.d("BORBOT SIZE",""+bitmaps.size());
+        Log.d("BORBOT","Uploading images asynchronously");
+        //send all the bitmaps to the async task
+        new ImageUploadAsyncTask(paths).execute(bitmaps);
+    }
+
+    private static class ImageUploadAsyncTask extends AsyncTask<ArrayList<Bitmap>, Void, Long>{
+        private static ArrayList<String> storagePaths;
+        private final FirebaseStorage mStorageReference;
+
+        private ImageUploadAsyncTask(ArrayList<String> paths){
+            storagePaths = paths;
+            mStorageReference = FirebaseStorage.getInstance();
+        }
+
+        @Override
+        protected Long doInBackground(ArrayList<Bitmap>[] bitmaps) {
+            int storageindex = 0;
+            for (Bitmap bmap: bitmaps[0]){
+                //create a byte array output stream to prepare the image bitmap for upload
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                //resource bitmap is compressed and stored into baos
+                bmap.compress(Bitmap.CompressFormat.PNG,100,baos);
+                byte[] data = baos.toByteArray();//outstream is converted into byte array for upload
+
+                String path = storagePaths.get(storageindex);
+                Log.d("BORBOT PATH",path);
+                StorageReference imgRef = mStorageReference.getReference(path);
+
+                //image byte array is uploaded with our metadata
+                UploadTask uploadTask = imgRef.putBytes(data);
+                uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        Log.d("ASYNCIMAGEUPLOADA", "Upload Success: " + taskSnapshot.getUploadSessionUri());
+                        StorageMetadata storageMetadata = taskSnapshot.getMetadata();
+                        Log.d("BORBOT","Image upload successful");
+                    }
+                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                        //display the progress to the user
+                        //TODO: TO CHRIS, this is where we can get the upload progress to show the user, dont know how tho
+                        long progress = taskSnapshot.getBytesTransferred();
+                    }
+                });
+
+                storageindex++;
+            }
+
+            Log.d("BORBOT","Uploading Complete");
+            return null;
+        }
+    }
+
+    /*
     public void uploadImage(final PictureData img, String picUri){
 
         //Check to see if the current step has an object saved in the db
         uploadStep(img);
-        //Uri newUri = Uri.fromFile(new File(picUri));
         Uri newUri = Uri.parse(picUri);
 
         Glide.with(CreateNewGuide.this)
@@ -1151,6 +1235,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 .into(new SimpleTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        //new ImageUploadAsyncTask().execute(resource);
                         //create a byte array output stream to prepare the image bitmap for upload
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         //resource bitmap is compressed and stored into baos
@@ -1164,20 +1249,20 @@ public class CreateNewGuide extends AppCompatActivity {
 
                         //metadata is set for the image to be uploaded
                         StorageMetadata metadata = new StorageMetadata.Builder()
-                                .setCustomMetadata(mFirebaseAuth.getUid(),"guide"+guideNum+"/imgBlock" + imgBlockNum)
+                                .setCustomMetadata(mFirebaseAuth.getUid(),"guide"+guideNum+"/imgBlock-" + img.getId())
                                 .build();
 
                         //image byte array is uploaded with our metadata
                         UploadTask uploadTask = imgRef.putBytes(data,metadata);
 
-                        //on success, do something, otherwise go to the error page and tell us what went wrong
+                        //on success, upload to database, otherwise go to the error page and tell us what went wrong
                         uploadTask.addOnSuccessListener(CreateNewGuide.this,new OnSuccessListener<UploadTask.TaskSnapshot>() {
                             @Override
                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                                 //Can create a hashmap to upload but instead we use custom objects
-                                DocumentReference imgBlockRef = picData.document("imgBlock" + imgBlockNum);
+                                DocumentReference imgBlockRef = picData.document("imgBlock-" + img.getId());
                                 imgBlockRef.set(img);
-                                imgBlockNum++;
+                                //imgBlockNum++;
                             }
                         }).addOnFailureListener(CreateNewGuide.this, new OnFailureListener() {
                             @Override
@@ -1196,7 +1281,9 @@ public class CreateNewGuide extends AppCompatActivity {
                     }
                 });
 
-    }
+    }*/
+
+
 
     /**
      * Fixes the step numbers when a step is deleted
