@@ -46,12 +46,12 @@ public class CreateGuideTitle extends AppCompatActivity {
                         }
                     })
                     .show();
+        }else{
+            Intent intent = new Intent(CreateGuideTitle.this,CreateNewGuide.class);
+            intent.putExtra("GUIDE_TITLE", mGuideTitle.getText().toString());
+            intent.putExtra("MODE","CREATE");//tells the activity that we are starting from scratch
+            startActivity(intent);
+            finish();
         }
-
-        Intent intent = new Intent(CreateGuideTitle.this,CreateNewGuide.class);
-        intent.putExtra("GUIDE_TITLE", mGuideTitle.getText().toString());
-        intent.putExtra("MODE","CREATE");//tells the activity that we are starting from scratch
-        startActivity(intent);
-        finish();
     }
 }
