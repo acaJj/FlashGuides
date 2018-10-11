@@ -96,7 +96,7 @@ public class SearchActivity extends AppCompatActivity {
     private void retrievePublishedGuides(String id) {
         CollectionReference userGuides = mFirestore.collection("Users/" +id+"/guides");
 
-        userGuides.whereEqualTo("published",true).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+        userGuides.whereEqualTo("publishedStatus",true).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 if (task.isSuccessful()) {

@@ -103,6 +103,8 @@ public class CreateNewGuide extends AppCompatActivity {
     public LinearLayout selectedLayout;
     //public TextView selectedTextView;
     public WebView selectedWebView; //changed from text to web view for better memory consumption and text formatting
+    private Button mSave;
+    private Button mPublish;
 
     TextView mNewGuideTitle;
 
@@ -119,6 +121,7 @@ public class CreateNewGuide extends AppCompatActivity {
     private CollectionReference stepData;
     private CollectionReference textData;
     private CollectionReference picData;
+    private DocumentReference guideRef;
     private DocumentReference userRef;
 
     //ArrayList stores metadata for the guide text and picture components
@@ -183,6 +186,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 //sets these 2 collections to point to the folders for the guide data of the new guide. for later uploading
                 textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
                 picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
+                guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
 
                 editorSetup(bundle);
             }
@@ -214,13 +218,13 @@ public class CreateNewGuide extends AppCompatActivity {
         currentIndex = 0;
         isSwapping = false;
         layoutFeed = findViewById(R.id.newGuideLayoutFeed);
-        Button mSave = findViewById(R.id.btnSaveGuide);
-        Button mPublish = findViewById(R.id.btnPublishGuide);
+        mSave = findViewById(R.id.btnSaveGuide);
+        mPublish = findViewById(R.id.btnPublishGuide);
 
         mSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                saveGuide();
+                saveGuide(false);
             }
         });
 
@@ -229,15 +233,21 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(View view) {
                 if (haveSaved){
                     newGuide.setPublishedStatus(true);
+                    guideRef.update("publishedStatus",true);
+                    Toast.makeText(CreateNewGuide.this,"You've been published!",Toast.LENGTH_SHORT).show();
                 }else{
                     new AlertDialog.Builder(CreateNewGuide.this)
                             .setMessage("You must save your work before publishing, would you like to save now?")
                             .setCancelable(false)
                             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                    saveGuide();
-                                    newGuide.setPublishedStatus(true);
-                                    Toast.makeText(CreateNewGuide.this,"You've been published!",Toast.LENGTH_SHORT).show();
+                                    boolean result = saveGuide(true);
+                                    if (result){
+                                        newGuide.setPublishedStatus(true);
+                                        guideRef.update("publishedStatus",true);
+                                        Toast.makeText(CreateNewGuide.this,"You've been published!",Toast.LENGTH_SHORT).show();
+                                    }
+
                                 }
                             })
                             .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -473,80 +483,95 @@ public class CreateNewGuide extends AppCompatActivity {
 
     /**
      * Saves the guide into firestore
+     * returns true if save was successful
      */
-    private void saveGuide(){
-
-        DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
+    private boolean saveGuide(boolean publishedStatus){
+        boolean result = false;
+        //sets publishedStatus depending on what button was pressed to get here, if we are publishing then this needs to be set to true
+        //if we are just saving our work, then we need to set publishedStatus to false
+        newGuide.setPublishedStatus(publishedStatus);
         guideRef.set(newGuide);
 
         //informs the user that the save process is starting
         Toast.makeText(CreateNewGuide.this,"Saving...\nPlease wait",Toast.LENGTH_LONG).show();
 
-        textData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()){
-                    for (DocumentSnapshot doc: task.getResult()){
-                        doc.getReference().delete();
-                    }
-                    //all data is stored in custom objects and added to an array list, we iterate through that to upload.
-                    //the order the objects are stored in the array is the order they're laid out in the layout.
-                    for (int i = 0; i < mGuideDataArrayList.size(); i++){
-                        //gets the next data object and uploads depending on the type of data we have
-                        GuideData dataToSave = mGuideDataArrayList.get(i);
-                        if (dataToSave.getType().equals("Text")){
-                            TextData textDataPkg = (TextData) dataToSave;
-                            //textDataPkg.setPlacement(i);//sets the placement to the current index
-                            uploadText(textDataPkg);
+        try{
+            //set buttons to false to prevent user from spamming firebase callbacks while we upload
+            mSave.setEnabled(false);
+            mPublish.setEnabled(false);
+
+            textData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                    if (task.isSuccessful()){
+                        for (DocumentSnapshot doc: task.getResult()){
+                            doc.getReference().delete();
+                        }
+                        //all data is stored in custom objects and added to an array list, we iterate through that to upload.
+                        //the order the objects are stored in the array is the order they're laid out in the layout.
+                        for (int i = 0; i < mGuideDataArrayList.size(); i++){
+                            //gets the next data object and uploads depending on the type of data we have
+                            GuideData dataToSave = mGuideDataArrayList.get(i);
+                            if (dataToSave.getType().equals("Text")){
+                                TextData textDataPkg = (TextData) dataToSave;
+                                //textDataPkg.setPlacement(i);//sets the placement to the current index
+                                uploadText(textDataPkg);
+                            }
                         }
                     }
                 }
-            }
-        });
-        //TODO: Modify uploadImage method to take in an array of all pictures in the data list rather than one by one
-        //TODO: This array will be passed to the async task where the processing and uploading will be carried out
-        picData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()) {
-                    for (DocumentSnapshot doc : task.getResult()) {
-                        doc.getReference().delete();
-                    }
-                    ArrayList<PictureData> picturesToUpload = new ArrayList<>();
-                    //all data is stored in custom objects and added to an array list, we iterate through that to upload.
-                    //the order the objects are stored in the array is the order they're laid out in the layout.
-                    for (int i = 0; i < mGuideDataArrayList.size(); i++){
-                        //gets the next data object and uploads depending on the type of data we have
-                        GuideData dataToSave = mGuideDataArrayList.get(i);
-                        if (dataToSave.getType().equals("Picture")){
-                            picturesToUpload.add((PictureData) dataToSave);
-
-                           // PictureData picDataPkg = (PictureData)dataToSave;
-                            //picDataPkg.setPlacement(i);
-                           // String picDataPkgUri = picDataPkg.getUri();
-                            //uploadImage(picDataPkg,picDataPkgUri);
+            });
+            //TODO: Modify uploadImage method to take in an array of all pictures in the data list rather than one by one
+            //TODO: This array will be passed to the async task where the processing and uploading will be carried out
+            picData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                    if (task.isSuccessful()) {
+                        for (DocumentSnapshot doc : task.getResult()) {
+                            doc.getReference().delete();
                         }
-                    }
+                        ArrayList<PictureData> picturesToUpload = new ArrayList<>();
+                        //all data is stored in custom objects and added to an array list, we iterate through that to upload.
+                        //the order the objects are stored in the array is the order they're laid out in the layout.
+                        for (int i = 0; i < mGuideDataArrayList.size(); i++){
+                            //gets the next data object and uploads depending on the type of data we have
+                            GuideData dataToSave = mGuideDataArrayList.get(i);
+                            if (dataToSave.getType().equals("Picture")){
+                                picturesToUpload.add((PictureData) dataToSave);
+                            }
+                        }
 
-                    uploadImages(picturesToUpload);
+                        uploadImages(picturesToUpload);
+                    }
+                }
+            });
+
+            //delete any documents from the db that we no longer want
+            if (!deletedDataList.isEmpty()){
+                for (DocumentReference doc: deletedDataList){
+                    doc.delete();
                 }
             }
-        });
 
-        //delete any documents from the db that we no longer want
-        if (!deletedDataList.isEmpty()){
-            for (DocumentReference doc: deletedDataList){
-                doc.delete();
+            //update the users guide count so the guides can be named differently, 'guide0', 'guide1', etc
+            userRef.update("numGuides", guideNum);
+            //userRef.update("key", userRef.getId());
+            result = true;
+            Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
+
+            //make buttons usable again
+            mSave.setEnabled(true);
+            mPublish.setEnabled(true);
+            haveSaved = true;
+            for (int i = 0; i< mGuideDataArrayList.size();i++){
+                Log.i("GUIDEDATA OBJ: ",mGuideDataArrayList.get(i).getType());
             }
+        }catch(Exception ex){
+            Toast.makeText(CreateNewGuide.this, "There was a problem saving...guide was not saved, sorry", Toast.LENGTH_SHORT).show();
+            result = false;
         }
 
-        //update the users guide count so the guides can be named differently, 'guide0', 'guide1', etc
-        userRef.update("numGuides", guideNum);
-        userRef.update("key", userRef.getId());
-        Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
-        for (int i = 0; i< mGuideDataArrayList.size();i++){
-            Log.i("GUIDEDATA OBJ: ",mGuideDataArrayList.get(i).getType());
-        }
+        return result;
     }
 
     /**
@@ -620,6 +645,7 @@ public class CreateNewGuide extends AppCompatActivity {
                                 //mGuideDataArrayList.add(picData);
                                 addObjectToDataListInOrder(picData);
                             }
+                            haveSaved = false;
                         }
                     });
 
@@ -644,7 +670,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 selectedLayout.addView(newImgView, selectedLayout.getChildCount() - 2);
                 currentIndex++;
             }
-
+            haveSaved = false;
         }catch(Exception ex){
             Log.i("IMAGE ERROR: ", ex.getMessage());
             return false;
@@ -732,7 +758,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 addDescription(desc);
             }
             currentIndex++;
-
+            haveSaved = false;
         }catch (Exception ex){
             ex.getMessage();
             return false;
@@ -768,7 +794,7 @@ public class CreateNewGuide extends AppCompatActivity {
             Log.e("BORBOT error: ",ex.getMessage());
             return false;
         }
-
+        haveSaved = false;
         return true;
     }
 
@@ -810,7 +836,7 @@ public class CreateNewGuide extends AppCompatActivity {
             ex.getMessage();
             return false;
         }
-
+        haveSaved = false;
         return true;
     }
 
@@ -866,7 +892,7 @@ public class CreateNewGuide extends AppCompatActivity {
             ex.getMessage();
             return false;
         }
-
+        haveSaved = false;
         return true;
     }
 
@@ -943,6 +969,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     String[] strings = dataId.split("--");
                     removeFromDataList(strings[1]);
                     ((LinearLayout) v.getParent()).removeView(v);
+                    haveSaved = false;
                 }else if(items[i].equals("View Picture")){
                     //calls the activty to view the picture and passes the URI
                     Intent intent = new Intent(CreateNewGuide.this, ViewPhoto.class);
@@ -1014,6 +1041,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     String[] strings = dataId.split("--");
                     removeFromDataList(strings[1]);
                     ((LinearLayout) v.getParent()).removeView(v);
+                    haveSaved = false;
                 }else if(items[i].equals("Edit Text")){
                     //Stores the selected text view to edit later
                     selectedWebView = (WebView) v;
@@ -1209,7 +1237,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     @Override
                     public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                         //display the progress to the user
-                        //TODO: TO CHRIS, this is where we can get the upload progress to show the user, dont know how tho
+                        //TODO: TO CHRIS, this is where we can get the upload progress to show the user, dont know how though
                         long progress = taskSnapshot.getBytesTransferred();
                     }
                 });
@@ -1221,69 +1249,6 @@ public class CreateNewGuide extends AppCompatActivity {
             return null;
         }
     }
-
-    /*
-    public void uploadImage(final PictureData img, String picUri){
-
-        //Check to see if the current step has an object saved in the db
-        uploadStep(img);
-        Uri newUri = Uri.parse(picUri);
-
-        Glide.with(CreateNewGuide.this)
-                .asBitmap()
-                .load(newUri)
-                .into(new SimpleTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        //new ImageUploadAsyncTask().execute(resource);
-                        //create a byte array output stream to prepare the image bitmap for upload
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        //resource bitmap is compressed and stored into baos
-                        resource.compress(Bitmap.CompressFormat.PNG,100,baos);
-                        byte[] data = baos.toByteArray();//outstream is converted into byte array for upload
-
-                        //the path of the image in firebase storage, is set as the imgPath for our PictureData obj for retrieval purposes
-                        String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + img.getId() + ".png";
-                        img.setImgPath(path);
-                        StorageReference imgRef = mStorage.getReference(path);
-
-                        //metadata is set for the image to be uploaded
-                        StorageMetadata metadata = new StorageMetadata.Builder()
-                                .setCustomMetadata(mFirebaseAuth.getUid(),"guide"+guideNum+"/imgBlock-" + img.getId())
-                                .build();
-
-                        //image byte array is uploaded with our metadata
-                        UploadTask uploadTask = imgRef.putBytes(data,metadata);
-
-                        //on success, upload to database, otherwise go to the error page and tell us what went wrong
-                        uploadTask.addOnSuccessListener(CreateNewGuide.this,new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                            @Override
-                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                //Can create a hashmap to upload but instead we use custom objects
-                                DocumentReference imgBlockRef = picData.document("imgBlock-" + img.getId());
-                                imgBlockRef.set(img);
-                                //imgBlockNum++;
-                            }
-                        }).addOnFailureListener(CreateNewGuide.this, new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Intent intent = new Intent(CreateNewGuide.this, ErrorActivity.class);
-                                intent.putExtra("ERRORS", e.getLocalizedMessage());
-                                startActivity(intent);
-                            }
-                        }).addOnProgressListener(CreateNewGuide.this, new OnProgressListener<UploadTask.TaskSnapshot>() {
-                            @Override
-                            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                                //display the progress to the user
-                                long progress = taskSnapshot.getBytesTransferred();
-                            }
-                        });
-                    }
-                });
-
-    }*/
-
-
 
     /**
      * Fixes the step numbers when a step is deleted
@@ -1377,7 +1342,7 @@ public class CreateNewGuide extends AppCompatActivity {
                         }
 
                         mGuideDataArrayList = newDataList;
-
+                        haveSaved = false;
                         //iterates through the data list and removes all elements of the deleted step
                         /*Iterator<GuideData> iterator = mGuideDataArrayList.iterator();
                         try{
