@@ -40,6 +40,8 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="(Ex. Gather materials ... )"
+        android:textCursorDrawable="@null"
+        android:backgroundTint="@color/statusbarpurple"
         android:inputType="textPersonName"
         android:selectAllOnFocus="false"
         android:singleLine="false" />
@@ -58,6 +60,8 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="(Ex. In this step, ... )"
+        android:textCursorDrawable="@null"
+        android:backgroundTint="@color/statusbarpurple"
         android:inputType="textMultiLine" />
 
     <Button
@@ -65,14 +69,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:background="@drawable/border_button_done"
+        android:background="@drawable/style_button_done"
         android:fontFamily="sans-serif-condensed"
         android:onClick="onDoneClick"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
         android:text="Done"
         android:textAlignment="center"
-        android:textColor="#8e55d3"
+        android:textColor="#FFFFFF"
         android:textSize="25dp"
         android:textStyle="bold" />
 </LinearLayout>

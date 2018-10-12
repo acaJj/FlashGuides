@@ -1,5 +1,6 @@
 package com.wew.azizchr.guidezprototype;
 
+import android.app.ActivityOptions;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -59,6 +60,7 @@ public class Homepage extends AppCompatActivity {
                 intent.putExtra(NEW_GUIDE, true);
                 intent.putExtra(EDIT_MODE,"CREATE");
                 startActivity(intent);
+                overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             }
         });
 

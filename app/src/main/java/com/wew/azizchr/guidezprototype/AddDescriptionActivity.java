@@ -70,5 +70,12 @@ public class AddDescriptionActivity extends AppCompatActivity {
         data.putExtra(NEW_DESC_WRITTEN, desc);
         setResult(RESULT_OK,data);
         finish();
+        AddDescriptionActivity.this.overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
     }
 }

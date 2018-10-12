@@ -32,6 +32,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.GenericTransitionOptions;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -465,6 +466,7 @@ public class CreateNewGuide extends AppCompatActivity {
         Intent intent = new Intent(CreateNewGuide.this,AddStepActivity.class);
         intent.putExtra("CurrStep", layoutFeed.getChildCount());
         startActivityForResult(intent,WRITE_STEP);
+        overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
     }
 
     public void onClickGuideTitle(View view) {
@@ -562,13 +564,13 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Camera")){
                     outputPath = camera.pickImage();
+                    overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                     //Intent intent = new Intent(CreateNewGuide.this,CameraViewActivity.class);
                     //startActivityForResult(intent,PESDK_RESULT);
                 }else if(items[i].equals("Gallery")){
                     Intent intent = new Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     intent.setType("image/*");
                     startActivityForResult(intent.createChooser(intent,"Select File"),SELECT_FILE);
-
                 }else if(items[i].equals("Cancel")){
                     if(isSwapping){isSwapping = false;}
                     dialogInterface.dismiss();
@@ -592,6 +594,7 @@ public class CreateNewGuide extends AppCompatActivity {
             Glide.with(CreateNewGuide.this)
                     .asBitmap()
                     .load(imageUri)
+                    .transition(GenericTransitionOptions.with(R.anim.fui_slide_in_right))
                     .into(new SimpleTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
@@ -684,6 +687,7 @@ public class CreateNewGuide extends AppCompatActivity {
             });
             //Creates the add image button and its on click listener
             Button addImage = new Button(CreateNewGuide.this);
+            addImage.setBackgroundResource(R.drawable.style_button_add);
             String addImageBtnDesc = "Add Image to step " + layoutFeed.getChildCount();
             addImage.setText(addImageBtnDesc);
             addImage.setOnClickListener(new View.OnClickListener() {
@@ -695,6 +699,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
             //Creates the add description button and its on click listener
             Button addDesc = new Button (CreateNewGuide.this);
+            addDesc.setBackgroundResource(R.drawable.style_button_add);
             String addTextBtnDesc = "Add Text to Step " + layoutFeed.getChildCount();
             addDesc.setText(addTextBtnDesc);
             addDesc.setOnClickListener(new View.OnClickListener() {
@@ -704,6 +709,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     intent.putExtra("CurrStep", layoutFeed.getChildCount());
                     intent.putExtra("isEditing", false);
                     startActivityForResult(intent,WRITE_DESC);
+                    overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                 }
             });
 
@@ -722,11 +728,11 @@ public class CreateNewGuide extends AppCompatActivity {
             newStepBlock.addView(newTitleBlock);
             newStepBlock.addView(addImage);
             newStepBlock.addView(addDesc);
-
+            //newStepBlock.setBackgroundResource(R.drawable.border_new_step);
             //Adds the new step block to the end of the main layout, before the button
             layoutFeed.addView(newStepBlock, layoutFeed.getChildCount()-1);
-
             selectedLayout = newStepBlock;
+
             //adds the starting description to the step block if not null/empty
             if (!desc.equals("")){
                 addDescription(desc);
@@ -844,6 +850,7 @@ public class CreateNewGuide extends AppCompatActivity {
             //mDescription.setTextColor(Color.DKGRAY);
             mDescription.setPadding(5, 10, 5, 10);
             mDescription.loadData(newStepDesc,"text/html","UTF-8");
+            mDescription.setBackgroundColor(Color.TRANSPARENT);
 
             mDescription.setOnTouchListener(new View.OnTouchListener() {
                 @Override
@@ -1465,6 +1472,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         CreateNewGuide.this.finish();
+                        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
                     }
                 })
                 .setNegativeButton("No", null)

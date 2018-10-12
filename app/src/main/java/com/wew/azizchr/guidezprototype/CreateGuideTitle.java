@@ -37,7 +37,7 @@ public class CreateGuideTitle extends AppCompatActivity {
 
         if (mGuideTitle.getText().toString().isEmpty()){
             new AlertDialog.Builder(CreateGuideTitle.this)
-                    .setMessage("You have to enter a title first fool")
+                    .setMessage("You have to enter a title first")
                     .setCancelable(false)
                     .setNeutralButton("OK", new DialogInterface.OnClickListener() {
                         @Override
@@ -51,7 +51,14 @@ public class CreateGuideTitle extends AppCompatActivity {
             intent.putExtra("GUIDE_TITLE", mGuideTitle.getText().toString());
             intent.putExtra("MODE","CREATE");//tells the activity that we are starting from scratch
             startActivity(intent);
+            overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             finish();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
     }
 }

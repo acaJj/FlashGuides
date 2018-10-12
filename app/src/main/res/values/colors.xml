@@ -5,5 +5,7 @@
     <color name="colorAccent">#FF4081</color>
     <color name="purple">#8e55d3</color>
     <color name="statusbarpurple">#6f41a7</color>
-
+    <color name="white">#FFFFFF</color>
+    <color name="addButton">#D1BBED</color>
+    <color name="addButtonclicked">#7D708E</color>
 </resources>

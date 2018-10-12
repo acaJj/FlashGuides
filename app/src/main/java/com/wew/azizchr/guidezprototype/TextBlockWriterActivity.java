@@ -124,6 +124,7 @@ public class TextBlockWriterActivity extends AppCompatActivity {
         data.putExtra(TEXT_BLOCK_WRITTEN,text);
         setResult(RESULT_OK,data);
         finish();
+        TextBlockWriterActivity.this.overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
     }
 
     public static String getNewDesc(Intent data){
@@ -134,5 +135,10 @@ public class TextBlockWriterActivity extends AppCompatActivity {
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
         savedInstanceState.putString("Text", text);
+    }
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
     }
 }

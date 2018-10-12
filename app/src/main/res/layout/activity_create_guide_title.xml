@@ -55,17 +55,24 @@
             android:paddingTop="25dp"
             android:singleLine="false"
             android:textAlignment="center"
-            android:textColorLink="@color/statusbarpurple"
+            android:textCursorDrawable="@null"
+            android:backgroundTint="@color/statusbarpurple"
             android:textSize="22sp"
             android:textStyle="bold" />
 
         <Button
             android:id="@+id/btnContinue"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:onClick="onContinueClick"
             android:text="Continue"
-            android:textAlignment="center" />
+            android:layout_marginTop="10dp"
+            android:background="@drawable/style_button_done"
+            android:textAlignment="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-condensed"
+            android:textColor="#FFFFFF"
+            android:textSize="20dp"
+            android:textStyle="bold"/>
 
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>
