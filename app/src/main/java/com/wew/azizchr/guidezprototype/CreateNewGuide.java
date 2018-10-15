@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Picture;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
@@ -131,6 +132,10 @@ public class CreateNewGuide extends AppCompatActivity {
     //used when saving so we know not to save the copies of the same data objects in db
     private boolean haveSaved;
 
+    //Images used for the step buttons
+    Drawable textIcon;
+    Drawable photoIcon;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -251,7 +256,12 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
             }
         });
+
+        //Gets the images from the drawable folder for the step buttons
+        textIcon = CreateNewGuide.this.getResources().getDrawable( R.drawable.icon_style_addtext );
+        photoIcon = CreateNewGuide.this.getResources().getDrawable( R.drawable.icon_style_addpic );
     }
+
 
     //JavaScript interface used to get html content from our webviews so that we can do stuff with them like editing
     public class WebViewJavascriptInterface{
@@ -580,6 +590,7 @@ public class CreateNewGuide extends AppCompatActivity {
         builder.show();
     }
 
+
     /**
      * Creates and adds a new ImageView to the guide's layoutFeed
      * @param imageUri the uri of the image being added
@@ -688,6 +699,7 @@ public class CreateNewGuide extends AppCompatActivity {
             //Creates the add image button and its on click listener
             Button addImage = new Button(CreateNewGuide.this);
             addImage.setBackgroundResource(R.drawable.style_button_add);
+            addImage.setCompoundDrawablesWithIntrinsicBounds(photoIcon, null, null, null);
             String addImageBtnDesc = "Add Image to step " + layoutFeed.getChildCount();
             addImage.setText(addImageBtnDesc);
             addImage.setOnClickListener(new View.OnClickListener() {
@@ -700,6 +712,7 @@ public class CreateNewGuide extends AppCompatActivity {
             //Creates the add description button and its on click listener
             Button addDesc = new Button (CreateNewGuide.this);
             addDesc.setBackgroundResource(R.drawable.style_button_add);
+            addDesc.setCompoundDrawablesWithIntrinsicBounds(textIcon, null, null, null);
             String addTextBtnDesc = "Add Text to Step " + layoutFeed.getChildCount();
             addDesc.setText(addTextBtnDesc);
             addDesc.setOnClickListener(new View.OnClickListener() {
@@ -963,6 +976,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     intent.putExtra("imageUri", imageUri);
                     intent.putExtra("isNewPic", false);
                     startActivityForResult(intent, PESDK_RESULT);
+                    overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                 }else if(items[i].equals("Swap Picture")){
                     //sets isSwapping check to true and then calls SelectImage to replace the image we want in the layout hierarchy
                     isSwapping = true;

@@ -64,8 +64,6 @@ public class EditorActivity extends Activity implements PermissionRequest.Respon
             toast.show();
             openSystemGalleryToSelectAnImage();
         } else {
-            Toast toast = Toast.makeText(getApplicationContext(), "Ayy we are editing an existing pic", Toast.LENGTH_LONG);
-            toast.show();
             picToEdit = getIntent().getParcelableExtra("imageUri");
             openEditor(picToEdit);
         }
@@ -133,6 +131,7 @@ public class EditorActivity extends Activity implements PermissionRequest.Respon
         new PhotoEditorBuilder(this)
                 .setSettingsList(settingsList)
                 .startActivityForResult(this, PESDK_RESULT);
+        overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
     }
 
 
@@ -168,6 +167,7 @@ public class EditorActivity extends Activity implements PermissionRequest.Respon
             returnIntent.putExtra("resultURI", resultURI.toString());
             setResult(Activity.RESULT_OK, returnIntent);
             finish();
+            overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
 
             /*// OPTIONAL: read the latest state to save it as a serialisation
             SettingsList lastState = data.getParcelableExtra(ImgLyIntent.SETTINGS_LIST);
@@ -183,9 +183,11 @@ public class EditorActivity extends Activity implements PermissionRequest.Respon
         } else if (resultCode == RESULT_CANCELED && requestCode == PESDK_RESULT) {
             // Editor was canceled
             finish();
+            overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
         } else if (resultCode == RESULT_CANCELED && requestCode == GALLERY_RESULT) {
             // Gallery was canceled
             finish();
+            overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
         }
     }
 }
