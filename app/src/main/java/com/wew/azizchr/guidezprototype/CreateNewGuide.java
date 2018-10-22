@@ -21,6 +21,7 @@ import android.text.InputType;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
@@ -30,6 +31,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -463,8 +465,7 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setPadding(3, 10, 3, 10);
 
             //add it to the layout
-
-            layout.addView(newImgView, layout.getChildCount() - 2);
+            layout.addView(newImgView, layout.getChildCount() - 1);
             currentIndex++;
 
         }catch(Exception ex){
@@ -655,7 +656,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 currentPictureSwap = 0;
                 isSwapping = false;
             }else {
-                selectedLayout.addView(newImgView, selectedLayout.getChildCount() - 2);
+                selectedLayout.addView(newImgView, selectedLayout.getChildCount() - 1);
                 currentIndex++;
             }
 
@@ -696,13 +697,20 @@ public class CreateNewGuide extends AppCompatActivity {
                     displayStepOptionsMenu(newTitleBlock.getChildAt(1));
                 }
             });
+
+            //Creates the Layout Parameters for the buttons
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            params.weight = 0.5f;
+
             //Creates the add image button and its on click listener
-            Button addImage = new Button(CreateNewGuide.this);
-            addImage.setBackgroundResource(R.drawable.style_button_add);
-            addImage.setCompoundDrawablesWithIntrinsicBounds(photoIcon, null, null, null);
-            String addImageBtnDesc = "Add Image to step " + layoutFeed.getChildCount();
-            addImage.setText(addImageBtnDesc);
-            addImage.setOnClickListener(new View.OnClickListener() {
+            Button mAddImage = new Button(CreateNewGuide.this);
+            mAddImage.setBackgroundResource(R.drawable.style_button_add);
+            mAddImage.setCompoundDrawablesWithIntrinsicBounds(photoIcon, null, null, null);
+            String addImageBtnDesc = "Add Image";
+            mAddImage.setText(addImageBtnDesc);
+            mAddImage.setLayoutParams(params);
+            mAddImage.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     selectedLayout = newStepBlock;
                     SelectImage();
@@ -710,12 +718,13 @@ public class CreateNewGuide extends AppCompatActivity {
             });
 
             //Creates the add description button and its on click listener
-            Button addDesc = new Button (CreateNewGuide.this);
-            addDesc.setBackgroundResource(R.drawable.style_button_add);
-            addDesc.setCompoundDrawablesWithIntrinsicBounds(textIcon, null, null, null);
-            String addTextBtnDesc = "Add Text to Step " + layoutFeed.getChildCount();
-            addDesc.setText(addTextBtnDesc);
-            addDesc.setOnClickListener(new View.OnClickListener() {
+            Button mAddDesc = new Button (CreateNewGuide.this);
+            mAddDesc.setBackgroundResource(R.drawable.style_button_add);
+            mAddDesc.setCompoundDrawablesWithIntrinsicBounds(textIcon, null, null, null);
+            String addTextBtnDesc = "Add Text";
+            mAddDesc.setText(addTextBtnDesc);
+            mAddDesc.setLayoutParams(params);
+            mAddDesc.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     selectedLayout = newStepBlock;
                     Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
@@ -725,6 +734,12 @@ public class CreateNewGuide extends AppCompatActivity {
                     overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                 }
             });
+
+            //Creates the linear layout to hold the two buttons together
+            LinearLayout buttonHolder = new LinearLayout(CreateNewGuide.this);
+            buttonHolder.setOrientation(LinearLayout.HORIZONTAL);
+            buttonHolder.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+
 
             int num = layoutFeed.getChildCount();
 
@@ -739,8 +754,10 @@ public class CreateNewGuide extends AppCompatActivity {
             newTitleBlock.addView(mStepNumber);
             newTitleBlock.addView(mStepTitle);
             newStepBlock.addView(newTitleBlock);
-            newStepBlock.addView(addImage);
-            newStepBlock.addView(addDesc);
+            newStepBlock.addView(buttonHolder);
+            buttonHolder.addView(mAddDesc);
+            buttonHolder.addView(mAddImage);
+
             //newStepBlock.setBackgroundResource(R.drawable.border_new_step);
             //Adds the new step block to the end of the main layout, before the button
             layoutFeed.addView(newStepBlock, layoutFeed.getChildCount()-1);
@@ -821,9 +838,10 @@ public class CreateNewGuide extends AppCompatActivity {
                     return true;
                 }
             });
+            mDescription.setBackgroundColor(Color.TRANSPARENT);
 
             //adds the new textblock with the text to the selected step
-            theSelectedLayout.addView(mDescription, theSelectedLayout.getChildCount() - 2);
+            theSelectedLayout.addView(mDescription, theSelectedLayout.getChildCount() - 1);
 
         }catch (Exception ex){
             ex.getMessage();
@@ -878,7 +896,7 @@ public class CreateNewGuide extends AppCompatActivity {
             });
 
             //adds the new text block with the text to the selected step
-            selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
+            selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 1);
 
             addObjectToDataListInOrder(dataToAdd);
 
@@ -1243,6 +1261,45 @@ public class CreateNewGuide extends AppCompatActivity {
         }
     }
 
+    /**
+     * This iterates through the whole layout, and gets each step and its contents and stores them
+     * inside a list. That list is then uploaded.
+     */
+    public void PopulateUploadList(){
+
+        //This loop iterates through each step.
+        //We do layoutFeed.getChildCount() - 1 since we do not want to access the "add step" button
+        for(int i = 0; i < layoutFeed.getChildCount() - 1; i++) {
+
+            //This gets the layout where the entire step are held
+            // Index 0 is the title layout
+            // Index 1 to n-1 are either a WebView block or an ImageView block
+            // Index n is the layout where the two "add" buttons are held
+            LinearLayout stepLayout = (LinearLayout) layoutFeed.getChildAt(i);
+
+            //This gets the layout where the step number and title are held
+            //Index 0 is the step and step number (Step x:)
+            //Index 1 is the title of the step
+            LinearLayout titleLayout = (LinearLayout) stepLayout.getChildAt(0);
+
+            //This gets the textviews of the title number and description
+            TextView TitleNum = (TextView) titleLayout.getChildAt(0);
+            TextView TitleDesc = (TextView) titleLayout.getChildAt(1);
+
+            // This loops through the content of each step. We start at 1 since 0 is the title
+            // and we -1 since we do not need to access the end which just holds the buttons
+            for (int j = 1; j < stepLayout.getChildCount() - 1; j++) {
+                    //This is where you can access each text or picture block and do whatever with it
+                    //You can access it by using
+                    // stepLayout.getChildAt(j);
+                    //TODO: decide if its an image or text from here (maybe using tags?)
+                    //TODO: add the image or text to the list
+                    //TODO: set any variables/modifiers that are needed in the back end
+                    //You can get URI from glide using
+                    //https://stackoverflow.com/questions/42200448/how-to-get-uri-on-imageview-with-glide
+            }
+        }
+    }
     /*
     public void uploadImage(final PictureData img, String picUri){
 
@@ -1312,9 +1369,11 @@ public class CreateNewGuide extends AppCompatActivity {
      * in the data list and the tags for each data view so those edits are done too
      */
     private void reorderSteps(){
-        int dataListPointer = 0;//used to iterate through the datalist by stepCount instead of one by one
+        //CRASHES AFTER PUTTING BOTH BUTTONS ON THE SAME LINE
+        //int dataListPointer = 0;//used to iterate through the datalist by stepCount instead of one by one
 
         //Loops through the layout Feed and its children to set the step number to the correct step
+
         for(int i = 0; i < layoutFeed.getChildCount() - 1; i++){
             LinearLayout stepLayout = (LinearLayout) layoutFeed.getChildAt(i);
             LinearLayout titleLayout = (LinearLayout) stepLayout.getChildAt(0);
@@ -1323,38 +1382,44 @@ public class CreateNewGuide extends AppCompatActivity {
             stepTitle.setText(newStepTitle);
             reorderTags(stepLayout,(i+1));//reorders the tags for each view in each step's linear layout
 
+            //CRASHES AFTER PUTTING BOTH BUTTONS ON THE SAME LINE
             //get the first object of the current step
-            GuideData data = mGuideDataArrayList.get(i+dataListPointer);
+            //GuideData data = mGuideDataArrayList.get(i+ dataListPointer);
 
+            //CRASHES AFTER PUTTING BOTH BUTTONS ON THE SAME LINE
             //if data's number is more than the number we are changing to, then correct it
             //ex. removed step 1, step 2 is now the new step 1, therefore we must decrement all blocks from step 2,
             //otherwise its already correct so leave it
-            int currStepNum = data.getStepNumber();//the step num of the current data block we are on
-            int stepToCheck = currStepNum;//the current step whose data blocks we are working on
-            while (currStepNum > (i+1)){
-                data.setStepNumber(currStepNum-1);//lower the step number by 1 to its proper number
-                //get the next data object in the list so we can see if its in the same step as our current object
-                dataListPointer++;//we are moving to the next data object in the list
-                //if we have reached the last element, break the loop
-                if ((i+dataListPointer) >= mGuideDataArrayList.size()){
-                    break;
-                }
-                data = mGuideDataArrayList.get(i+dataListPointer);
-                currStepNum = data.getStepNumber();
-                //if this is not true, then we have reached a data object of the next step, break and move on
-                if (currStepNum != stepToCheck){
-                    dataListPointer--;
-                    break;
-                }
-            }
+//            int currStepNum = data.getStepNumber();//the step num of the current data block we are on
+//            int stepToCheck = currStepNum;//the current step whose data blocks we are working on
+//            while (currStepNum > (i+1)){
+//                data.setStepNumber(currStepNum-1);//lower the step number by 1 to its proper number
+//                //get the next data object in the list so we can see if its in the same step as our current object
+//               dataListPointer++;//we are moving to the next data object in the list
+//                //if we have reached the last element, break the loop
+//                if ((i+dataListPointer) >= mGuideDataArrayList.size()){
+//                    break;
+//                }
+//                data = mGuideDataArrayList.get(i+dataListPointer);
+//                currStepNum = data.getStepNumber();
+//                //if this is not true, then we have reached a data object of the next step, break and move on
+//                if (currStepNum != stepToCheck){
+//                    dataListPointer--;
+//                    break;
+//                }
+//            }
 
+
+            //THIS IS NOT USED SINCE WE CHANGED THE BUTTONS TO BE IN ONE LINE
             //Changes the buttons text to the correct step number
+            /*
             Button addStep = (Button) stepLayout.getChildAt(stepLayout.getChildCount() - 2);
             String newImageBtnDesc = "Add Image to step " + (i + 1);
             String newTextBtnDesc = "Add Text to Step " + (i + 1);
             addStep.setText(newImageBtnDesc);
             Button addDesc = (Button) stepLayout.getChildAt(stepLayout.getChildCount() - 1);
             addDesc.setText(newTextBtnDesc);
+            */
         }
     }
 
@@ -1413,7 +1478,6 @@ public class CreateNewGuide extends AppCompatActivity {
                         }
 */
                         ((LinearLayout) stepLayout.getParent()).removeView(stepLayout);
-
                         reorderSteps();
                     }
                 })
