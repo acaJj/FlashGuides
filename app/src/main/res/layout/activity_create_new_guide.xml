@@ -50,11 +50,12 @@
                     android:id="@+id/buttonLayout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@drawable/border_new_content"
                     android:orientation="horizontal">
-                    <!---->
+
 
                     <!--
+
+
                                         <ImageButton
                                             android:id="@+id/imageButton3"
                                             android:layout_width="match_parent"
@@ -76,12 +77,12 @@
                                             android:padding="30dp"
                                             android:scaleType="fitCenter"
                                             app:srcCompat="@drawable/ic_add_text" />
+                                            android:layout_marginTop="40dp"
                     -->
                     <Button
                         android:id="@+id/btnAddStep"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="40dp"
                         android:background="@drawable/style_button_done"
                         android:fontFamily="sans-serif-condensed"
                         android:onClick="onClickStep"

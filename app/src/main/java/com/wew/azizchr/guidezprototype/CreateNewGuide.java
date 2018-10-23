@@ -135,8 +135,10 @@ public class CreateNewGuide extends AppCompatActivity {
     private boolean haveSaved;
 
     //Images used for the step buttons
-    Drawable textIcon;
-    Drawable photoIcon;
+    public Drawable textIcon;
+    public Drawable photoIcon;
+
+    public LinearLayout.LayoutParams buttonLP;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -262,6 +264,11 @@ public class CreateNewGuide extends AppCompatActivity {
         //Gets the images from the drawable folder for the step buttons
         textIcon = CreateNewGuide.this.getResources().getDrawable( R.drawable.icon_style_addtext );
         photoIcon = CreateNewGuide.this.getResources().getDrawable( R.drawable.icon_style_addpic );
+
+        //Sets the layout parameters for the buttonHolder layout
+        buttonLP = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        buttonLP.setMargins(0,0,0, 75);
     }
 
 
@@ -737,8 +744,10 @@ public class CreateNewGuide extends AppCompatActivity {
 
             //Creates the linear layout to hold the two buttons together
             LinearLayout buttonHolder = new LinearLayout(CreateNewGuide.this);
+            buttonHolder.setBackgroundResource(R.drawable.border_new_content);
             buttonHolder.setOrientation(LinearLayout.HORIZONTAL);
-            buttonHolder.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+            buttonHolder.setLayoutParams(buttonLP);
+            buttonHolder.setPadding(0,0,0,75);
 
 
             int num = layoutFeed.getChildCount();

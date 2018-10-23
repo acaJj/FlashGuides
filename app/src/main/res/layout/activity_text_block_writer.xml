@@ -29,65 +29,73 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="horizontal"
-        >
+        android:scrollbars="horizontal">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:orientation="horizontal"
-            >
+            android:padding="10dp">
 
             <Button
                 android:id="@+id/btnUndo"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="U"
-                />
+                android:drawableStart="@drawable/icon_style_undo"
+                android:text="" />
 
             <Button
                 android:id="@+id/btnRedo"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="R" />
+                android:drawableStart="@drawable/icon_style_redo"
+                android:text="" />
 
             <Button
                 android:id="@+id/btnBold"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="B" />
+                android:drawableStart="@drawable/icon_style_bold"
+                android:text="" />
 
             <Button
                 android:id="@+id/btnItalic"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="I" />
+                android:drawableStart="@drawable/icon_style_italic"
+                android:text="" />
 
             <Button
                 android:id="@+id/btnUnderline"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:text="_" />
-
-            <Button
-                android:id="@+id/btnHeader1"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:text="H1" />
+                android:drawableStart="@drawable/icon_style_underline"
+                android:text="" />
         </LinearLayout>
 
     </ScrollView>
 
-    <jp.wasabeef.richeditor.RichEditor
-        android:id="@+id/editor"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center_horizontal"
+        android:padding="10dp">
 
-        <TextView
-            android:id="@+id/preview"
+        <jp.wasabeef.richeditor.RichEditor
+            android:id="@+id/editor"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </jp.wasabeef.richeditor.RichEditor>
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/preview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </jp.wasabeef.richeditor.RichEditor>
+
+    </LinearLayout>
 
     <Button
         android:id="@+id/btnDone"
