@@ -26,43 +26,54 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <TextView
-        android:id="@+id/txtStepTitle"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Step Title: "
-        android:textColor="@android:color/black"
-        android:textSize="24sp" />
+        android:orientation="vertical"
+        android:paddingBottom="5dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="5dp">
 
-    <EditText
-        android:id="@+id/etNewStepTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:hint="(Ex. Gather materials ... )"
-        android:textCursorDrawable="@null"
-        android:backgroundTint="@color/statusbarpurple"
-        android:inputType="textPersonName"
-        android:selectAllOnFocus="false"
-        android:singleLine="false" />
+        <TextView
+            android:id="@+id/txtStepTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Step Title: "
+            android:textColor="@android:color/black"
+            android:textSize="24sp" />
 
-    <TextView
-        android:id="@+id/txtTextDesc"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Step Description:"
-        android:textColor="@android:color/black"
-        android:textSize="24sp" />
+        <EditText
+            android:id="@+id/etNewStepTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:backgroundTint="@color/statusbarpurple"
+            android:ems="10"
+            android:hint="(Ex. Gather materials ... )"
+            android:inputType="textPersonName"
+            android:selectAllOnFocus="false"
+            android:singleLine="false"
+            android:textCursorDrawable="@null" />
 
-    <EditText
-        android:id="@+id/etNewStepDescription"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:hint="(Ex. In this step, ... )"
-        android:textCursorDrawable="@null"
-        android:backgroundTint="@color/statusbarpurple"
-        android:inputType="textMultiLine" />
+        <TextView
+            android:id="@+id/txtTextDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Step Description:"
+            android:textColor="@android:color/black"
+            android:textSize="24sp" />
+
+        <EditText
+            android:id="@+id/etNewStepDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/statusbarpurple"
+            android:ems="10"
+            android:hint="(Ex. In this step, ... )"
+            android:inputType="textMultiLine"
+            android:textCursorDrawable="@null" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/btnDoneAddStep"
@@ -79,4 +90,5 @@
         android:textColor="#FFFFFF"
         android:textSize="25dp"
         android:textStyle="bold" />
+
 </LinearLayout>

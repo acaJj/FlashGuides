@@ -2,6 +2,7 @@ package com.wew.azizchr.guidezprototype;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -21,6 +22,13 @@ public class TextBlockWriterActivity extends AppCompatActivity {
     private TextView mPreview;
     private Button mbtnDone;
     private String text;
+
+    private Button mbtnUndo;
+    private Button mbtnRedo;
+    private Button mbtnBold;
+    private Button mbtnItalic;
+    private Button mbtnUnderline;
+
     private static final String TEXT_BLOCK_WRITTEN = "com.wew.azizchr.guidezprototype.text_written";
 
     public static String getTextBlockWritten(Intent data){
@@ -51,6 +59,12 @@ public class TextBlockWriterActivity extends AppCompatActivity {
         mEditor.setEditorFontColor(Color.BLACK);
         mEditor.setPlaceholder("Insert text here...");
 
+        mbtnUndo = (Button) findViewById(R.id.btnUndo);
+        mbtnRedo = (Button) findViewById(R.id.btnRedo);
+        mbtnUnderline = (Button) findViewById(R.id.btnUnderline);
+        mbtnItalic = (Button) findViewById(R.id.btnItalic);
+        mbtnBold = (Button) findViewById(R.id.btnBold);
+
         if (savedInstanceState != null){
             text = savedInstanceState.getString("Text");
         }
@@ -60,47 +74,46 @@ public class TextBlockWriterActivity extends AppCompatActivity {
             public void onTextChange(String text){ }
         });
 
-        findViewById(R.id.btnUndo).setOnClickListener(new View.OnClickListener() {
+        mbtnUndo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mEditor.undo();
             }
         });
+        mbtnUndo.setBackgroundResource(R.drawable.style_button_add);
 
-        findViewById(R.id.btnRedo).setOnClickListener(new View.OnClickListener() {
+        mbtnRedo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mEditor.redo();
             }
         });
+        mbtnRedo.setBackgroundResource(R.drawable.style_button_add);
 
-        findViewById(R.id.btnBold).setOnClickListener(new View.OnClickListener() {
+        mbtnBold.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mEditor.setBold();
             }
         });
+        mbtnBold.setBackgroundResource(R.drawable.style_button_add);
 
-        findViewById(R.id.btnItalic).setOnClickListener(new View.OnClickListener() {
+        mbtnItalic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mEditor.setItalic();
             }
         });
+        mbtnItalic.setBackgroundResource(R.drawable.style_button_add);
 
-        findViewById(R.id.btnUnderline).setOnClickListener(new View.OnClickListener() {
+        mbtnUnderline.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mEditor.setUnderline();
             }
         });
+        mbtnUnderline.setBackgroundResource(R.drawable.style_button_add);
 
-        findViewById(R.id.btnHeader1).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mEditor.setHeading(1);
-            }
-        });
 
         mbtnDone.setOnClickListener(new View.OnClickListener() {
             @Override

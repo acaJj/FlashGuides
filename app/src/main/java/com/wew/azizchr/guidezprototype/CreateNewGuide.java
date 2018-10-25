@@ -140,8 +140,10 @@ public class CreateNewGuide extends AppCompatActivity {
     private boolean haveSaved;
 
     //Images used for the step buttons
-    Drawable textIcon;
-    Drawable photoIcon;
+    public Drawable textIcon;
+    public Drawable photoIcon;
+
+    public LinearLayout.LayoutParams buttonLP;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -242,6 +244,8 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(View view) {
                 if (haveSaved){
                     newGuide.setPublishedStatus(true);
+                    DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
+                    guideRef.update("publishedStatus",true);
                 }else{
                     new AlertDialog.Builder(CreateNewGuide.this)
                             .setMessage("You must save your work before publishing, would you like to save now?")
@@ -250,6 +254,8 @@ public class CreateNewGuide extends AppCompatActivity {
                                 public void onClick(DialogInterface dialog, int id) {
                                     saveGuide();
                                     newGuide.setPublishedStatus(true);
+                                    DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
+                                    guideRef.update("publishedStatus",true);
                                     Toast.makeText(CreateNewGuide.this,"You've been published!",Toast.LENGTH_SHORT).show();
                                 }
                             })
@@ -267,6 +273,11 @@ public class CreateNewGuide extends AppCompatActivity {
         //Gets the images from the drawable folder for the step buttons
         textIcon = CreateNewGuide.this.getResources().getDrawable( R.drawable.icon_style_addtext );
         photoIcon = CreateNewGuide.this.getResources().getDrawable( R.drawable.icon_style_addpic );
+
+        //Sets the layout parameters for the buttonHolder layout
+        buttonLP = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        buttonLP.setMargins(0,0,0, 75);
     }
 
 
@@ -519,6 +530,7 @@ public class CreateNewGuide extends AppCompatActivity {
         PopulateUploadList();
 
         DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
+        newGuide.setKey(""+guideNum);
         guideRef.set(newGuide);
 
         //informs the user that the save process is starting
@@ -763,8 +775,10 @@ public class CreateNewGuide extends AppCompatActivity {
 
             //Creates the linear layout to hold the two buttons together
             LinearLayout buttonHolder = new LinearLayout(CreateNewGuide.this);
+            buttonHolder.setBackgroundResource(R.drawable.border_new_content);
             buttonHolder.setOrientation(LinearLayout.HORIZONTAL);
-            buttonHolder.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+            buttonHolder.setLayoutParams(buttonLP);
+            buttonHolder.setPadding(0,0,0,75);
 
 
             int num = layoutFeed.getChildCount();
@@ -811,7 +825,9 @@ public class CreateNewGuide extends AppCompatActivity {
         try {
 
             selectedWebView.loadData(newStepDesc,"text/html","UTF-8");
-            String dataId = (String)selectedWebView.getTag();
+            String viewTag = "TEXT--" +newStepDesc;
+            selectedWebView.setTag(viewTag);
+            /*String dataId = (String)selectedWebView.getTag();
             String[] strings = dataId.split("--");
             int num = Integer.parseInt(strings[0]);//get the tag of the textview, which is the view's id
             String id = strings[1];
@@ -826,9 +842,9 @@ public class CreateNewGuide extends AppCompatActivity {
                     data.stringToBlob(newStepDesc);
                     break;
                 }
-            }
+            }*/
         }catch (Exception ex){
-            Log.e("BORBOT error: ",ex.getMessage());
+            Log.e("BORBOT edit error: ",ex.getMessage());
             return false;
         }
 
@@ -886,7 +902,6 @@ public class CreateNewGuide extends AppCompatActivity {
      */
     private boolean addDescription(String newStepDesc) {
         try{
-            Log.i("BORBOT check", "" + newStepDesc);
             LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
             TextView title = (TextView)titleBlock.getChildAt(1);
 
@@ -998,9 +1013,9 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Delete Picture")){
                     //Remove picture, indexes shift up
-                    String dataId = (String)v.getTag();
-                    String[] strings = dataId.split("--");
-                    removeFromDataList(strings[1]);
+                    //String dataId = (String)v.getTag();
+                    //String[] strings = dataId.split("--");
+                    //removeFromDataList(strings[1]);
                     ((LinearLayout) v.getParent()).removeView(v);
                 }else if(items[i].equals("View Picture")){
                     //calls the activty to view the picture and passes the URI
@@ -1070,9 +1085,9 @@ public class CreateNewGuide extends AppCompatActivity {
                     //Removes the selected Textview from the layout and its corresponding data obj from our data list
                     //TODO: After deleting a step, the data list disappears, and the tag just becomes the step number, WTF
                     Log.i("BORBOT TAG",v.getTag().toString());
-                    String dataId = (String)v.getTag();
-                    String[] strings = dataId.split("--");
-                    removeFromDataList(strings[1]);
+                    //String dataId = (String)v.getTag();
+                    //String[] strings = dataId.split("--");
+                    //removeFromDataList(strings[1]);
                     ((LinearLayout) v.getParent()).removeView(v);
                 }else if(items[i].equals("Edit Text")){
                     //Stores the selected text view to edit later
