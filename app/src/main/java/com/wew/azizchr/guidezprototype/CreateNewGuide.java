@@ -9,8 +9,10 @@ import android.graphics.Picture;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Debug;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -40,6 +42,8 @@ import android.widget.Toast;
 
 import com.bumptech.glide.GenericTransitionOptions;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.gms.tasks.Continuation;
@@ -112,6 +116,7 @@ public class CreateNewGuide extends AppCompatActivity {
     public LinearLayout selectedLayout;
     //public TextView selectedTextView;
     public WebView selectedWebView; //changed from text to web view for better memory consumption and text formatting
+    public ImageView selectedImageView;//used for bitmaps
 
     TextView mNewGuideTitle;
 
@@ -145,6 +150,8 @@ public class CreateNewGuide extends AppCompatActivity {
 
     public LinearLayout.LayoutParams buttonLP;
 
+    public ArrayList<Bitmap> mBitmaps;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -159,6 +166,7 @@ public class CreateNewGuide extends AppCompatActivity {
         }
 
         newGuide = new Guide();
+        mBitmaps = new ArrayList<>();
 
         mNewGuideTitle = (TextView) findViewById(R.id.txtNewGuideTitle);
 
@@ -601,6 +609,7 @@ public class CreateNewGuide extends AppCompatActivity {
         for (int i = 0; i< mGuideDataArrayList.size();i++){
             Log.i("GUIDEDATA OBJ: ",mGuideDataArrayList.get(i).getType());
         }
+        haveSaved = true;
     }
 
     /**
@@ -644,8 +653,9 @@ public class CreateNewGuide extends AppCompatActivity {
 
             final ImageView newImgView = new ImageView(CreateNewGuide.this);
             String viewTag = "PICTURE--" + imageUri.toString();
-            newImgView.setTag(viewTag);
+            newImgView.setTag(R.id.viewId,viewTag);
             //Glide.with(CreateNewGuide.this).load(imageUri).into(newImgView);
+            final Boolean checkSwapping = isSwapping;
             Glide.with(CreateNewGuide.this)
                     .asBitmap()
                     .load(imageUri)
@@ -655,24 +665,36 @@ public class CreateNewGuide extends AppCompatActivity {
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
                             //creates object to hold picture data
                             newImgView.setImageBitmap(resource);
+                            if (checkSwapping){
+                                Log.d("SWAP","Yes" + currentPictureSwap);
+
+                                View imageToReplace = selectedLayout.getChildAt(currentPictureSwap);
+                                int index = (int)selectedImageView.getTag(R.id.bitmapIndex);
+                                Log.d("IMG TAGs (old)",""+ index);
+                                mBitmaps.add(index,resource);
+                                mBitmaps.remove(index+1);
+                                int newIndex = mBitmaps.indexOf(resource);
+                                newImgView.setTag(R.id.bitmapIndex,index);
+                            }else{
+                                Log.d("SWAP","No");
+
+                                mBitmaps.add(resource);
+                                //gets index of the bitmap in the list and stores it as a tag in the imgview
+                                //this is important for when we have to change the images in the list
+                                int index = mBitmaps.indexOf(resource);
+                                newImgView.setTag(R.id.bitmapIndex,index);
+                            }
+
                             LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
                             TextView title = (TextView)titleBlock.getChildAt(1);
 
                             //Adds the tag to the new imageview (the tag is the step number + dataId)
                             //String viewTag = selectedLayout.getTag().toString() + "--" + picData.getId();
 
-                            Log.i("IMG TAG", ""+newImgView.getTag());
+                            Log.i("IMG TAGs", ""+newImgView.getTag(R.id.viewId) + " / " + newImgView.getTag(R.id.bitmapIndex));
                             //if we are swapping out a picture, replace the old location with new pic, otherwise just add it to end
                             //WE WONT HAVE TO DO ANYTHING WITH THE DATALIST HERE WITH THE NEW ONE
-                            if (isSwapping){
-                                //picData.setPlacement(currentPictureSwap);
-                                //mGuideDataArrayList.add(currentPictureSwap,picData);
-                                //mGuideDataArrayList.remove(currentPictureSwap + 1);
-                            }else{
-                                //picData.setPlacement(currentIndex);
-                                //mGuideDataArrayList.add(picData);
-                                //addObjectToDataListInOrder(picData);
-                            }
+
                         }
                     });
 
@@ -697,6 +719,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 selectedLayout.addView(newImgView, selectedLayout.getChildCount() - 1);
                 currentIndex++;
             }
+            haveSaved = false;
 
         }catch(Exception ex){
             Log.i("IMAGE ERROR: ", ex.getMessage());
@@ -808,6 +831,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 addDescription(desc);
             }
             currentIndex++;
+            haveSaved = false;
 
         }catch (Exception ex){
             ex.getMessage();
@@ -826,7 +850,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
             selectedWebView.loadData(newStepDesc,"text/html","UTF-8");
             String viewTag = "TEXT--" +newStepDesc;
-            selectedWebView.setTag(viewTag);
+            selectedWebView.setTag(R.id.viewId,viewTag);
             /*String dataId = (String)selectedWebView.getTag();
             String[] strings = dataId.split("--");
             int num = Integer.parseInt(strings[0]);//get the tag of the textview, which is the view's id
@@ -843,6 +867,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     break;
                 }
             }*/
+            haveSaved = false;
         }catch (Exception ex){
             Log.e("BORBOT edit error: ",ex.getMessage());
             return false;
@@ -911,7 +936,7 @@ public class CreateNewGuide extends AppCompatActivity {
             //set second section of tag to data id, so we can get the view to manipulate it with the data object simultaneously
             //String viewTag = selectedLayout.getTag().toString() + "--" + dataToAdd.getId();
             String viewTag = "TEXT--" +newStepDesc;
-            mDescription.setTag(viewTag);
+            mDescription.setTag(R.id.viewId,viewTag);
 
            // mDescription.setTextSize(17);
             //mDescription.setTextColor(Color.DKGRAY);
@@ -935,7 +960,7 @@ public class CreateNewGuide extends AppCompatActivity {
             selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 1);
 
             //addObjectToDataListInOrder(dataToAdd);
-
+            haveSaved = false;
         }catch (Exception ex){
             ex.getMessage();
             return false;
@@ -1026,6 +1051,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     isSwapping = true;
                     selectedLayout = ((LinearLayout) v.getParent());
                     currentPictureSwap = ((LinearLayout) v.getParent()).indexOfChild(v);
+                    selectedImageView = (ImageView)v;
                     Intent intent = new Intent(CreateNewGuide.this, EditorActivity.class);
                     intent.putExtra("imageUri", imageUri);
                     intent.putExtra("isNewPic", false);
@@ -1036,6 +1062,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     isSwapping = true;
                     selectedLayout = ((LinearLayout) v.getParent());
                     currentPictureSwap = ((LinearLayout) v.getParent()).indexOfChild(v);
+                    selectedImageView = (ImageView)v;
                     SelectImage();
                 }else if(items[i].equals("Cancel")){
                     dialogInterface.dismiss();
@@ -1159,6 +1186,7 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 textview.setText(input.getText().toString());
                 newGuide.setTitle(input.getText().toString());
+                haveSaved = false;
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -1177,7 +1205,6 @@ public class CreateNewGuide extends AppCompatActivity {
      * @param text object to be uploaded
      */
     public void uploadText(TextData text){
-        Log.i("BORBOT"," go back");
         if (text.getStringFromBlob().isEmpty()){
             Log.i("BORBOT","gotta go back");
             return;
@@ -1222,23 +1249,18 @@ public class CreateNewGuide extends AppCompatActivity {
 
 
     public void uploadImages(ArrayList<PictureData> images){
-        final ArrayList<Bitmap> bitmaps = new ArrayList<>();
+        //final ArrayList<Bitmap> bitmaps = new ArrayList<>();
         final ArrayList<String> paths = new ArrayList<>();
+        boolean readyToUpload = false;
 
         //get each PictureData obj in guide and extract bitmaps/file paths for async uploading;then store the data in firestore
         for(PictureData image: images){
             //Check to see if the current step has an object saved in the db
             uploadStep(image);
-            Uri imageUri = Uri.parse(image.getUri());
-            Glide.with(CreateNewGuide.this)
-                    .asBitmap()
-                    .load(imageUri)
-                    .into(new SimpleTarget<Bitmap>() {
-                        @Override
-                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            bitmaps.add(resource);
-                        }
-                    });
+            //Uri imageUri = Uri.parse(image.getUri());
+            //RequestOptions ro = new RequestOptions()
+            //        .diskCacheStrategy(DiskCacheStrategy.RESOURCE);
+
             String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + image.getId() + ".png";
             image.setImgPath(path);
             paths.add(path);
@@ -1246,11 +1268,20 @@ public class CreateNewGuide extends AppCompatActivity {
             //Can create a hashmap to upload but instead we use custom objects
             DocumentReference imgBlockRef = picData.document("imgBlock-" + image.getId());
             imgBlockRef.set(image);
+            Log.d("BORBOT SIZE",""+mBitmaps.size());
+            if (mBitmaps.size() == images.size()){
+                Log.d("BORBOT EQUALS","all bitmaps loaded");
+                readyToUpload = true;
+            }
+
         }
-        Log.d("BORBOT SIZE",""+bitmaps.size());
-        Log.d("BORBOT","Uploading images asynchronously");
-        //send all the bitmaps to the async task
-        new ImageUploadAsyncTask(paths).execute(bitmaps);
+
+        if (readyToUpload){
+            Log.d("BORBOT","Uploading images asynchronously");
+            //send all the bitmaps to the async task
+            new ImageUploadAsyncTask(paths).execute(mBitmaps);
+        }
+
     }
 
     private static class ImageUploadAsyncTask extends AsyncTask<ArrayList<Bitmap>, Void, Long>{
@@ -1348,12 +1379,12 @@ public class CreateNewGuide extends AppCompatActivity {
                     //You can get URI from glide using
                     //https://stackoverflow.com/questions/42200448/how-to-get-uri-on-imageview-with-glide
                 View dataView = stepLayout.getChildAt(j);
-                String tag = dataView.getTag().toString();
+                String tag = dataView.getTag(R.id.viewId).toString();
                 String[] strings = tag.split("--");
                 String blockType = strings[0];
 
                 if (blockType.equals("TEXT")){
-                    Log.i("BORBOT text blob: ","getting text");
+                    //Log.i("BORBOT text blob: ","getting text");
                     WebView mWebview = (WebView) dataView;
                     //make the text data object
                     TextData dataToAdd = new TextData();
@@ -1365,7 +1396,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     String currText = strings[1];
                     dataToAdd.stringToBlob(currText);
                     dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
-                    Log.i("BORBOT text blob: ","dfdfdf"+dataToAdd.getStringFromBlob());
+                    //Log.i("BORBOT text blob: ",""+dataToAdd.getStringFromBlob());
                     mGuideDataArrayList.add(dataToAdd);
                     dataToAdd.setId(newGuide.getId() +"TEXT"+mGuideDataArrayList.size());
                 }else if (blockType.equals("PICTURE")){
@@ -1376,11 +1407,10 @@ public class CreateNewGuide extends AppCompatActivity {
                     picData.setStepNumber(stepNumber);
                     picData.setStepTitle(TitleDesc.getText().toString());
                     picData.setPlacement(j-1);
-
                     String picUri = strings[1];
                     picData.setUri(picUri);
-                    //getImageUri(picData,imageView);
-                    Log.i("BORBOT URI: ",""+picData.getUri());
+                    //getBitmaps(picUri);
+                    //Log.i("BORBOT URI: ",""+picData.getUri());
                     mGuideDataArrayList.add(picData);
                     picData.setId(newGuide.getId()+"IMG"+mGuideDataArrayList.size());
                 }
@@ -1388,12 +1418,22 @@ public class CreateNewGuide extends AppCompatActivity {
         }
     }
 
-    public void getImageUri(PictureData data, ImageView imageView){
-        Bitmap bitmap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-        String path = MediaStore.Images.Media.insertImage(getApplicationContext().getContentResolver(), bitmap, data.getId(), null);
-        data.setUri(path);
+    /**
+     * Gets the image bitmap from a given uri and stores it in a bitmap list
+     * @param imageUri of the image we are processing
+     */
+    public void getBitmaps(String imageUri){
+        Uri theUri = Uri.parse(imageUri);
+        Glide.with(CreateNewGuide.this)
+                .asBitmap()
+                .load(theUri)
+                .into(new SimpleTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        Log.d("BORBOT BITMAPS","bitmap added");
+                        mBitmaps.add(resource);
+                    }
+                });
     }
 
     /**
@@ -1567,6 +1607,7 @@ public class CreateNewGuide extends AppCompatActivity {
             }else if (requestCode == PESDK_RESULT){
                 String editedImage = data.getStringExtra("resultURI");
                 Uri editedUri = Uri.parse(editedImage);
+                isSwapping = true;
                 addImage(editedUri);
             }
         }

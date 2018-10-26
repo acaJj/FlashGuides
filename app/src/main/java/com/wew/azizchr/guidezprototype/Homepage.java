@@ -70,14 +70,17 @@ public class Homepage extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(Homepage.this,SettingsActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             }
         });
 
         btnCollection.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(Homepage.this, UserCollectionActivity.class);
+                //Intent intent = new Intent(Homepage.this, UserCollectionActivity.class);
+                Intent intent = new Intent(Homepage.this, ViewGuide.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             }
         });
 
@@ -86,6 +89,7 @@ public class Homepage extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(Homepage.this, SearchActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             }
         });
     }
