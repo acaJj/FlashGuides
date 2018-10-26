@@ -136,8 +136,8 @@ public class ViewGuide extends AppCompatActivity {
             //Creates a new textview and sets the tag (the tag is the current step number)
             WebView mDescription = new WebView(ViewGuide.this);
 
-            String viewTag = "TEXT--" +newStepDesc;
-            mDescription.setTag(viewTag);
+            //String viewTag = "TEXT--" +newStepDesc;
+            //mDescription.setTag(viewTag);
 
             //Formats the webview
             mDescription.setPadding(0, 10, 0, 10);
@@ -179,8 +179,8 @@ public class ViewGuide extends AppCompatActivity {
             newImgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             newImgView.setAdjustViewBounds(true);
             newImgView.setPadding(3, 10, 3, 10);
-            String viewTag = "PICTURE--" + tag;
-            newImgView.setTag(viewTag);
+            //String viewTag = "PICTURE--" + tag;
+            //newImgView.setTag(viewTag);
             selectedLayout.addView(newImgView, selectedLayout.getChildCount()-1);
 
         }catch(Exception ex){

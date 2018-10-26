@@ -78,7 +78,7 @@ public class Homepage extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 //Intent intent = new Intent(Homepage.this, UserCollectionActivity.class);
-                Intent intent = new Intent(Homepage.this, ViewGuide.class);
+                Intent intent = new Intent(Homepage.this, UserCollectionActivity.class);
                 startActivity(intent);
                 overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             }
