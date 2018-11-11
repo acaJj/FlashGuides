@@ -34,6 +34,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
 
             //Starts the view guide activity for the selected guide
             itemView.setClickable(true);
+            /*
             itemView.setOnClickListener(new View.OnClickListener() {
                 @SuppressLint("ResourceAsColor")
                 @Override
@@ -42,8 +43,31 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
                     Activity mContext = (Activity) v.getContext();
 
                     //Starts the intent with a transition
-                    Intent intent = new Intent(v.getContext(), ViewGuide.class);
+                    Intent intent = new Intent(v.getContext(), CreateNewGuide.class);
+                    intent.putExtra("MODE","EDIT");
+
                     v.getContext().startActivity(intent);
+                    mContext.overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
+                }
+            });*/
+        }
+
+        public void bindData(final Result result){
+            //set cardview listener
+            cardView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //Get the activity in which the cardview resides in
+                    Activity mContext = (Activity) view.getContext();
+
+                    //Starts the intent with a transition
+                    Intent intent = new Intent(view.getContext(), CreateNewGuide.class);
+                    intent.putExtra("MODE","EDIT");
+                    intent.putExtra("GUIDEID",result.getId());
+                    intent.putExtra("GUIDE_TITLE",result.getTitle());
+                    intent.putExtra("Key",result.getKey());
+
+                    view.getContext().startActivity(intent);
                     mContext.overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                 }
             });
@@ -64,6 +88,8 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
         holder.guideTitle.setText(searchResults.get(position).title);
         holder.guideAuthor.setText("By: " + searchResults.get(position).name);
         holder.guideDate.setText("Published: " + searchResults.get(position).date);
+        //bind the listener
+        holder.bindData(searchResults.get(position));
     }
 
     //Returns the number of search results

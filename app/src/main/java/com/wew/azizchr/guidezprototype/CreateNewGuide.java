@@ -51,6 +51,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -76,11 +77,14 @@ import com.kbeanie.multipicker.api.entity.ChosenImage;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -91,6 +95,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
     //private static final String TEXT_TAG = "TEXT";
     //private static final String IMG_TAG = "IMG";
+    private static final String DEBUG_TAG = "BORBOT";//a made up word to make our log statements easier to find
     private static final int SELECT_FILE =0;//used when selecting an image file
     private static final int WRITE_STEP =1;//used when making a new step
     private static final int WRITE_DESC =2;//used when making a new text block
@@ -143,6 +148,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
     //used when saving so we know not to save the copies of the same data objects in db
     private boolean haveSaved;
+    private Boolean haveLoaded;
 
     //Images used for the step buttons
     public Drawable textIcon;
@@ -191,7 +197,7 @@ public class CreateNewGuide extends AppCompatActivity {
             guideTitle = "Guide (No title)";
             mode = "CREATE";
         }
-        Log.i("BORBOT MODE",mode);
+        Log.i(DEBUG_TAG+"MODE",mode);
         userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
 
         //gets the number of guides the user has
@@ -323,8 +329,36 @@ public class CreateNewGuide extends AppCompatActivity {
         }else if (mode.equals("EDIT")){
             newGuide.setId(bundle.getString("GUIDEID"));
             newGuide.setKey(bundle.getString("Key"));
+            haveLoaded = false;
             loadGuide(newGuide.getId(),newGuide.getKey());
-            Log.i("BORBOT EDITs","" + newGuide.getId());
+            Log.i(DEBUG_TAG+"EDITs","" + newGuide.getId());
+        }
+    }
+
+    //used to load the parts of a guide
+    public class LoadCallable implements Callable<Boolean>{
+        private final ArrayList guideSteps;
+        private final Query loadQuery;
+
+        public LoadCallable(ArrayList steps, Query query){
+            this.guideSteps = steps;
+            this.loadQuery = query;
+        }
+
+        @Override
+        public Boolean call() throws Exception{
+            Boolean completed = false;
+
+            //loadQuery.get().addOnCompleteListener()
+
+            return completed;
+        }
+    }
+
+    public class TextLoadContinuation implements Continuation<String, List<String>> {
+        @Override
+        public List<String> then(Task<String> task) throws Exception {
+            return Arrays.asList(task.getResult().split(" +"));
         }
     }
 
@@ -355,6 +389,8 @@ public class CreateNewGuide extends AppCompatActivity {
             }
         });
 
+        final ArrayList<GuideData> guideElements = new ArrayList<>();
+
         /*Task guideLoader = mFirebaseAuth.signInAnonymously();
 
         guideLoader.continueWithTask(new Continuation() {
@@ -363,35 +399,35 @@ public class CreateNewGuide extends AppCompatActivity {
                 return null;
             }
         });
-
-        Executor executor = new Executor() {
+*/
+        final Executor executor = new Executor() {
             @Override
             public void execute(@NonNull Runnable runnable) {
-
+                new Thread(runnable).start();
             }
         };
-*/
+
+        final ArrayList<Map<String,Object>> steps = new ArrayList<>();
         //get the stored guide data
         guideSteps.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 int stepNum;
+                String stepTitle;
                 if (task.isSuccessful()){
                     //for each step in the guide, get its info and recreate the step
+                    int totalSteps = task.getResult().size();
                     for (QueryDocumentSnapshot doc: task.getResult()){
                         stepNum = doc.getLong("stepNumber").intValue();
-                        String stepTitle = doc.get("stepTitle").toString();
+                        stepTitle = doc.get("stepTitle").toString();
                         addStep(stepTitle,"");
 
                         Query stepText = guideText.whereEqualTo("stepNumber",stepNum);
                         Query stepImgs = guideImgs.whereEqualTo("stepNumber", stepNum);
-
-                        //get the step's text from the db and add it to the data list in the proper order
-                        stepText.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<QuerySnapshot>() {
+                        stepText.get().addOnCompleteListener(CreateNewGuide.this, new OnCompleteListener<QuerySnapshot>() {
                             @Override
                             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                                 if (task.isSuccessful()){
-                                    //get each text's data, make an object for it, and add it to the data list
                                     for (QueryDocumentSnapshot snap: task.getResult()){
                                         Blob text = (Blob)snap.get("text");
                                         String id = snap.get("id").toString();
@@ -400,28 +436,21 @@ public class CreateNewGuide extends AppCompatActivity {
                                         String type = snap.get("type").toString();
                                         int num = snap.getLong("stepNumber").intValue();
                                         int placement = snap.getLong("placement").intValue();
-                                        int size = snap.getLong("size").intValue();
-                                        int color = snap.getLong("color").intValue();
-                                        boolean bold = (boolean)snap.get("bold");
-                                        boolean italic = (boolean)snap.get("italic");
                                         TextData data = new TextData(type,placement,guideId,stepTitle,num);
-                                        //data.stringToBlob(text);
                                         data.setText(text);
                                         data.setId(id);
-                                        //selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);
-                                        addObjectToDataListInOrder(data);
-                                        addDescription(data);
+                                        Log.i(DEBUG_TAG+"-TEXT EXECUTE","in chained task, data added / " + data.getId() );
+
+                                        addElement(data);
                                     }
                                 }
                             }
                         });
 
-                        //get the step's images from the db and add it to the data list in the proper order
-                        stepImgs.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<QuerySnapshot>() {
+                        stepImgs.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                             @Override
                             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                                 if (task.isSuccessful()){
-                                    //get each pic's data, make an object for it, add it to the data list, then load the image
                                     for (QueryDocumentSnapshot snap: task.getResult()){
                                         //get the data from fire store and add a data object to the data list
                                         String id = snap.get("id").toString();
@@ -436,37 +465,283 @@ public class CreateNewGuide extends AppCompatActivity {
                                         data.setStep(num,stepTitle);
                                         data.setUri(uri);
                                         data.setImgPath(imgPath);
-                                       // selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);
-                                        addObjectToDataListInOrder(data);
 
-                                        //load the image from storage into the layout
-                                        String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + id + ".png";
-                                        StorageReference imageToLoad = imgStorage.child(path);
-                                        //get reference to the layout we are adding the picture to
-                                        int dataStep = data.getStepNumber() - 1;
-                                        LinearLayout theSelectedLayout = (LinearLayout) layoutFeed.getChildAt(dataStep);
-                                        loadImage(imageToLoad, theSelectedLayout);
+                                        Log.i(DEBUG_TAG+"IMG EXECUTE","in chained task, data added / " + data.getId() );
+                                        addElement(data);
                                     }
                                 }
                             }
                         });
-                    }
-                }else{
-                    //sheeeeit
-                    Log.i("SOMEONE FUCKED UP: ","IT WAS JEFFREY!");
-                    Log.i("ITS ALRIGHT: ","BE NICE TO JEFF");
-                }
 
+                        //Task<QuerySnapshot> fetchTextTask;
+                        //Map<String,Object> data = new HashMap<>();
+                        //data.put("stepNumber",stepNum);
+                        //data.put("stepTitle",stepTitle);
+                        //steps.add(data);
+
+                        Log.i(DEBUG_TAG+"EXECUTE","in Guide steps / " + doc.getId());
+                    }
+                    /*int counter = 0;
+                    for (Map<String, Object> item: steps){
+                        stepNum = (int)item.get("stepNumber");
+                        Query stepText = guideText.whereEqualTo("stepNumber",stepNum);
+                        final Query stepImgs = guideImgs.whereEqualTo("stepNumber", stepNum);
+                        //fetchTextTask = stepText.get();
+                        stepText.get().addOnCompleteListener(CreateNewGuide.this, new OnCompleteListener<QuerySnapshot>() {
+                            int stepsChecked = 0;//to keep count of how many steps we've checked for this data
+                            int textBlocksChecked = 0;//blocks checked in the step
+                            Boolean textCompleted = false;//have we gotten all text data for this guide?
+                            int guideTextSize = 0;//running total of text blocks in the guide
+                            @Override
+                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                if (task.isSuccessful()){
+                                    //add the current step's number of text blocks to the running total, if there's none, the steps checked
+                                    guideTextSize = guideTextSize + task.getResult().size();
+                                    if (guideTextSize == 0){
+                                        stepsChecked++;
+                                    }
+
+                                    for (QueryDocumentSnapshot snap: task.getResult()){
+                                        textBlocksChecked++;
+                                        Blob text = (Blob)snap.get("text");
+                                        String id = snap.get("id").toString();
+                                        String guideId = "";
+                                        String stepTitle = snap.get("stepTitle").toString();
+                                        String type = snap.get("type").toString();
+                                        int num = snap.getLong("stepNumber").intValue();
+                                        int placement = snap.getLong("placement").intValue();
+                                        TextData data = new TextData(type,placement,guideId,stepTitle,num);
+                                        data.setText(text);
+                                        data.setId(id);
+
+                                        guideElements.add(data);
+                                        if (textBlocksChecked == guideTextSize)
+                                            stepsChecked++;
+
+                                        Log.i(DEBUG_TAG+"-TEXT EXECUTE","in chained task, data added / " + data.getId() );
+                                    }
+                                    if ((stepsChecked == steps.size()) && (textBlocksChecked == guideTextSize)) textCompleted = true;
+                                    Log.i(DEBUG_TAG+"TEXT EXECUTE","Text Completed? "+textBlocksChecked+"/"+guideTextSize+"/"+textCompleted);
+                                }
+                            }
+                        }).continueWith(new Continuation<QuerySnapshot, Void>() {
+                            @Override
+                            public Void then(@NonNull Task<QuerySnapshot> task) throws Exception{
+                                stepImgs.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                    int stepsChecked = 0;//to keep count of how many steps we've checked for this data
+                                    int imgBlocksChecked = 0;//blocks checked in the step
+                                    Boolean imgCompleted = false;//have we gotten all text data for this guide?
+                                    int guideImgSize = 0;//running total of text blocks in the guide
+                                    @Override
+                                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                        if (task.isSuccessful()){
+                                            guideImgSize =guideImgSize+ task.getResult().size();
+                                            if (guideImgSize == 0){
+                                                stepsChecked++;
+                                            }
+
+                                            for (QueryDocumentSnapshot snap: task.getResult()){
+                                                imgBlocksChecked++;
+                                                //get the data from fire store and add a data object to the data list
+                                                String id = snap.get("id").toString();
+                                                String guideId = "";
+                                                String stepTitle = snap.get("stepTitle").toString();
+                                                String type = (String)snap.get("type");
+                                                int num = snap.getLong("stepNumber").intValue();
+                                                int placement = snap.getLong("placement").intValue();
+                                                String imgPath = snap.get("imgPath").toString();
+                                                String uri = snap.get("uri").toString();
+                                                PictureData data = new PictureData(id,type,placement,guideId);
+                                                data.setStep(num,stepTitle);
+                                                data.setUri(uri);
+                                                data.setImgPath(imgPath);
+                                                guideElements.add(data);
+
+                                                if (imgBlocksChecked == guideImgSize)
+                                                    stepsChecked++;
+
+                                                Log.i(DEBUG_TAG+"IMG EXECUTE","in chained task, data added / " + data.getId() );
+                                            }
+
+                                            if ((stepsChecked == steps.size()) && (imgBlocksChecked == guideImgSize)) imgCompleted = true;
+                                            Log.i(DEBUG_TAG+"IMG EXECUTE","IMG Completed? "+imgBlocksChecked+"/"+guideImgSize+"/"+imgCompleted);
+
+                                            //check
+                                            Log.i(DEBUG_TAG+"-FINISH",""+guideElements.size());
+                                            Log.i(DEBUG_TAG+"-FINISH","textCompleted/imgCompleted/"+imgCompleted);
+                                            //Create the guide
+                                            createGuide(guideElements);
+                                        }
+                                    }
+                                });
+
+                                return null;
+                            }
+                        });
+                        counter++;
+                    }*/
+                }
 
             }
         });
+    }
+
+    public void addElement(GuideData data){
+        int stepNumber = data.getStepNumber();
+        int stepPlacement = data.getPlacement();
+
+        View elementView = new View(CreateNewGuide.this);
+        if (data.getType().equals("Text")){
+            TextData textData = (TextData) data;
+            elementView = loadText(textData);
+        }else if (data.getType().equals("Picture")){
+            PictureData pictureData = (PictureData)data;
+            StorageReference imageToLoad = imgStorage.child(pictureData.getImgPath());
+            elementView = loadImage(pictureData,imageToLoad);
+        }
+        LinearLayout stepLayout = (LinearLayout)layoutFeed.getChildAt(stepNumber-1);
+        Log.i(DEBUG_TAG+"-Elements",""+data.getStepNumber()+"/"+data.getPlacement());
+        for (int i =0; i< stepLayout.getChildCount()-1;i++){
+            //if there is no object in the step (only the title and buttons), place the element and get out
+            if (stepLayout.getChildCount() == 2){
+                stepLayout.addView(elementView,stepLayout.getChildCount()-1);
+                break;
+            }
+            int currentViewIndex = i+1;
+
+            View currentView = stepLayout.getChildAt(currentViewIndex);
+            Log.i("Placements:",""+(String)currentView.getTag(R.id.index)+"/"+(String)elementView.getTag(R.id.index));
+            int currentViewPlacement = 0;
+            try{
+                currentViewPlacement = Integer.parseInt((String)currentView.getTag(R.id.index));
+            }catch(NumberFormatException ex){
+                Log.i("EXCEPTION!",ex.getMessage());
+                //if we end up here then the element goes at the end of the step
+                stepLayout.addView(elementView,currentViewIndex);
+                break;
+            }
+
+            int elementViewPlacement = Integer.parseInt((String)elementView.getTag(R.id.index));
+
+            //compare the placement of the elementView and currentView
+            if (elementViewPlacement<currentViewPlacement){//if less, then it goes before it in the step
+                stepLayout.addView(elementView,currentViewIndex);
+                break;
+            }
+
+            //Log.i(DEBUG_TAG,data.getId()+"/"+elementView.getParent());
+        }
+    }
+    public void createGuide(ArrayList<GuideData> guideElements){
+        if (!haveLoaded){
+            haveLoaded = true;
+            ArrayList<GuideData> orderedGuide = putGuideInOrder(guideElements);
+
+            for (int i =0;i<orderedGuide.size();i++){
+                Log.i(DEBUG_TAG+"-ORDEREDLIST","data-step/placement"+orderedGuide.get(i).getStepNumber()+"/"+orderedGuide.get(i).getPlacement());
+            }
+
+            int currentStep = 0;
+            for (int i =0;i<orderedGuide.size();i++){
+                GuideData data = orderedGuide.get(i);
+                if (data.getStepNumber() > currentStep){
+                    currentStep = data.getStepNumber();
+                    addStep(data.getStepTitle(),"");
+                }
+
+                if (data.getType().equals("Text")){
+                    TextData textData = (TextData) data;
+                    addDescription(textData.getStringFromBlob());
+                }else if (data.getType().equals("Picture")){
+                    PictureData pictureData = (PictureData)data;
+                    StorageReference imageToLoad = imgStorage.child(pictureData.getImgPath());
+                    LinearLayout layout = (LinearLayout) layoutFeed.getChildAt(pictureData.getStepNumber()-1);
+                    //loadImage(imageToLoad);
+                }
+            }
+        }
+
+    }
+
+    public ArrayList<GuideData> putGuideInOrder(ArrayList<GuideData> guideData){
+        ArrayList<GuideData> orderedGuide = new ArrayList<>();
+        int index = 0;
+        int currStep = 1;
+        int listIterator = 0;
+
+        while(orderedGuide.size() != guideData.size()){
+            GuideData data = guideData.get(listIterator);
+            if ((data.getStepNumber() == currStep) && (data.getPlacement() == index)){
+                index++;
+
+                orderedGuide.add(data);
+
+                if (orderedGuide.size() == guideData.size()){
+                    break;
+                }else{
+                    listIterator = 0;
+                    continue;
+                }
+            }
+
+            listIterator++;
+            //if i is greater than the data list length, we have searched the whole loop
+            //and haven't found the element at the index we are looking for, this means we have found all elements in the step
+            //increment currStep and start looking for the next step's elements
+            if (listIterator > guideData.size()-1){
+                currStep++;
+                index = 0;
+                listIterator = 0;
+            }
+        }
+
+        return orderedGuide;
+    }
+
+    public WebView loadText(TextData text){
+        try{
+            //Creates a new textview and sets the tag (the tag is the current step number)
+            WebView mDescription = new WebView(CreateNewGuide.this);
+            String description = text.getStringFromBlob();
+
+            //set tag to the text so we can easily get it when uploading, haven't yet figured out how to get from webview
+            String viewTag = "TEXT--" +description;
+            mDescription.setTag(R.id.viewId,viewTag);
+            Log.i("Placement",""+text.getPlacement());
+            mDescription.setTag(R.id.index,""+text.getPlacement());
+
+            mDescription.setPadding(5, 10, 5, 10);
+            mDescription.loadData(description,"text/html","UTF-8");
+            mDescription.setBackgroundColor(Color.TRANSPARENT);
+
+            mDescription.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    switch (motionEvent.getAction()){
+                        case MotionEvent.ACTION_UP:
+                            view.performClick();
+                            displayTextOptionsMenu(view);
+                    }
+                    return true;
+                }
+            });
+
+            //adds the new text block with the text to the selected step
+            //selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 1);
+
+            haveSaved = false;
+            return mDescription;
+        }catch (Exception ex){
+            ex.getMessage();
+            return null;
+        }
     }
 
     /**
      * Loads an image from Firebase Storage into a new image view
      * @param ref of the image we are getting from storage
      */
-    public void loadImage(StorageReference ref, LinearLayout layout){
+    public ImageView loadImage(PictureData pictureData,StorageReference ref){
         try{
             //Creates the new imageview
             final ImageView newImgView = new ImageView(CreateNewGuide.this);
@@ -499,11 +774,15 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setPadding(3, 10, 3, 10);
 
             //add it to the layout
-            layout.addView(newImgView, layout.getChildCount() - 1);
+            //layout.addView(newImgView, layout.getChildCount() - 1);
             currentIndex++;
+            Log.i("Placement",""+pictureData.getPlacement());
+            newImgView.setTag(R.id.index,""+pictureData.getPlacement());
+            return newImgView;
 
         }catch(Exception ex){
             Log.i("IMAGE ERROR: ", ex.getMessage());
+            return null;
         }
     }
 
@@ -811,6 +1090,7 @@ public class CreateNewGuide extends AppCompatActivity {
             newStepBlock.setTag(num);
 //            mStepDesc.setTag(num);
 
+            //add the title and button views to the stepBlock, an "empty" stepBlock has those 2 children
             String newStepNum = "Step " +num + " : ";
             mStepNumber.setText(newStepNum);
             mStepTitle.setText(title);
@@ -1376,8 +1656,6 @@ public class CreateNewGuide extends AppCompatActivity {
                     //TODO: decide if its an image or text from here (maybe using tags?)
                     //TODO: add the image or text to the list
                     //TODO: set any variables/modifiers that are needed in the back end
-                    //You can get URI from glide using
-                    //https://stackoverflow.com/questions/42200448/how-to-get-uri-on-imageview-with-glide
                 View dataView = stepLayout.getChildAt(j);
                 String tag = dataView.getTag(R.id.viewId).toString();
                 String[] strings = tag.split("--");
@@ -1416,24 +1694,6 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
             }
         }
-    }
-
-    /**
-     * Gets the image bitmap from a given uri and stores it in a bitmap list
-     * @param imageUri of the image we are processing
-     */
-    public void getBitmaps(String imageUri){
-        Uri theUri = Uri.parse(imageUri);
-        Glide.with(CreateNewGuide.this)
-                .asBitmap()
-                .load(theUri)
-                .into(new SimpleTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        Log.d("BORBOT BITMAPS","bitmap added");
-                        mBitmaps.add(resource);
-                    }
-                });
     }
 
     /**

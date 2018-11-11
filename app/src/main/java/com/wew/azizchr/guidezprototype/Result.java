@@ -5,6 +5,8 @@ public class Result {
     public String title;
     public String name;
     public String date;
+    public String id;
+    public String key;
 
     public Result() {
         title = "unknown";
@@ -42,5 +44,21 @@ public class Result {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 }

@@ -3,5 +3,6 @@
     <string name="default_item_text">This is a collection item</string>
     
     <item type="id" name="viewId"/>
+    <item type="id" name="index" />
     <item type="id" name="bitmapIndex"/>
 </resources>

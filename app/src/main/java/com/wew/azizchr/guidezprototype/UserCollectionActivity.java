@@ -90,6 +90,8 @@ public class UserCollectionActivity extends AppCompatActivity {
                         guide.setTitle(doc.getString("title"));
                         guide.setName("you!");
                         guide.setDate("October 29th, 2018");
+                        guide.setKey(doc.getId());
+                        guide.setId(doc.getString("id"));
                         searchResults.add(guide);
                     }
 
