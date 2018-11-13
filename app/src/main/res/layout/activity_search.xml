@@ -6,28 +6,112 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context="com.wew.azizchr.guidezprototype.SearchActivity">
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
         android:orientation="vertical">
 
-        <Spinner
-            android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/txtSearchTitle"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/userIdSpinner"
-            />
+            android:layout_centerVertical="true"
+            android:background="#8e55d3"
+            android:fontFamily="sans-serif-condensed"
+            android:paddingBottom="15dp"
+            android:paddingTop="15dp"
+            android:text="Search"
+            android:textAlignment="center"
+            android:textColor="#FFFFFF"
+            android:textSize="25dp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:orientation="vertical"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp">
+
+            <TextView
+                android:id="@+id/txtSearchBoxTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="10dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="10dp"
+                android:text="What are we going to learn today?"
+                android:textAlignment="center"
+                android:textColor="@android:color/black"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="51dp"
+                tools:layout_editor_absoluteY="99dp" />
+
+            <EditText
+                android:id="@+id/etSearchString"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/statusbarpurple"
+                android:ems="10"
+                android:hint="Ex. How to ride a bike..."
+                android:inputType="textCapSentences"
+                android:paddingBottom="20dp"
+                android:paddingTop="25dp"
+                android:singleLine="false"
+                android:textAlignment="center"
+                android:textCursorDrawable="@null"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <CheckBox
+                android:id="@+id/cbSearchByUser"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/statusbarpurple"
+                android:checked="false"
+                android:text="Search by User"
+                android:textColorHint="@color/statusbarpurple"
+                android:textColorLink="@color/statusbarpurple" />
+
+            <EditText
+                android:id="@+id/etSearchUser"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/statusbarpurple"
+                android:ems="10"
+                android:hint="Ex. chrisaziz2112@gmail.com"
+                android:inputType="textCapSentences"
+                android:paddingBottom="20dp"
+                android:paddingTop="25dp"
+                android:singleLine="false"
+                android:textAlignment="center"
+                android:textCursorDrawable="@null"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
 
         <Button
+            android:id="@+id/btnContinue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/btnSearch"
-            android:text="Search"/>
-    </LinearLayout>
+            android:layout_marginTop="10dp"
+            android:background="@drawable/style_button_done"
+            android:fontFamily="sans-serif-condensed"
+            android:onClick="onSearchSubmit"
+            android:text="Continue"
+            android:textAlignment="center"
+            android:textColor="#FFFFFF"
+            android:textSize="20dp"
+            android:textStyle="bold" />
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/searchResults"
-        android:scrollbars="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+    </LinearLayout>
 </LinearLayout>
