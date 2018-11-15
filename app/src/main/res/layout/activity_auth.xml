@@ -4,13 +4,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/purple"
+    android:background="@color/white"
     tools:context=".AuthActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="135dp"
+        android:layout_marginTop="86dp"
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:weightSum="2"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="0dp">
 
         <ImageView
             android:id="@+id/imageView"
@@ -18,37 +25,36 @@
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
             android:maxHeight="250dp"
-            app:srcCompat="@drawable/logo" />
-
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Flash Guides"
-            android:textAlignment="center"
-            android:textColor="@android:color/white"
-            android:textSize="24sp"
-            android:textStyle="bold|italic" />
+            app:srcCompat="@drawable/login_logo" />
 
         <Button
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="50dp"
+            android:layout_marginRight="50dp"
+            android:layout_weight="1"
+            android:background="@drawable/style_button_save"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-condensed"
             android:onClick="onClickSignIn"
+            android:textColor="@color/statusbarpurple"
             android:text="Login" />
 
         <Button
             android:id="@+id/btnSignUp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="50dp"
+            android:layout_marginRight="50dp"
+            android:layout_weight="1"
+            android:background="@drawable/style_button_save"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-condensed"
+            android:textColor="@color/statusbarpurple"
             android:onClick="onClickSignUp"
             android:text="Create Account" />
 
-        <Button
-            android:id="@+id/button5"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="onClickGuest"
-            android:text="Continue As Guest" />
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

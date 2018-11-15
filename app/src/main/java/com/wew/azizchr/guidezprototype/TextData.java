@@ -10,6 +10,7 @@ import java.util.Iterator;
 
 /**
  * Created by Jeffrey on 2018-06-01.
+ * Models the data for a text block
  */
 
 public class TextData extends GuideData {

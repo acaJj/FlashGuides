@@ -8,79 +8,131 @@
     tools:context="com.wew.azizchr.guidezprototype.SettingsActivity">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:id="@+id/txtEditSettings"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Edit Settings"/>
+        android:layout_centerVertical="true"
+        android:fontFamily="sans-serif-condensed"
+        android:paddingBottom="15dp"
+        android:paddingTop="15dp"
+        android:text="Edit Settings"
+        android:textAlignment="center"
+        android:textSize="25dp"
+        android:textStyle="bold"
+        android:background="#8e55d3"
+        android:textColor="#FFFFFF"/>
 
-    <TextView
-        android:id="@+id/txtCurrFirst"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="First Name"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="15dp"
+        android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/eFirstname"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ems="10"/>
+        <TextView
+            android:id="@+id/txtCurrFirst"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="First Name"
+            android:textColor="@color/statusbarpurple" />
 
-    <TextView
-        android:id="@+id/txtCurrLast"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Last Name"/>
+        <EditText
+            android:id="@+id/eFirstname"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/statusbarpurple"
+            android:ems="10"
+            android:inputType="text" />
 
-    <EditText
-        android:id="@+id/eLastname"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ems="10"/>
+        <TextView
+            android:id="@+id/txtCurrLast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Last Name"
+            android:textColor="@color/statusbarpurple" />
 
-    <TextView
-        android:id="@+id/txtCurrNick"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Nickname"/>
+        <EditText
+            android:id="@+id/eLastname"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:backgroundTint="@color/statusbarpurple"
+            android:ems="10"
+            android:inputType="text" />
 
-    <EditText
-        android:id="@+id/eUsername"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ems="10"/>
+        <TextView
+            android:id="@+id/txtCurrNick"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nickname"
+            android:textColor="@color/statusbarpurple" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Change Password"/>
+        <EditText
+            android:id="@+id/eUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:backgroundTint="@color/statusbarpurple"
+            android:ems="10"
+            android:inputType="text" />
 
-    <EditText
-        android:id="@+id/ePassword"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="textPassword"
-        android:ems="10"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Change Password"
+            android:textColor="@color/statusbarpurple" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Confirm New Password"/>
+        <EditText
+            android:id="@+id/ePassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/statusbarpurple"
+            android:ems="10"
+            android:inputType="textPassword" />
 
-    <EditText
-        android:id="@+id/ePasswordChangeConfirm"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ems="10"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Confirm New Password"
+            android:textColor="@color/statusbarpurple" />
 
-    <Button
-        android:id="@+id/btnConfirmSettings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Save Changes"/>
+        <EditText
+            android:id="@+id/ePasswordChangeConfirm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:backgroundTint="@color/statusbarpurple"
+            android:ems="10"
+            android:inputType="textPassword" />
 
-    <Button
-        android:id="@+id/btnBackSettings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Go Back"/>
+        <Button
+            android:id="@+id/btnConfirmSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="50dp"
+            android:layout_marginRight="50dp"
+            android:background="@drawable/style_button_done"
+            android:fontFamily="sans-serif-condensed"
+            android:text="Save Changes"
+            android:textColor="@color/white"
+            android:textSize="16dp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnBackSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="50dp"
+            android:layout_marginRight="50dp"
+            android:background="@drawable/style_button_done"
+            android:fontFamily="sans-serif-condensed"
+            android:text="Go Back"
+            android:textColor="@color/white"
+            android:textSize="16dp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
 </LinearLayout>

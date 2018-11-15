@@ -9,8 +9,11 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -40,11 +43,22 @@ public class UserCollectionActivity extends AppCompatActivity {
     private RecyclerView.LayoutManager mLayoutManager;
     private RecyclerView.Adapter mAdapter;
 
+    public List<Result> searchResults;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_collection);
 
+        //sets the status bar color
+        if (android.os.Build.VERSION.SDK_INT >= 21){
+            Window window = this.getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
+        }
+
+        //Gets a handle on the firebase modules
         mAuth = FirebaseAuth.getInstance();
         mFirestore = FirebaseFirestore.getInstance();
         FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
@@ -53,44 +67,57 @@ public class UserCollectionActivity extends AppCompatActivity {
         mFirestore.setFirestoreSettings(settings);
         mStorage = FirebaseStorage.getInstance();
 
+        //init the list
+        searchResults = new ArrayList<>();
+
+        //Get a handle on the recycler view
         guideCollection = findViewById(R.id.guideCollection);
+        guideCollection.setHasFixedSize(true);
+
+        //Creates and sets the layout for the recycler view
         mLayoutManager = new LinearLayoutManager(this);
         guideCollection.setLayoutManager(mLayoutManager);
-        //TODO: Create the getter functions for retrieving guide data from firestore
 
+        //Get all the guides that the user has created
         CollectionReference userGuides = mFirestore.collection("Users/" + mAuth.getUid() +"/guides");
         userGuides.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 if (task.isSuccessful()){
-                    ArrayList<Guide> guideList = new ArrayList<>();
-                    int counter = 0;
                     for (QueryDocumentSnapshot doc:task.getResult()){
-                        //For each document in the collection, populate the list with info for adapter
-                        Guide guide = new Guide(doc.getString("title"));
+                        //For each document in the collection, create a Result object and add it to the list
+                        Result guide = new Result();
+                        guide.setTitle(doc.getString("title"));
+                        guide.setName("you!");
+                        guide.setDate("October 29th, 2018");
                         guide.setKey(doc.getId());
                         guide.setId(doc.getString("id"));
-                        guideList.add(counter ,guide);
-                        counter++;
+                        searchResults.add(guide);
                     }
 
-                    //set the adapter to the recycler view
-                    mAdapter = new CollectionAdapter(guideList, new CollectionAdapter.OnItemClickListener() {
-                        @Override
-                        public void OnItemClick(Guide item) {
-                            Intent intent = new Intent(UserCollectionActivity.this,CreateNewGuide.class);
-                            //the guide Id is used for lookup on which specific guide to get while EDIT mode tells the activity we are not making a guide from scratch
-                            intent.putExtra("GUIDEID",item.getId());
-                            intent.putExtra("GUIDE_TITLE",item.getTitle());
-                            intent.putExtra("Key",item.getKey());
-                            intent.putExtra("MODE","EDIT");
-                            startActivity(intent);
-                        }
-                    });
+                    //Once everything is obtained, it creates and sets the adapter
+                    mAdapter = new SearchAdapter(searchResults);
+                    guideCollection.setAdapter(mAdapter);
+                    Toast.makeText(getApplicationContext(), searchResults.size() + " results." , Toast.LENGTH_SHORT).show();
+                } else{
+
+                    //This is included just incase something is wrong
+                    testGuides();
+                    mAdapter = new SearchAdapter(searchResults);
                     guideCollection.setAdapter(mAdapter);
                 }
             }
         });
-
     }
+
+    public void testGuides(){
+        searchResults.add(new Result("Sample guide - Recycling", "you!", "October 29th, 2018"));
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
+    }
+
 }

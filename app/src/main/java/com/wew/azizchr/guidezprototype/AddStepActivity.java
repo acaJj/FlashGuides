@@ -75,5 +75,11 @@ public class AddStepActivity extends AppCompatActivity {
         data.putExtra(STEP_DESC_WRITTEN, desc);
         setResult(RESULT_OK,data);
         finish();
+        AddStepActivity.this.overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
+    }
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
     }
 }

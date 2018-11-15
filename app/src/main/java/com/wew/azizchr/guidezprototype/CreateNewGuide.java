@@ -1,17 +1,23 @@
 package com.wew.azizchr.guidezprototype;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Picture;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Debug;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,19 +26,25 @@ import android.text.InputType;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.GenericTransitionOptions;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.gms.tasks.Continuation;
@@ -40,6 +52,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -65,19 +78,32 @@ import com.kbeanie.multipicker.api.entity.ChosenImage;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.grpc.Context;
+
+/**
+ * Both Chris and Jeffrey have worked on this
+ *
+ * Chris was responsible for:
+ * Jeff was responsible for:
+ */
 
 public class CreateNewGuide extends AppCompatActivity {
 
     //private static final String TEXT_TAG = "TEXT";
     //private static final String IMG_TAG = "IMG";
+    private static final String DEBUG_TAG = "BORBOT";//a made up word to make our log statements easier to find
     private static final int SELECT_FILE =0;//used when selecting an image file
     private static final int WRITE_STEP =1;//used when making a new step
     private static final int WRITE_DESC =2;//used when making a new text block
@@ -103,8 +129,7 @@ public class CreateNewGuide extends AppCompatActivity {
     public LinearLayout selectedLayout;
     //public TextView selectedTextView;
     public WebView selectedWebView; //changed from text to web view for better memory consumption and text formatting
-    private Button mSave;
-    private Button mPublish;
+    public ImageView selectedImageView;//used for bitmaps
 
     TextView mNewGuideTitle;
 
@@ -121,7 +146,6 @@ public class CreateNewGuide extends AppCompatActivity {
     private CollectionReference stepData;
     private CollectionReference textData;
     private CollectionReference picData;
-    private DocumentReference guideRef;
     private DocumentReference userRef;
 
     //ArrayList stores metadata for the guide text and picture components
@@ -132,6 +156,15 @@ public class CreateNewGuide extends AppCompatActivity {
 
     //used when saving so we know not to save the copies of the same data objects in db
     private boolean haveSaved;
+    private Boolean haveLoaded;
+
+    //Images used for the step buttons
+    public Drawable textIcon;
+    public Drawable photoIcon;
+
+    public LinearLayout.LayoutParams buttonLP;
+
+    public ArrayList<Bitmap> mBitmaps;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,6 +180,7 @@ public class CreateNewGuide extends AppCompatActivity {
         }
 
         newGuide = new Guide();
+        mBitmaps = new ArrayList<>();
 
         mNewGuideTitle = (TextView) findViewById(R.id.txtNewGuideTitle);
 
@@ -171,7 +205,7 @@ public class CreateNewGuide extends AppCompatActivity {
             guideTitle = "Guide (No title)";
             mode = "CREATE";
         }
-        Log.i("BORBOT MODE",mode);
+        Log.i(DEBUG_TAG+"MODE",mode);
         userRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
 
         //gets the number of guides the user has
@@ -186,7 +220,6 @@ public class CreateNewGuide extends AppCompatActivity {
                 //sets these 2 collections to point to the folders for the guide data of the new guide. for later uploading
                 textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
                 picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
-                guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
 
                 editorSetup(bundle);
             }
@@ -218,13 +251,13 @@ public class CreateNewGuide extends AppCompatActivity {
         currentIndex = 0;
         isSwapping = false;
         layoutFeed = findViewById(R.id.newGuideLayoutFeed);
-        mSave = findViewById(R.id.btnSaveGuide);
-        mPublish = findViewById(R.id.btnPublishGuide);
+        Button mSave = findViewById(R.id.btnSaveGuide);
+        Button mPublish = findViewById(R.id.btnPublishGuide);
 
         mSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                saveGuide(false);
+                saveGuide();
             }
         });
 
@@ -233,21 +266,19 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(View view) {
                 if (haveSaved){
                     newGuide.setPublishedStatus(true);
+                    DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
                     guideRef.update("publishedStatus",true);
-                    Toast.makeText(CreateNewGuide.this,"You've been published!",Toast.LENGTH_SHORT).show();
                 }else{
                     new AlertDialog.Builder(CreateNewGuide.this)
                             .setMessage("You must save your work before publishing, would you like to save now?")
                             .setCancelable(false)
                             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                    boolean result = saveGuide(true);
-                                    if (result){
-                                        newGuide.setPublishedStatus(true);
-                                        guideRef.update("publishedStatus",true);
-                                        Toast.makeText(CreateNewGuide.this,"You've been published!",Toast.LENGTH_SHORT).show();
-                                    }
-
+                                    saveGuide();
+                                    newGuide.setPublishedStatus(true);
+                                    DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
+                                    guideRef.update("publishedStatus",true);
+                                    Toast.makeText(CreateNewGuide.this,"You've been published!",Toast.LENGTH_SHORT).show();
                                 }
                             })
                             .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -260,19 +291,39 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
             }
         });
+
+        //Gets the images from the drawable folder for the step buttons
+        textIcon = CreateNewGuide.this.getResources().getDrawable( R.drawable.icon_style_addtext );
+        photoIcon = CreateNewGuide.this.getResources().getDrawable( R.drawable.icon_style_addpic );
+
+        //Sets the layout parameters for the buttonHolder layout
+        buttonLP = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        buttonLP.setMargins(0,0,0, 75);
     }
+
 
     //JavaScript interface used to get html content from our webviews so that we can do stuff with them like editing
     public class WebViewJavascriptInterface{
+        private TextView contentView;
         private String Html;
 
-        public WebViewJavascriptInterface(String html){
+        public WebViewJavascriptInterface(String html, TextView contentView){
             this.Html = html;
+            this.contentView = contentView;
         }
 
         @JavascriptInterface
-        public void processContent(String htmlContent){
-            Html = htmlContent;
+        public void processContent(final String htmlContent){
+            Log.i("BORBOT","processing html");
+            contentView.post(new Runnable() {
+                @Override
+                public void run() {
+                    contentView.setText(htmlContent);
+                    Html = htmlContent;
+                    Log.i("BORBOT content",""+ htmlContent);
+                }
+            });
         }
     }
 
@@ -286,8 +337,9 @@ public class CreateNewGuide extends AppCompatActivity {
         }else if (mode.equals("EDIT")){
             newGuide.setId(bundle.getString("GUIDEID"));
             newGuide.setKey(bundle.getString("Key"));
+            haveLoaded = false;
             loadGuide(newGuide.getId(),newGuide.getKey());
-            Log.i("BORBOT EDITs","" + newGuide.getId());
+            Log.i(DEBUG_TAG+"EDITs","" + newGuide.getId());
         }
     }
 
@@ -318,43 +370,35 @@ public class CreateNewGuide extends AppCompatActivity {
             }
         });
 
-        /*Task guideLoader = mFirebaseAuth.signInAnonymously();
-
-        guideLoader.continueWithTask(new Continuation() {
-            @Override
-            public Object then(@NonNull Task task) throws Exception {
-                return null;
-            }
-        });
-
-        Executor executor = new Executor() {
+      /*
+        final Executor executor = new Executor() {
             @Override
             public void execute(@NonNull Runnable runnable) {
-
+                new Thread(runnable).start();
             }
         };
 */
+        final ArrayList<Map<String,Object>> steps = new ArrayList<>();
         //get the stored guide data
         guideSteps.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 int stepNum;
+                String stepTitle;
                 if (task.isSuccessful()){
                     //for each step in the guide, get its info and recreate the step
+                    int totalSteps = task.getResult().size();
                     for (QueryDocumentSnapshot doc: task.getResult()){
                         stepNum = doc.getLong("stepNumber").intValue();
-                        String stepTitle = doc.get("stepTitle").toString();
+                        stepTitle = doc.get("stepTitle").toString();
                         addStep(stepTitle,"");
 
                         Query stepText = guideText.whereEqualTo("stepNumber",stepNum);
                         Query stepImgs = guideImgs.whereEqualTo("stepNumber", stepNum);
-
-                        //get the step's text from the db and add it to the data list in the proper order
-                        stepText.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<QuerySnapshot>() {
+                        stepText.get().addOnCompleteListener(CreateNewGuide.this, new OnCompleteListener<QuerySnapshot>() {
                             @Override
                             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                                 if (task.isSuccessful()){
-                                    //get each text's data, make an object for it, and add it to the data list
                                     for (QueryDocumentSnapshot snap: task.getResult()){
                                         Blob text = (Blob)snap.get("text");
                                         String id = snap.get("id").toString();
@@ -363,28 +407,21 @@ public class CreateNewGuide extends AppCompatActivity {
                                         String type = snap.get("type").toString();
                                         int num = snap.getLong("stepNumber").intValue();
                                         int placement = snap.getLong("placement").intValue();
-                                        int size = snap.getLong("size").intValue();
-                                        int color = snap.getLong("color").intValue();
-                                        boolean bold = (boolean)snap.get("bold");
-                                        boolean italic = (boolean)snap.get("italic");
                                         TextData data = new TextData(type,placement,guideId,stepTitle,num);
-                                        //data.stringToBlob(text);
                                         data.setText(text);
                                         data.setId(id);
-                                        //selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);
-                                        addObjectToDataListInOrder(data);
-                                        addDescription(data);
+                                        Log.i(DEBUG_TAG+"-TEXT EXECUTE","in chained task, data added / " + data.getId() );
+
+                                        addElement(data);
                                     }
                                 }
                             }
                         });
 
-                        //get the step's images from the db and add it to the data list in the proper order
-                        stepImgs.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<QuerySnapshot>() {
+                        stepImgs.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                             @Override
                             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                                 if (task.isSuccessful()){
-                                    //get each pic's data, make an object for it, add it to the data list, then load the image
                                     for (QueryDocumentSnapshot snap: task.getResult()){
                                         //get the data from fire store and add a data object to the data list
                                         String id = snap.get("id").toString();
@@ -399,40 +436,118 @@ public class CreateNewGuide extends AppCompatActivity {
                                         data.setStep(num,stepTitle);
                                         data.setUri(uri);
                                         data.setImgPath(imgPath);
-                                       // selectedLayout = (LinearLayout) layoutFeed.getChildAt(num-1);
-                                        addObjectToDataListInOrder(data);
 
-                                        //load the image from storage into the layout
-                                        String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + id + ".png";
-                                        StorageReference imageToLoad = imgStorage.child(path);
-                                        //get reference to the layout we are adding the picture to
-                                        int dataStep = data.getStepNumber() - 1;
-                                        LinearLayout theSelectedLayout = (LinearLayout) layoutFeed.getChildAt(dataStep);
-                                        loadImage(imageToLoad, theSelectedLayout);
+                                        Log.i(DEBUG_TAG+"IMG EXECUTE","in chained task, data added / " + data.getId() );
+                                        addElement(data);
                                     }
                                 }
                             }
                         });
-                    }
-                }else{
-                    //sheeeeit
-                    Log.i("SOMEONE FUCKED UP: ","IT WAS JEFFREY!");
-                    Log.i("ITS ALRIGHT: ","BE NICE TO JEFF");
-                }
 
+                        Log.i(DEBUG_TAG+"EXECUTE","in Guide steps / " + doc.getId());
+                    }
+                }
 
             }
         });
+    }
+
+    public void addElement(GuideData data){
+        int stepNumber = data.getStepNumber();
+        int stepPlacement = data.getPlacement();
+
+        View elementView = new View(CreateNewGuide.this);
+        if (data.getType().equals("Text")){
+            TextData textData = (TextData) data;
+            elementView = loadText(textData);
+        }else if (data.getType().equals("Picture")){
+            PictureData pictureData = (PictureData)data;
+            StorageReference imageToLoad = imgStorage.child(pictureData.getImgPath());
+            elementView = loadImage(pictureData,imageToLoad);
+        }
+        LinearLayout stepLayout = (LinearLayout)layoutFeed.getChildAt(stepNumber-1);
+        Log.i(DEBUG_TAG+"-Elements",""+data.getStepNumber()+"/"+data.getPlacement());
+        for (int i =0; i< stepLayout.getChildCount()-1;i++){
+            //if there is no object in the step (only the title and buttons), place the element and get out
+            if (stepLayout.getChildCount() == 2){
+                stepLayout.addView(elementView,stepLayout.getChildCount()-1);
+                break;
+            }
+            int currentViewIndex = i+1;
+
+            View currentView = stepLayout.getChildAt(currentViewIndex);
+            Log.i("Placements:",""+(String)currentView.getTag(R.id.index)+"/"+(String)elementView.getTag(R.id.index));
+            int currentViewPlacement = 0;
+            try{
+                currentViewPlacement = Integer.parseInt((String)currentView.getTag(R.id.index));
+            }catch(NumberFormatException ex){
+                Log.i("EXCEPTION!",ex.getMessage());
+                //if we end up here then the element goes at the end of the step
+                stepLayout.addView(elementView,currentViewIndex);
+                break;
+            }
+
+            int elementViewPlacement = Integer.parseInt((String)elementView.getTag(R.id.index));
+
+            //compare the placement of the elementView and currentView
+            if (elementViewPlacement<currentViewPlacement){//if less, then it goes before it in the step
+                stepLayout.addView(elementView,currentViewIndex);
+                break;
+            }
+
+            //Log.i(DEBUG_TAG,data.getId()+"/"+elementView.getParent());
+        }
+    }
+
+    public WebView loadText(TextData text){
+        try{
+            //Creates a new textview and sets the tag (the tag is the current step number)
+            WebView mDescription = new WebView(CreateNewGuide.this);
+            String description = text.getStringFromBlob();
+
+            //set tag to the text so we can easily get it when uploading, haven't yet figured out how to get from webview
+            String viewTag = "TEXT--" +description;
+            mDescription.setTag(R.id.viewId,viewTag);
+            Log.i("Placement",""+text.getPlacement());
+            mDescription.setTag(R.id.index,""+text.getPlacement());
+
+            mDescription.setPadding(5, 10, 5, 10);
+            mDescription.loadData(description,"text/html","UTF-8");
+            mDescription.setBackgroundColor(Color.TRANSPARENT);
+
+            mDescription.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    switch (motionEvent.getAction()){
+                        case MotionEvent.ACTION_UP:
+                            view.performClick();
+                            displayTextOptionsMenu(view);
+                    }
+                    return true;
+                }
+            });
+
+            //adds the new text block with the text to the selected step
+            //selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 1);
+
+            haveSaved = false;
+            return mDescription;
+        }catch (Exception ex){
+            ex.getMessage();
+            return null;
+        }
     }
 
     /**
      * Loads an image from Firebase Storage into a new image view
      * @param ref of the image we are getting from storage
      */
-    public void loadImage(StorageReference ref, LinearLayout layout){
+    public ImageView loadImage(PictureData pictureData,StorageReference ref){
         try{
             //Creates the new imageview
             final ImageView newImgView = new ImageView(CreateNewGuide.this);
+            final int stepNumber = pictureData.getStepNumber();
+            final int placement = pictureData.getPlacement();
             //Glide.with(CreateNewGuide.this).load(imageUri).into(newImgView);
             Glide.with(CreateNewGuide.this)
                     .asBitmap()
@@ -441,6 +556,8 @@ public class CreateNewGuide extends AppCompatActivity {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                             newImgView.setImageBitmap(resource);
+
+                            //addImgBitmap(newImgView,resource);
 
                             //gets the mediapath of the image and parses it into a uri we can work with
                             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -462,12 +579,27 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setPadding(3, 10, 3, 10);
 
             //add it to the layout
-
-            layout.addView(newImgView, layout.getChildCount() - 2);
+            //layout.addView(newImgView, layout.getChildCount() - 1);
             currentIndex++;
+            Log.i("Placement",""+pictureData.getPlacement());
+            newImgView.setTag(R.id.index,""+pictureData.getPlacement());
+            return newImgView;
 
         }catch(Exception ex){
             Log.i("IMAGE ERROR: ", ex.getMessage());
+            return null;
+        }
+    }
+
+    public void addImgBitmap(final ImageView imgView, Bitmap bitmap){
+        if (mBitmaps.size() == 0){
+            mBitmaps.add(bitmap);
+            return;
+        }
+
+        for(int i = 0; i < mBitmaps.size();i++){
+            Bitmap bitmapToCompare = mBitmaps.get(i);
+
         }
     }
 
@@ -475,103 +607,105 @@ public class CreateNewGuide extends AppCompatActivity {
         Intent intent = new Intent(CreateNewGuide.this,AddStepActivity.class);
         intent.putExtra("CurrStep", layoutFeed.getChildCount());
         startActivityForResult(intent,WRITE_STEP);
+        overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
     }
 
     public void onClickGuideTitle(View view) {
         editTitle(view);
     }
 
+    public void testPopulateUploadList(){
+        mGuideDataArrayList.clear();
+        PopulateUploadList();
+
+        for (int i =0;i<mGuideDataArrayList.size(); i++){
+            GuideData data = mGuideDataArrayList.get(i);
+            Log.i("BORBOT TESTPOPULATE","ID: " + data.getId() +"/ Type: "+ data.getType() +" /Step Number: "+ data.getStepNumber() +"/ Placement: " +data.getPlacement());
+        }
+    }
+
     /**
      * Saves the guide into firestore
-     * returns true if save was successful
      */
-    private boolean saveGuide(boolean publishedStatus){
-        boolean result = false;
-        //sets publishedStatus depending on what button was pressed to get here, if we are publishing then this needs to be set to true
-        //if we are just saving our work, then we need to set publishedStatus to false
-        newGuide.setPublishedStatus(publishedStatus);
+    private void saveGuide(){
+
+        //clear current guide list and populate it with all current block data
+        mGuideDataArrayList.clear();
+        PopulateUploadList();
+
+        DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
+        newGuide.setKey(""+guideNum);
         guideRef.set(newGuide);
 
         //informs the user that the save process is starting
         Toast.makeText(CreateNewGuide.this,"Saving...\nPlease wait",Toast.LENGTH_LONG).show();
 
-        try{
-            //set buttons to false to prevent user from spamming firebase callbacks while we upload
-            mSave.setEnabled(false);
-            mPublish.setEnabled(false);
-
-            textData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                @Override
-                public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                    if (task.isSuccessful()){
-                        for (DocumentSnapshot doc: task.getResult()){
-                            doc.getReference().delete();
-                        }
-                        //all data is stored in custom objects and added to an array list, we iterate through that to upload.
-                        //the order the objects are stored in the array is the order they're laid out in the layout.
-                        for (int i = 0; i < mGuideDataArrayList.size(); i++){
-                            //gets the next data object and uploads depending on the type of data we have
-                            GuideData dataToSave = mGuideDataArrayList.get(i);
-                            if (dataToSave.getType().equals("Text")){
-                                TextData textDataPkg = (TextData) dataToSave;
-                                //textDataPkg.setPlacement(i);//sets the placement to the current index
-                                uploadText(textDataPkg);
-                            }
+        textData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()){
+                    for (DocumentSnapshot doc: task.getResult()){
+                        doc.getReference().delete();
+                    }
+                    //all data is stored in custom objects and added to an array list, we iterate through that to upload.
+                    //the order the objects are stored in the array is the order they're laid out in the layout.
+                    for (int i = 0; i < mGuideDataArrayList.size(); i++){
+                        //gets the next data object and uploads depending on the type of data we have
+                        GuideData dataToSave = mGuideDataArrayList.get(i);
+                        if (dataToSave.getType().equals("Text")){
+                            TextData textDataPkg = (TextData) dataToSave;
+                            //textDataPkg.setPlacement(i);//sets the placement to the current index
+                            uploadText(textDataPkg);
                         }
                     }
                 }
-            });
-            //TODO: Modify uploadImage method to take in an array of all pictures in the data list rather than one by one
-            //TODO: This array will be passed to the async task where the processing and uploading will be carried out
-            picData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                @Override
-                public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                    if (task.isSuccessful()) {
-                        for (DocumentSnapshot doc : task.getResult()) {
-                            doc.getReference().delete();
-                        }
-                        ArrayList<PictureData> picturesToUpload = new ArrayList<>();
-                        //all data is stored in custom objects and added to an array list, we iterate through that to upload.
-                        //the order the objects are stored in the array is the order they're laid out in the layout.
-                        for (int i = 0; i < mGuideDataArrayList.size(); i++){
-                            //gets the next data object and uploads depending on the type of data we have
-                            GuideData dataToSave = mGuideDataArrayList.get(i);
-                            if (dataToSave.getType().equals("Picture")){
-                                picturesToUpload.add((PictureData) dataToSave);
-                            }
-                        }
-
-                        uploadImages(picturesToUpload);
+            }
+        });
+        //TODO: Modify uploadImage method to take in an array of all pictures in the data list rather than one by one
+        //TODO: This array will be passed to the async task where the processing and uploading will be carried out
+        picData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    for (DocumentSnapshot doc : task.getResult()) {
+                        doc.getReference().delete();
                     }
-                }
-            });
+                    ArrayList<PictureData> picturesToUpload = new ArrayList<>();
+                    //all data is stored in custom objects and added to an array list, we iterate through that to upload.
+                    //the order the objects are stored in the array is the order they're laid out in the layout.
+                    for (int i = 0; i < mGuideDataArrayList.size(); i++){
+                        //gets the next data object and uploads depending on the type of data we have
+                        GuideData dataToSave = mGuideDataArrayList.get(i);
+                        if (dataToSave.getType().equals("Picture")){
+                            picturesToUpload.add((PictureData) dataToSave);
 
-            //delete any documents from the db that we no longer want
-            if (!deletedDataList.isEmpty()){
-                for (DocumentReference doc: deletedDataList){
-                    doc.delete();
+                           // PictureData picDataPkg = (PictureData)dataToSave;
+                            //picDataPkg.setPlacement(i);
+                           // String picDataPkgUri = picDataPkg.getUri();
+                            //uploadImage(picDataPkg,picDataPkgUri);
+                        }
+                    }
+                    Log.i("BORBOT IMAGES",""+picturesToUpload.size());
+                    uploadImages(picturesToUpload);
                 }
             }
+        });
 
-            //update the users guide count so the guides can be named differently, 'guide0', 'guide1', etc
-            userRef.update("numGuides", guideNum);
-            //userRef.update("key", userRef.getId());
-            result = true;
-            Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
-
-            //make buttons usable again
-            mSave.setEnabled(true);
-            mPublish.setEnabled(true);
-            haveSaved = true;
-            for (int i = 0; i< mGuideDataArrayList.size();i++){
-                Log.i("GUIDEDATA OBJ: ",mGuideDataArrayList.get(i).getType());
+        //delete any documents from the db that we no longer want
+        if (!deletedDataList.isEmpty()){
+            for (DocumentReference doc: deletedDataList){
+                doc.delete();
             }
-        }catch(Exception ex){
-            Toast.makeText(CreateNewGuide.this, "There was a problem saving...guide was not saved, sorry", Toast.LENGTH_SHORT).show();
-            result = false;
         }
 
-        return result;
+        //update the users guide count so the guides can be named differently, 'guide0', 'guide1', etc
+        userRef.update("numGuides", guideNum);
+        userRef.update("key", userRef.getId());
+        Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
+        for (int i = 0; i< mGuideDataArrayList.size();i++){
+            Log.i("GUIDEDATA OBJ: ",mGuideDataArrayList.get(i).getType());
+        }
+        haveSaved = true;
     }
 
     /**
@@ -587,13 +721,13 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Camera")){
                     outputPath = camera.pickImage();
+                    overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                     //Intent intent = new Intent(CreateNewGuide.this,CameraViewActivity.class);
                     //startActivityForResult(intent,PESDK_RESULT);
                 }else if(items[i].equals("Gallery")){
                     Intent intent = new Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     intent.setType("image/*");
                     startActivityForResult(intent.createChooser(intent,"Select File"),SELECT_FILE);
-
                 }else if(items[i].equals("Cancel")){
                     if(isSwapping){isSwapping = false;}
                     dialogInterface.dismiss();
@@ -602,6 +736,7 @@ public class CreateNewGuide extends AppCompatActivity {
         });
         builder.show();
     }
+
 
     /**
      * Creates and adds a new ImageView to the guide's layoutFeed
@@ -613,39 +748,50 @@ public class CreateNewGuide extends AppCompatActivity {
             //Creates the new imageview
 
             final ImageView newImgView = new ImageView(CreateNewGuide.this);
+            String viewTag = "PICTURE--" + imageUri.toString();
+            newImgView.setTag(R.id.viewId,viewTag);
             //Glide.with(CreateNewGuide.this).load(imageUri).into(newImgView);
+            final Boolean checkSwapping = isSwapping;
             Glide.with(CreateNewGuide.this)
                     .asBitmap()
                     .load(imageUri)
+                    .transition(GenericTransitionOptions.with(R.anim.fui_slide_in_right))
                     .into(new SimpleTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
                             //creates object to hold picture data
                             newImgView.setImageBitmap(resource);
+                            if (checkSwapping){
+                                Log.d("SWAP","Yes" + currentPictureSwap);
+
+                                //View imageToReplace = selectedLayout.getChildAt(currentPictureSwap);
+                                int index = (int)selectedImageView.getTag(R.id.bitmapIndex);
+                                Log.d("IMG TAGs (old)",""+ index);
+                                mBitmaps.add(index,resource);
+                                mBitmaps.remove(index+1);
+                                //int newIndex = mBitmaps.indexOf(resource);
+                                //store placement as a tag so we can better arrange everything
+                                newImgView.setTag(R.id.bitmapIndex,index);
+                            }else{
+                                Log.d("SWAP","No");
+
+                                mBitmaps.add(resource);
+                                //gets index of the bitmap in the list and stores it as a tag in the imgview
+                                //this is important for when we have to change the images in the list
+                                int index = mBitmaps.indexOf(resource);
+                                newImgView.setTag(R.id.bitmapIndex,index);
+                            }
+
                             LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
                             TextView title = (TextView)titleBlock.getChildAt(1);
-                            PictureData picData = new PictureData();
-                            picData.setUri(imageUri.toString());
-                            picData.setType("Picture");
-                            picData.setStepNumber((int)selectedLayout.getTag());
-                            picData.setStepTitle(title.getText().toString());
-                            picData.setId(newGuide.getId()+"IMG"+mGuideDataArrayList.size());
 
                             //Adds the tag to the new imageview (the tag is the step number + dataId)
-                            String viewTag = selectedLayout.getTag().toString() + "--" + picData.getId();
-                            newImgView.setTag(viewTag);
-                            Log.i("IMG TAG", ""+newImgView.getTag());
+                            //String viewTag = selectedLayout.getTag().toString() + "--" + picData.getId();
+
+                            Log.i("IMG TAGs", ""+newImgView.getTag(R.id.viewId) + " / " + newImgView.getTag(R.id.bitmapIndex));
                             //if we are swapping out a picture, replace the old location with new pic, otherwise just add it to end
-                            if (isSwapping){
-                                //picData.setPlacement(currentPictureSwap);
-                                mGuideDataArrayList.add(currentPictureSwap,picData);
-                                mGuideDataArrayList.remove(currentPictureSwap + 1);
-                            }else{
-                                //picData.setPlacement(currentIndex);
-                                //mGuideDataArrayList.add(picData);
-                                addObjectToDataListInOrder(picData);
-                            }
-                            haveSaved = false;
+                            //WE WONT HAVE TO DO ANYTHING WITH THE DATALIST HERE WITH THE NEW ONE
+
                         }
                     });
 
@@ -667,10 +813,11 @@ public class CreateNewGuide extends AppCompatActivity {
                 currentPictureSwap = 0;
                 isSwapping = false;
             }else {
-                selectedLayout.addView(newImgView, selectedLayout.getChildCount() - 2);
+                selectedLayout.addView(newImgView, selectedLayout.getChildCount() - 1);
                 currentIndex++;
             }
             haveSaved = false;
+
         }catch(Exception ex){
             Log.i("IMAGE ERROR: ", ex.getMessage());
             return false;
@@ -708,11 +855,20 @@ public class CreateNewGuide extends AppCompatActivity {
                     displayStepOptionsMenu(newTitleBlock.getChildAt(1));
                 }
             });
+
+            //Creates the Layout Parameters for the buttons
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            params.weight = 0.5f;
+
             //Creates the add image button and its on click listener
-            Button addImage = new Button(CreateNewGuide.this);
-            String addImageBtnDesc = "Add Image to step " + layoutFeed.getChildCount();
-            addImage.setText(addImageBtnDesc);
-            addImage.setOnClickListener(new View.OnClickListener() {
+            Button mAddImage = new Button(CreateNewGuide.this);
+            mAddImage.setBackgroundResource(R.drawable.style_button_add);
+            mAddImage.setCompoundDrawablesWithIntrinsicBounds(photoIcon, null, null, null);
+            String addImageBtnDesc = "Add Image";
+            mAddImage.setText(addImageBtnDesc);
+            mAddImage.setLayoutParams(params);
+            mAddImage.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     selectedLayout = newStepBlock;
                     SelectImage();
@@ -720,18 +876,30 @@ public class CreateNewGuide extends AppCompatActivity {
             });
 
             //Creates the add description button and its on click listener
-            Button addDesc = new Button (CreateNewGuide.this);
-            String addTextBtnDesc = "Add Text to Step " + layoutFeed.getChildCount();
-            addDesc.setText(addTextBtnDesc);
-            addDesc.setOnClickListener(new View.OnClickListener() {
+            Button mAddDesc = new Button (CreateNewGuide.this);
+            mAddDesc.setBackgroundResource(R.drawable.style_button_add);
+            mAddDesc.setCompoundDrawablesWithIntrinsicBounds(textIcon, null, null, null);
+            String addTextBtnDesc = "Add Text";
+            mAddDesc.setText(addTextBtnDesc);
+            mAddDesc.setLayoutParams(params);
+            mAddDesc.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     selectedLayout = newStepBlock;
                     Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
                     intent.putExtra("CurrStep", layoutFeed.getChildCount());
                     intent.putExtra("isEditing", false);
                     startActivityForResult(intent,WRITE_DESC);
+                    overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                 }
             });
+
+            //Creates the linear layout to hold the two buttons together
+            LinearLayout buttonHolder = new LinearLayout(CreateNewGuide.this);
+            buttonHolder.setBackgroundResource(R.drawable.border_new_content);
+            buttonHolder.setOrientation(LinearLayout.HORIZONTAL);
+            buttonHolder.setLayoutParams(buttonLP);
+            buttonHolder.setPadding(0,0,0,75);
+
 
             int num = layoutFeed.getChildCount();
 
@@ -740,25 +908,29 @@ public class CreateNewGuide extends AppCompatActivity {
             newStepBlock.setTag(num);
 //            mStepDesc.setTag(num);
 
+            //add the title and button views to the stepBlock, an "empty" stepBlock has those 2 children
             String newStepNum = "Step " +num + " : ";
             mStepNumber.setText(newStepNum);
             mStepTitle.setText(title);
             newTitleBlock.addView(mStepNumber);
             newTitleBlock.addView(mStepTitle);
             newStepBlock.addView(newTitleBlock);
-            newStepBlock.addView(addImage);
-            newStepBlock.addView(addDesc);
+            newStepBlock.addView(buttonHolder);
+            buttonHolder.addView(mAddDesc);
+            buttonHolder.addView(mAddImage);
 
+            //newStepBlock.setBackgroundResource(R.drawable.border_new_step);
             //Adds the new step block to the end of the main layout, before the button
             layoutFeed.addView(newStepBlock, layoutFeed.getChildCount()-1);
-
             selectedLayout = newStepBlock;
+
             //adds the starting description to the step block if not null/empty
             if (!desc.equals("")){
                 addDescription(desc);
             }
             currentIndex++;
             haveSaved = false;
+
         }catch (Exception ex){
             ex.getMessage();
             return false;
@@ -773,8 +945,11 @@ public class CreateNewGuide extends AppCompatActivity {
      */
     private boolean editDescription(String newStepDesc){
         try {
+
             selectedWebView.loadData(newStepDesc,"text/html","UTF-8");
-            String dataId = (String)selectedWebView.getTag();
+            String viewTag = "TEXT--" +newStepDesc;
+            selectedWebView.setTag(R.id.viewId,viewTag);
+            /*String dataId = (String)selectedWebView.getTag();
             String[] strings = dataId.split("--");
             int num = Integer.parseInt(strings[0]);//get the tag of the textview, which is the view's id
             String id = strings[1];
@@ -789,12 +964,13 @@ public class CreateNewGuide extends AppCompatActivity {
                     data.stringToBlob(newStepDesc);
                     break;
                 }
-            }
+            }*/
+            haveSaved = false;
         }catch (Exception ex){
-            Log.e("BORBOT error: ",ex.getMessage());
+            Log.e("BORBOT edit error: ",ex.getMessage());
             return false;
         }
-        haveSaved = false;
+
         return true;
     }
 
@@ -828,15 +1004,16 @@ public class CreateNewGuide extends AppCompatActivity {
                     return true;
                 }
             });
+            mDescription.setBackgroundColor(Color.TRANSPARENT);
 
             //adds the new textblock with the text to the selected step
-            theSelectedLayout.addView(mDescription, theSelectedLayout.getChildCount() - 2);
+            theSelectedLayout.addView(mDescription, theSelectedLayout.getChildCount() - 1);
 
         }catch (Exception ex){
             ex.getMessage();
             return false;
         }
-        haveSaved = false;
+
         return true;
     }
 
@@ -850,26 +1027,20 @@ public class CreateNewGuide extends AppCompatActivity {
         try{
             LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
             TextView title = (TextView)titleBlock.getChildAt(1);
-            TextData dataToAdd = new TextData();
-            dataToAdd.setType("Text");
-            //dataToAdd.setPlacement(mGuideDataArrayList.size());
-            dataToAdd.setStepNumber((int) selectedLayout.getTag());
-            dataToAdd.setStepTitle(title.getText().toString());
-            dataToAdd.stringToBlob(newStepDesc);
-            dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
 
-            dataToAdd.setId(newGuide.getId() +"TEXT"+mGuideDataArrayList.size());
             //Creates a new textview and sets the tag (the tag is the current step number)
             WebView mDescription = new WebView(CreateNewGuide.this);
             //set tag to the stepNum as the first section for proper placement in data list
             //set second section of tag to data id, so we can get the view to manipulate it with the data object simultaneously
-            String viewTag = selectedLayout.getTag().toString() + "--" + dataToAdd.getId();
-            mDescription.setTag(viewTag);
+            //String viewTag = selectedLayout.getTag().toString() + "--" + dataToAdd.getId();
+            String viewTag = "TEXT--" +newStepDesc;
+            mDescription.setTag(R.id.viewId,viewTag);
 
            // mDescription.setTextSize(17);
             //mDescription.setTextColor(Color.DKGRAY);
             mDescription.setPadding(5, 10, 5, 10);
             mDescription.loadData(newStepDesc,"text/html","UTF-8");
+            mDescription.setBackgroundColor(Color.TRANSPARENT);
 
             mDescription.setOnTouchListener(new View.OnTouchListener() {
                 @Override
@@ -884,71 +1055,15 @@ public class CreateNewGuide extends AppCompatActivity {
             });
 
             //adds the new text block with the text to the selected step
-            selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 2);
+            selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 1);
 
-            addObjectToDataListInOrder(dataToAdd);
-
+            //addObjectToDataListInOrder(dataToAdd);
+            haveSaved = false;
         }catch (Exception ex){
             ex.getMessage();
             return false;
         }
-        haveSaved = false;
-        return true;
-    }
 
-    /**
-     * this function takes a GuideData object and adds it to our overall guide data list
-     * in the correct index according to the object's position in the actual guide
-     * @param data the object we are adding to the data list
-     * @return true if successfully added
-     */
-    private boolean addObjectToDataListInOrder(GuideData data){
-        try{
-            int dataStep = data.getStepNumber() - 1;
-            LinearLayout theSelectedLayout = (LinearLayout) layoutFeed.getChildAt(dataStep);
-            int num = (int)theSelectedLayout.getTag();//get the tag of the stepLayout, which is the view's id
-            boolean foundCorrectStep = false;//when we found the step we want to add text to, set to true
-            //add the new data object to the data list in the appropriate spot
-            for (int i = 0; i < mGuideDataArrayList.size();i++){
-                GuideData currentObj = mGuideDataArrayList.get(i);
-
-                //set to true when we have found the step we are adding text to
-                if (currentObj.getStepNumber() == num){
-                    foundCorrectStep = true;
-                }
-
-                //if we found the items proper placement in the step, i.e. its right before the current block in the guide layout
-                if ((data.getPlacement() != 0 ) && (currentObj.getPlacement() >= data.getPlacement())){
-                    //String newDataId = "";
-                    //if (data.getType().equals("Text"))newDataId=newGuide.getId()+"TEXT"+mGuideDataArrayList.size();
-                    //else if (data.getType().equals("Picture"))newDataId=newGuide.getId()+"IMG"+mGuideDataArrayList.size();
-                    //data.setId(newDataId);
-                    mGuideDataArrayList.add(i-1,data);
-                    break;
-                }
-
-                //new text is always added to the end of the step by default, we can only know when we reached it when
-                //we iterate onto the first object of the next step.
-                if (foundCorrectStep && (currentObj.getStepNumber() > num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
-                    data.setPlacement(i);
-                    mGuideDataArrayList.add(i,data);
-                    mGuideDataArrayList.remove(currentObj);
-                    currentObj.setPlacement(i+1);
-                    mGuideDataArrayList.add(i+1,currentObj);
-
-                    break;
-                }
-            }
-            //if we didn't find the next step we haven't added the data to the list
-            //that means the step we are adding to is the last step, put the data object at the end of the data list
-            if (!mGuideDataArrayList.contains(data)){
-                data.setStepNumber(num);
-                data.setPlacement(mGuideDataArrayList.size());
-                mGuideDataArrayList.add(data);
-            }
-        }catch (Exception ex){
-            return false;
-        }
         return true;
     }
 
@@ -965,11 +1080,10 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Delete Picture")){
                     //Remove picture, indexes shift up
-                    String dataId = (String)v.getTag();
-                    String[] strings = dataId.split("--");
-                    removeFromDataList(strings[1]);
+                    //String dataId = (String)v.getTag();
+                    //String[] strings = dataId.split("--");
+                    //removeFromDataList(strings[1]);
                     ((LinearLayout) v.getParent()).removeView(v);
-                    haveSaved = false;
                 }else if(items[i].equals("View Picture")){
                     //calls the activty to view the picture and passes the URI
                     Intent intent = new Intent(CreateNewGuide.this, ViewPhoto.class);
@@ -979,15 +1093,18 @@ public class CreateNewGuide extends AppCompatActivity {
                     isSwapping = true;
                     selectedLayout = ((LinearLayout) v.getParent());
                     currentPictureSwap = ((LinearLayout) v.getParent()).indexOfChild(v);
+                    selectedImageView = (ImageView)v;
                     Intent intent = new Intent(CreateNewGuide.this, EditorActivity.class);
                     intent.putExtra("imageUri", imageUri);
                     intent.putExtra("isNewPic", false);
                     startActivityForResult(intent, PESDK_RESULT);
+                    overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                 }else if(items[i].equals("Swap Picture")){
                     //sets isSwapping check to true and then calls SelectImage to replace the image we want in the layout hierarchy
                     isSwapping = true;
                     selectedLayout = ((LinearLayout) v.getParent());
                     currentPictureSwap = ((LinearLayout) v.getParent()).indexOfChild(v);
+                    selectedImageView = (ImageView)v;
                     SelectImage();
                 }else if(items[i].equals("Cancel")){
                     dialogInterface.dismiss();
@@ -995,31 +1112,6 @@ public class CreateNewGuide extends AppCompatActivity {
             }
         });
         builder.show();
-    }
-
-    private void removeFromDataList(String dataId) {
-        boolean elementDeleted = false;
-        GuideData dataToDelete = new GuideData();
-        //go through list until we have found the element we want to delete
-        //once it is deleted, we need to lower the placement # of all elements after it by 1
-        for (GuideData data: mGuideDataArrayList){
-            if (elementDeleted){
-                int newPlacement = data.getPlacement()-1;
-                data.setPlacement(newPlacement);
-            }else{
-                if (data.getId().equals(dataId)){
-                    //mGuideDataArrayList.remove(data);
-                    dataToDelete = data;//get reference to the object we want to remove
-                    elementDeleted = true;
-                }
-            }
-        }
-
-        //add the ref to the list, if we are editing a guide previously saved, then we will delete any docs that we no longer want in the db
-        DocumentReference deletedDataRef = mFirestore.document(textData+"/textBlock-"+dataToDelete.getId());
-        deletedDataList.add(deletedDataRef);
-
-        mGuideDataArrayList.remove(dataToDelete);
     }
 
     /**
@@ -1037,19 +1129,19 @@ public class CreateNewGuide extends AppCompatActivity {
                     //Removes the selected Textview from the layout and its corresponding data obj from our data list
                     //TODO: After deleting a step, the data list disappears, and the tag just becomes the step number, WTF
                     Log.i("BORBOT TAG",v.getTag().toString());
-                    String dataId = (String)v.getTag();
-                    String[] strings = dataId.split("--");
-                    removeFromDataList(strings[1]);
+                    //String dataId = (String)v.getTag();
+                    //String[] strings = dataId.split("--");
+                    //removeFromDataList(strings[1]);
                     ((LinearLayout) v.getParent()).removeView(v);
-                    haveSaved = false;
                 }else if(items[i].equals("Edit Text")){
                     //Stores the selected text view to edit later
                     selectedWebView = (WebView) v;
                     //Starts a new activity
                     //TODO: Have to find way to get text from a web view
                     String currText = "";
+                    TextView contentView = new TextView(getApplicationContext());
                     selectedWebView.getSettings().setJavaScriptEnabled(true); //someone can use an XSS attack to screw us while js is enabled
-                    selectedWebView.addJavascriptInterface(new WebViewJavascriptInterface(currText),"INTERFACE");
+                    selectedWebView.addJavascriptInterface(new WebViewJavascriptInterface(currText,contentView),"INTERFACE");
                     selectedWebView.setWebViewClient(new WebViewClient(){
                         @Override
                         public void onPageFinished(WebView view, String url){
@@ -1111,6 +1203,7 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 textview.setText(input.getText().toString());
                 newGuide.setTitle(input.getText().toString());
+                haveSaved = false;
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -1129,7 +1222,10 @@ public class CreateNewGuide extends AppCompatActivity {
      * @param text object to be uploaded
      */
     public void uploadText(TextData text){
-        if (text.getStringFromBlob().isEmpty()){return;}
+        if (text.getStringFromBlob().isEmpty()){
+            Log.i("BORBOT","gotta go back");
+            return;
+        }
 
         //Check to see if the current step has an object saved in the db
         uploadStep(text);
@@ -1144,6 +1240,10 @@ public class CreateNewGuide extends AppCompatActivity {
         textBlockNum++;
     }
 
+    /**
+     * Checks if the current data object has its step uploaded to firestore and uploads it if not
+     * @param data object that we are uploading the step of
+     */
     private void uploadStep(final GuideData data) {
         //if the current step has not had an object representing it stored in the db
         //then we will make one here before saving the text
@@ -1168,60 +1268,77 @@ public class CreateNewGuide extends AppCompatActivity {
         });
     }
 
-
-    public void uploadImages(ArrayList<PictureData> images){
-        final ArrayList<Bitmap> bitmaps = new ArrayList<>();
+    /**
+     * Uploads all pictures in the guide to firestore and stores bitmaps in storage
+     * @param images list of data objects representing the pictures in the guide
+     */
+    public void uploadImages(final ArrayList<PictureData> images){
+        //arraylists to hold bitmaps and their paths in the firebase storage
+        final ArrayList<Bitmap> bitmapsToUpload = new ArrayList<>();
         final ArrayList<String> paths = new ArrayList<>();
 
         //get each PictureData obj in guide and extract bitmaps/file paths for async uploading;then store the data in firestore
         for(PictureData image: images){
             //Check to see if the current step has an object saved in the db
             uploadStep(image);
-            Uri imageUri = Uri.parse(image.getUri());
-            Glide.with(CreateNewGuide.this)
+            //Uri imageUri = Uri.parse(image.getUri());
+            //RequestOptions ro = new RequestOptions()
+            //        .diskCacheStrategy(DiskCacheStrategy.RESOURCE);
+
+            final String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + image.getId() + ".png";
+            image.setImgPath(path);
+            paths.add(path);
+
+            Glide.with(getApplicationContext())
                     .asBitmap()
-                    .load(imageUri)
+                    .load(image.getUri())
                     .into(new SimpleTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            bitmaps.add(resource);
+                            bitmapsToUpload.add(resource);
+
+                            Log.d("BORBOT SIZE",""+mBitmaps.size());
+                            //if uploadlist is the same size as the images list we passed in
+                            //then all bitmaps have been processed and we are ready to upload
+                            if (bitmapsToUpload.size() == images.size()) {
+                                Log.d("BORBOT", "Uploading images asynchronously");
+                                //send all the bitmaps to the async task
+                                ImageUploadAsyncTask imageUploader = new ImageUploadAsyncTask(paths);
+                                imageUploader.execute(bitmapsToUpload);
+                            }
                         }
                     });
-            String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + image.getId() + ".png";
-            image.setImgPath(path);
-            paths.add(path);
 
             //Can create a hashmap to upload but instead we use custom objects
             DocumentReference imgBlockRef = picData.document("imgBlock-" + image.getId());
             imgBlockRef.set(image);
         }
-        Log.d("BORBOT SIZE",""+bitmaps.size());
-        Log.d("BORBOT","Uploading images asynchronously");
-        //send all the bitmaps to the async task
-        new ImageUploadAsyncTask(paths).execute(bitmaps);
     }
 
-    private static class ImageUploadAsyncTask extends AsyncTask<ArrayList<Bitmap>, Void, Long>{
+    private static class ImageUploadAsyncTask extends AsyncTask<ArrayList<Bitmap>,Void,Long>{
+        //private Activity sActivity;
         private static ArrayList<String> storagePaths;
+        //private static String storagePath;
         private final FirebaseStorage mStorageReference;
 
         private ImageUploadAsyncTask(ArrayList<String> paths){
+            //sActivity = activity;
             storagePaths = paths;
+            //storagePath = path;
             mStorageReference = FirebaseStorage.getInstance();
         }
 
         @Override
         protected Long doInBackground(ArrayList<Bitmap>[] bitmaps) {
+
             int storageindex = 0;
             for (Bitmap bmap: bitmaps[0]){
                 //create a byte array output stream to prepare the image bitmap for upload
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                //resource bitmap is compressed and stored into baos
                 bmap.compress(Bitmap.CompressFormat.PNG,100,baos);
                 byte[] data = baos.toByteArray();//outstream is converted into byte array for upload
-
                 String path = storagePaths.get(storageindex);
-                Log.d("BORBOT PATH",path);
+                Log.d("BORBOT PATHs",path + " / " + bmap);
                 StorageReference imgRef = mStorageReference.getReference(path);
 
                 //image byte array is uploaded with our metadata
@@ -1237,11 +1354,10 @@ public class CreateNewGuide extends AppCompatActivity {
                     @Override
                     public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                         //display the progress to the user
-                        //TODO: TO CHRIS, this is where we can get the upload progress to show the user, dont know how though
+                        //TODO: TO CHRIS, this is where we can get the upload progress to show the user, dont know how tho
                         long progress = taskSnapshot.getBytesTransferred();
                     }
                 });
-
                 storageindex++;
             }
 
@@ -1251,14 +1367,99 @@ public class CreateNewGuide extends AppCompatActivity {
     }
 
     /**
+     * This iterates through the whole layout, and gets each step and its contents and stores them
+     * inside a list. That list is then uploaded.
+     */
+    public void PopulateUploadList(){
+
+        //This loop iterates through each step.
+        //We do layoutFeed.getChildCount() - 1 since we do not want to access the "add step" button
+        for(int i = 0; i < layoutFeed.getChildCount() - 1; i++) {
+
+            //This gets the layout where the entire step are held
+            // Index 0 is the title layout
+            // Index 1 to n-1 are either a WebView block or an ImageView block
+            // Index n is the layout where the two "add" buttons are held
+            LinearLayout stepLayout = (LinearLayout) layoutFeed.getChildAt(i);
+
+            //This gets the layout where the step number and title are held
+            //Index 0 is the step and step number (Step x:)
+            //Index 1 is the title of the step
+            LinearLayout titleLayout = (LinearLayout) stepLayout.getChildAt(0);
+
+            //This gets the textviews of the title number and description
+            TextView TitleNum = (TextView) titleLayout.getChildAt(0);
+            TextView TitleDesc = (TextView) titleLayout.getChildAt(1);
+
+            int stepNumber = -1; //default is -1, if we get that in the data obj there was a mistake
+            Pattern pattern = Pattern.compile("\\d");
+            Matcher matcher = pattern.matcher(TitleNum.getText().toString());
+            while (matcher.find()){
+                stepNumber = Integer.parseInt(matcher.group());
+                //Log.i("REGEX: ", ""+stepNumber);
+            }
+
+
+            // This loops through the content of each step. We start at 1 since 0 is the title
+            // and we -1 since we do not need to access the end which just holds the buttons
+            for (int j = 1; j < stepLayout.getChildCount() - 1; j++) {
+                    //This is where you can access each text or picture block and do whatever with it
+                    //You can access it by using
+                    // stepLayout.getChildAt(j);
+                    //TODO: decide if its an image or text from here (maybe using tags?)
+                    //TODO: add the image or text to the list
+                    //TODO: set any variables/modifiers that are needed in the back end
+                View dataView = stepLayout.getChildAt(j);
+                String tag = dataView.getTag(R.id.viewId).toString();
+                String[] strings = tag.split("--");
+                String blockType = strings[0];
+
+                if (blockType.equals("TEXT")){
+                    //Log.i("BORBOT text blob: ","getting text");
+                    WebView mWebview = (WebView) dataView;
+                    //make the text data object
+                    TextData dataToAdd = new TextData();
+                    dataToAdd.setType("Text");
+                    //dataToAdd.setPlacement(mGuideDataArrayList.size());
+                    dataToAdd.setStepNumber(stepNumber);
+                    dataToAdd.setStepTitle(TitleDesc.getText().toString());
+                    dataToAdd.setPlacement(j-1);
+                    String currText = strings[1];
+                    dataToAdd.stringToBlob(currText);
+                    dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
+                    //Log.i("BORBOT text blob: ",""+dataToAdd.getStringFromBlob());
+                    mGuideDataArrayList.add(dataToAdd);
+                    dataToAdd.setId(newGuide.getId() +"TEXT"+mGuideDataArrayList.size());
+                }else if (blockType.equals("PICTURE")){
+                    //make picture obj
+                    ImageView imageView = (ImageView) dataView;
+                    PictureData picData = new PictureData();
+                    picData.setType("Picture");
+                    picData.setStepNumber(stepNumber);
+                    picData.setStepTitle(TitleDesc.getText().toString());
+                    picData.setPlacement(j-1);
+                    String picUri = strings[1];
+                    picData.setUri(picUri);
+                    //getBitmaps(picUri);
+                    //Log.i("BORBOT URI: ",""+picData.getUri());
+                    mGuideDataArrayList.add(picData);
+                    picData.setId(newGuide.getId()+"IMG"+mGuideDataArrayList.size());
+                }
+            }
+        }
+    }
+
+    /**
      * Fixes the step numbers when a step is deleted
      * When the steps are reordered that means we have to update the step numbers for each item
      * in the data list and the tags for each data view so those edits are done too
      */
     private void reorderSteps(){
-        int dataListPointer = 0;//used to iterate through the datalist by stepCount instead of one by one
+        //CRASHES AFTER PUTTING BOTH BUTTONS ON THE SAME LINE
+        //int dataListPointer = 0;//used to iterate through the datalist by stepCount instead of one by one
 
         //Loops through the layout Feed and its children to set the step number to the correct step
+
         for(int i = 0; i < layoutFeed.getChildCount() - 1; i++){
             LinearLayout stepLayout = (LinearLayout) layoutFeed.getChildAt(i);
             LinearLayout titleLayout = (LinearLayout) stepLayout.getChildAt(0);
@@ -1267,38 +1468,44 @@ public class CreateNewGuide extends AppCompatActivity {
             stepTitle.setText(newStepTitle);
             reorderTags(stepLayout,(i+1));//reorders the tags for each view in each step's linear layout
 
+            //CRASHES AFTER PUTTING BOTH BUTTONS ON THE SAME LINE
             //get the first object of the current step
-            GuideData data = mGuideDataArrayList.get(i+dataListPointer);
+            //GuideData data = mGuideDataArrayList.get(i+ dataListPointer);
 
+            //CRASHES AFTER PUTTING BOTH BUTTONS ON THE SAME LINE
             //if data's number is more than the number we are changing to, then correct it
             //ex. removed step 1, step 2 is now the new step 1, therefore we must decrement all blocks from step 2,
             //otherwise its already correct so leave it
-            int currStepNum = data.getStepNumber();//the step num of the current data block we are on
-            int stepToCheck = currStepNum;//the current step whose data blocks we are working on
-            while (currStepNum > (i+1)){
-                data.setStepNumber(currStepNum-1);//lower the step number by 1 to its proper number
-                //get the next data object in the list so we can see if its in the same step as our current object
-                dataListPointer++;//we are moving to the next data object in the list
-                //if we have reached the last element, break the loop
-                if ((i+dataListPointer) >= mGuideDataArrayList.size()){
-                    break;
-                }
-                data = mGuideDataArrayList.get(i+dataListPointer);
-                currStepNum = data.getStepNumber();
-                //if this is not true, then we have reached a data object of the next step, break and move on
-                if (currStepNum != stepToCheck){
-                    dataListPointer--;
-                    break;
-                }
-            }
+//            int currStepNum = data.getStepNumber();//the step num of the current data block we are on
+//            int stepToCheck = currStepNum;//the current step whose data blocks we are working on
+//            while (currStepNum > (i+1)){
+//                data.setStepNumber(currStepNum-1);//lower the step number by 1 to its proper number
+//                //get the next data object in the list so we can see if its in the same step as our current object
+//               dataListPointer++;//we are moving to the next data object in the list
+//                //if we have reached the last element, break the loop
+//                if ((i+dataListPointer) >= mGuideDataArrayList.size()){
+//                    break;
+//                }
+//                data = mGuideDataArrayList.get(i+dataListPointer);
+//                currStepNum = data.getStepNumber();
+//                //if this is not true, then we have reached a data object of the next step, break and move on
+//                if (currStepNum != stepToCheck){
+//                    dataListPointer--;
+//                    break;
+//                }
+//            }
 
+
+            //THIS IS NOT USED SINCE WE CHANGED THE BUTTONS TO BE IN ONE LINE
             //Changes the buttons text to the correct step number
+            /*
             Button addStep = (Button) stepLayout.getChildAt(stepLayout.getChildCount() - 2);
             String newImageBtnDesc = "Add Image to step " + (i + 1);
             String newTextBtnDesc = "Add Text to Step " + (i + 1);
             addStep.setText(newImageBtnDesc);
             Button addDesc = (Button) stepLayout.getChildAt(stepLayout.getChildCount() - 1);
             addDesc.setText(newTextBtnDesc);
+            */
         }
     }
 
@@ -1342,7 +1549,7 @@ public class CreateNewGuide extends AppCompatActivity {
                         }
 
                         mGuideDataArrayList = newDataList;
-                        haveSaved = false;
+
                         //iterates through the data list and removes all elements of the deleted step
                         /*Iterator<GuideData> iterator = mGuideDataArrayList.iterator();
                         try{
@@ -1357,7 +1564,6 @@ public class CreateNewGuide extends AppCompatActivity {
                         }
 */
                         ((LinearLayout) stepLayout.getParent()).removeView(stepLayout);
-
                         reorderSteps();
                     }
                 })
@@ -1414,6 +1620,7 @@ public class CreateNewGuide extends AppCompatActivity {
             }else if (requestCode == PESDK_RESULT){
                 String editedImage = data.getStringExtra("resultURI");
                 Uri editedUri = Uri.parse(editedImage);
+                isSwapping = true;
                 addImage(editedUri);
             }
         }
@@ -1430,6 +1637,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         CreateNewGuide.this.finish();
+                        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
                     }
                 })
                 .setNegativeButton("No", null)

@@ -6,6 +6,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -22,9 +24,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private TextView mCurrFirst;
-    private TextView mCurrLast;
-    private TextView mCurrNick;
     private EditText mFirstName;
     private EditText mLastName;
     private EditText mNickName;
@@ -44,6 +43,14 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+
+        //sets the status bar color
+        if (android.os.Build.VERSION.SDK_INT >= 21){
+            Window window = this.getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
+        }
 
         FirebaseAuth mFirebaseAuth = FirebaseAuth.getInstance();
         mCurrentUser = mFirebaseAuth.getCurrentUser();
@@ -66,9 +73,6 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        mCurrFirst = findViewById(R.id.txtCurrFirst);
-        mCurrLast = findViewById(R.id.txtCurrLast);
-        mCurrNick = findViewById(R.id.txtCurrNick);
         mFirstName = findViewById(R.id.eFirstname);
         mLastName = findViewById(R.id.eLastname);
         mNickName = findViewById(R.id.eUsername);
@@ -78,9 +82,6 @@ public class SettingsActivity extends AppCompatActivity {
         mConfirm = findViewById(R.id.btnConfirmSettings);
 
         //Sets the current user information for the user's convenience
-        mCurrFirst.setText(mUser.getFirstName());
-        mCurrLast.setText(mUser.getLastName());
-        mCurrNick.setText(mUser.getUserName());
         mPassword.setText(mUser.getPassword());
 
         mConfirm.setOnClickListener(new View.OnClickListener() {
@@ -107,6 +108,7 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 finish();
+                overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
             }
         });
     }
@@ -142,5 +144,11 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         Toast.makeText(SettingsActivity.this,"Settings Saved!",Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
     }
 }

@@ -28,17 +28,13 @@ public class AuthActivity extends AppCompatActivity {
     public void onClickSignUp(View view) {
         Intent intent = new Intent(AuthActivity.this, SignUpActivty.class);
         startActivity(intent);
+        overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
     }
 
     //Starts sign in activty
     public void onClickSignIn(View view) {
         Intent intent = new Intent(AuthActivity.this, SignInActivity.class);
         startActivity(intent);
-    }
-
-    //Signs in as a guest
-    public void onClickGuest(View view) {
-        Toast.makeText(AuthActivity.this, "This is for LATER",
-                Toast.LENGTH_LONG).show();
+        overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
     }
 }

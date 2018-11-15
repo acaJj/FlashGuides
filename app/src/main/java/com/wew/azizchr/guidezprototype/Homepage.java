@@ -1,6 +1,8 @@
 package com.wew.azizchr.guidezprototype;
 
+import android.app.ActivityOptions;
 import android.content.Intent;
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -59,6 +61,7 @@ public class Homepage extends AppCompatActivity {
                 intent.putExtra(NEW_GUIDE, true);
                 intent.putExtra(EDIT_MODE,"CREATE");
                 startActivity(intent);
+                overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             }
         });
 
@@ -67,14 +70,17 @@ public class Homepage extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(Homepage.this,SettingsActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             }
         });
 
         btnCollection.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //Intent intent = new Intent(Homepage.this, UserCollectionActivity.class);
                 Intent intent = new Intent(Homepage.this, UserCollectionActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             }
         });
 
@@ -83,6 +89,7 @@ public class Homepage extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(Homepage.this, SearchActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             }
         });
     }
@@ -94,7 +101,8 @@ public class Homepage extends AppCompatActivity {
 
         //Checks to see if the user is signed in. If not, start the auth activity
         if(currentUser != null){
-            String greet = greeting(hour);
+            User currUser = new User(mAuth.getCurrentUser().getUid());
+            String greet = greeting(hour) + ".";
             mGreeting.setText(greet + ". Signed in as: " + currentUser.getEmail() );
         }else{
             Intent intent = new Intent(Homepage.this, AuthActivity.class);
@@ -124,5 +132,6 @@ public class Homepage extends AppCompatActivity {
         Intent intent = new Intent(Homepage.this, AuthActivity.class);
         startActivity(intent);
         finish();
+        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
     }
 }

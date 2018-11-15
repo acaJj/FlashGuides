@@ -7,20 +7,30 @@
     tools:context=".Homepage">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="86dp"
+        android:layout_marginEnd="47dp"
+        android:layout_marginStart="48dp"
+        android:layout_marginTop="56dp"
         android:gravity="center_horizontal"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/txtHomePageGreet"
-            android:layout_width="289dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="163dp"
-            android:layout_marginStart="163dp"
-            android:layout_marginTop="168dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginTop="50dp"
+            android:background="@drawable/style_button_save"
+            android:padding="20dp"
             android:text="greeting"
             android:textAlignment="center"
+            android:textColor="@android:color/background_dark"
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
@@ -28,37 +38,74 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
-            android:id="@+id/btnGuideCollection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Your Guides" />
-
-        <Button
             android:id="@+id/btnSearch"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Search"/>
+            android:layout_marginBottom="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/style_button_done"
+            android:drawableLeft="@drawable/icon_style_serach"
+            android:fontFamily="sans-serif-condensed"
+            android:text="Search"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/btnMakeGuide"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Create A Guide" />
+            android:layout_marginBottom="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/style_button_done"
+            android:drawableLeft="@drawable/icon_style_addguide"
+            android:fontFamily="sans-serif-condensed"
+            android:text="Create A Guide"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnGuideCollection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/style_button_done"
+            android:drawableLeft="@drawable/icon_style_userguide"
+            android:fontFamily="sans-serif-condensed"
+            android:text="Your Guides"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/btnSettings"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Settings"/>
+            android:layout_marginBottom="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/style_button_done"
+            android:drawableLeft="@drawable/icon_style_setting"
+            android:fontFamily="sans-serif-condensed"
+            android:text="Settings"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/btnSignOut"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/style_button_done"
+            android:drawableLeft="@drawable/icon_style_logout"
+            android:fontFamily="sans-serif-condensed"
             android:onClick="OnSignOutClick"
             android:text="Sign Out"
-            tools:layout_editor_absoluteX="124dp"
-            tools:layout_editor_absoluteY="473dp" />
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 

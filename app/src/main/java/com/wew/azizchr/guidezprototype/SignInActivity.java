@@ -77,6 +77,7 @@ public class SignInActivity extends AppCompatActivity {
                             //If the email and password match with an account, it starts the homepage activity
                             Intent intent = new Intent(SignInActivity.this, Homepage.class);
                             startActivity(intent);
+                            overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                             finish();
                         } else {
                             Toast.makeText(SignInActivity.this, "Sign In failed.",
@@ -86,8 +87,9 @@ public class SignInActivity extends AppCompatActivity {
                 });
     }
 
-    public void OnForgotClick(View view) {
-        Toast.makeText(SignInActivity.this, "This is for LATER",
-                Toast.LENGTH_LONG).show();
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
     }
 }

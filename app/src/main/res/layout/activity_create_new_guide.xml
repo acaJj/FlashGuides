@@ -50,9 +50,12 @@
                     android:id="@+id/buttonLayout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@drawable/border_new_content"
                     android:orientation="horizontal">
+
+
                     <!--
+
+
                                         <ImageButton
                                             android:id="@+id/imageButton3"
                                             android:layout_width="match_parent"
@@ -74,14 +77,19 @@
                                             android:padding="30dp"
                                             android:scaleType="fitCenter"
                                             app:srcCompat="@drawable/ic_add_text" />
+                                            android:layout_marginTop="40dp"
                     -->
                     <Button
                         android:id="@+id/btnAddStep"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
+                        android:background="@drawable/style_button_done"
+                        android:fontFamily="sans-serif-condensed"
                         android:onClick="onClickStep"
-                        android:text="Add a Step!" />
+                        android:text="Add a Step!"
+                        android:textColor="#FFFFFF"
+                        android:textSize="20dp"
+                        android:textStyle="bold" />
                     <!--
                     <Button
                         android:id="@+id/btnAddImage"
@@ -110,11 +118,23 @@
                 android:id="@+id/btnSaveGuide"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
+                android:textSize="15dp"
+                android:fontFamily="sans-serif-condensed"
+                android:textStyle="bold"
+                android:background="@drawable/style_button_save"
+                android:textColor="@color/purple"
                 android:text="Save"/>
             <Button
                 android:id="@+id/btnPublishGuide"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:textSize="15dp"
+                android:fontFamily="sans-serif-condensed"
+                android:textStyle="bold"
+                android:background="@drawable/style_button_save"
+                android:textColor="@color/purple"
                 android:text="Publish"/>
         </LinearLayout>
     </LinearLayout>
