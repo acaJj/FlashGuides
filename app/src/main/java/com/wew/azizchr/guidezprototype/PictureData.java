@@ -16,6 +16,9 @@ public class PictureData extends GuideData {
     private String imgPath;
     private String uri;
 
+    public float longitude,latitude;
+    public boolean hasMap;
+
     public PictureData() {
     }
 

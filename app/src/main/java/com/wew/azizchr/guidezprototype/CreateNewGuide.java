@@ -1,6 +1,7 @@
 package com.wew.azizchr.guidezprototype;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -90,6 +91,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.grpc.Context;
+
+/**
+ * Both Chris and Jeffrey have worked on this
+ *
+ * Chris was responsible for:
+ * Jeff was responsible for:
+ */
 
 public class CreateNewGuide extends AppCompatActivity {
 
@@ -335,33 +343,6 @@ public class CreateNewGuide extends AppCompatActivity {
         }
     }
 
-    //used to load the parts of a guide
-    public class LoadCallable implements Callable<Boolean>{
-        private final ArrayList guideSteps;
-        private final Query loadQuery;
-
-        public LoadCallable(ArrayList steps, Query query){
-            this.guideSteps = steps;
-            this.loadQuery = query;
-        }
-
-        @Override
-        public Boolean call() throws Exception{
-            Boolean completed = false;
-
-            //loadQuery.get().addOnCompleteListener()
-
-            return completed;
-        }
-    }
-
-    public class TextLoadContinuation implements Continuation<String, List<String>> {
-        @Override
-        public List<String> then(Task<String> task) throws Exception {
-            return Arrays.asList(task.getResult().split(" +"));
-        }
-    }
-
     /**
      * Loads up a guide in storage for further editing
      * @param id of the guide we are editing
@@ -389,24 +370,14 @@ public class CreateNewGuide extends AppCompatActivity {
             }
         });
 
-        final ArrayList<GuideData> guideElements = new ArrayList<>();
-
-        /*Task guideLoader = mFirebaseAuth.signInAnonymously();
-
-        guideLoader.continueWithTask(new Continuation() {
-            @Override
-            public Object then(@NonNull Task task) throws Exception {
-                return null;
-            }
-        });
-*/
+      /*
         final Executor executor = new Executor() {
             @Override
             public void execute(@NonNull Runnable runnable) {
                 new Thread(runnable).start();
             }
         };
-
+*/
         final ArrayList<Map<String,Object>> steps = new ArrayList<>();
         //get the stored guide data
         guideSteps.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<QuerySnapshot>() {
@@ -473,113 +444,8 @@ public class CreateNewGuide extends AppCompatActivity {
                             }
                         });
 
-                        //Task<QuerySnapshot> fetchTextTask;
-                        //Map<String,Object> data = new HashMap<>();
-                        //data.put("stepNumber",stepNum);
-                        //data.put("stepTitle",stepTitle);
-                        //steps.add(data);
-
                         Log.i(DEBUG_TAG+"EXECUTE","in Guide steps / " + doc.getId());
                     }
-                    /*int counter = 0;
-                    for (Map<String, Object> item: steps){
-                        stepNum = (int)item.get("stepNumber");
-                        Query stepText = guideText.whereEqualTo("stepNumber",stepNum);
-                        final Query stepImgs = guideImgs.whereEqualTo("stepNumber", stepNum);
-                        //fetchTextTask = stepText.get();
-                        stepText.get().addOnCompleteListener(CreateNewGuide.this, new OnCompleteListener<QuerySnapshot>() {
-                            int stepsChecked = 0;//to keep count of how many steps we've checked for this data
-                            int textBlocksChecked = 0;//blocks checked in the step
-                            Boolean textCompleted = false;//have we gotten all text data for this guide?
-                            int guideTextSize = 0;//running total of text blocks in the guide
-                            @Override
-                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                if (task.isSuccessful()){
-                                    //add the current step's number of text blocks to the running total, if there's none, the steps checked
-                                    guideTextSize = guideTextSize + task.getResult().size();
-                                    if (guideTextSize == 0){
-                                        stepsChecked++;
-                                    }
-
-                                    for (QueryDocumentSnapshot snap: task.getResult()){
-                                        textBlocksChecked++;
-                                        Blob text = (Blob)snap.get("text");
-                                        String id = snap.get("id").toString();
-                                        String guideId = "";
-                                        String stepTitle = snap.get("stepTitle").toString();
-                                        String type = snap.get("type").toString();
-                                        int num = snap.getLong("stepNumber").intValue();
-                                        int placement = snap.getLong("placement").intValue();
-                                        TextData data = new TextData(type,placement,guideId,stepTitle,num);
-                                        data.setText(text);
-                                        data.setId(id);
-
-                                        guideElements.add(data);
-                                        if (textBlocksChecked == guideTextSize)
-                                            stepsChecked++;
-
-                                        Log.i(DEBUG_TAG+"-TEXT EXECUTE","in chained task, data added / " + data.getId() );
-                                    }
-                                    if ((stepsChecked == steps.size()) && (textBlocksChecked == guideTextSize)) textCompleted = true;
-                                    Log.i(DEBUG_TAG+"TEXT EXECUTE","Text Completed? "+textBlocksChecked+"/"+guideTextSize+"/"+textCompleted);
-                                }
-                            }
-                        }).continueWith(new Continuation<QuerySnapshot, Void>() {
-                            @Override
-                            public Void then(@NonNull Task<QuerySnapshot> task) throws Exception{
-                                stepImgs.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                                    int stepsChecked = 0;//to keep count of how many steps we've checked for this data
-                                    int imgBlocksChecked = 0;//blocks checked in the step
-                                    Boolean imgCompleted = false;//have we gotten all text data for this guide?
-                                    int guideImgSize = 0;//running total of text blocks in the guide
-                                    @Override
-                                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                        if (task.isSuccessful()){
-                                            guideImgSize =guideImgSize+ task.getResult().size();
-                                            if (guideImgSize == 0){
-                                                stepsChecked++;
-                                            }
-
-                                            for (QueryDocumentSnapshot snap: task.getResult()){
-                                                imgBlocksChecked++;
-                                                //get the data from fire store and add a data object to the data list
-                                                String id = snap.get("id").toString();
-                                                String guideId = "";
-                                                String stepTitle = snap.get("stepTitle").toString();
-                                                String type = (String)snap.get("type");
-                                                int num = snap.getLong("stepNumber").intValue();
-                                                int placement = snap.getLong("placement").intValue();
-                                                String imgPath = snap.get("imgPath").toString();
-                                                String uri = snap.get("uri").toString();
-                                                PictureData data = new PictureData(id,type,placement,guideId);
-                                                data.setStep(num,stepTitle);
-                                                data.setUri(uri);
-                                                data.setImgPath(imgPath);
-                                                guideElements.add(data);
-
-                                                if (imgBlocksChecked == guideImgSize)
-                                                    stepsChecked++;
-
-                                                Log.i(DEBUG_TAG+"IMG EXECUTE","in chained task, data added / " + data.getId() );
-                                            }
-
-                                            if ((stepsChecked == steps.size()) && (imgBlocksChecked == guideImgSize)) imgCompleted = true;
-                                            Log.i(DEBUG_TAG+"IMG EXECUTE","IMG Completed? "+imgBlocksChecked+"/"+guideImgSize+"/"+imgCompleted);
-
-                                            //check
-                                            Log.i(DEBUG_TAG+"-FINISH",""+guideElements.size());
-                                            Log.i(DEBUG_TAG+"-FINISH","textCompleted/imgCompleted/"+imgCompleted);
-                                            //Create the guide
-                                            createGuide(guideElements);
-                                        }
-                                    }
-                                });
-
-                                return null;
-                            }
-                        });
-                        counter++;
-                    }*/
                 }
 
             }
@@ -632,71 +498,6 @@ public class CreateNewGuide extends AppCompatActivity {
             //Log.i(DEBUG_TAG,data.getId()+"/"+elementView.getParent());
         }
     }
-    public void createGuide(ArrayList<GuideData> guideElements){
-        if (!haveLoaded){
-            haveLoaded = true;
-            ArrayList<GuideData> orderedGuide = putGuideInOrder(guideElements);
-
-            for (int i =0;i<orderedGuide.size();i++){
-                Log.i(DEBUG_TAG+"-ORDEREDLIST","data-step/placement"+orderedGuide.get(i).getStepNumber()+"/"+orderedGuide.get(i).getPlacement());
-            }
-
-            int currentStep = 0;
-            for (int i =0;i<orderedGuide.size();i++){
-                GuideData data = orderedGuide.get(i);
-                if (data.getStepNumber() > currentStep){
-                    currentStep = data.getStepNumber();
-                    addStep(data.getStepTitle(),"");
-                }
-
-                if (data.getType().equals("Text")){
-                    TextData textData = (TextData) data;
-                    addDescription(textData.getStringFromBlob());
-                }else if (data.getType().equals("Picture")){
-                    PictureData pictureData = (PictureData)data;
-                    StorageReference imageToLoad = imgStorage.child(pictureData.getImgPath());
-                    LinearLayout layout = (LinearLayout) layoutFeed.getChildAt(pictureData.getStepNumber()-1);
-                    //loadImage(imageToLoad);
-                }
-            }
-        }
-
-    }
-
-    public ArrayList<GuideData> putGuideInOrder(ArrayList<GuideData> guideData){
-        ArrayList<GuideData> orderedGuide = new ArrayList<>();
-        int index = 0;
-        int currStep = 1;
-        int listIterator = 0;
-
-        while(orderedGuide.size() != guideData.size()){
-            GuideData data = guideData.get(listIterator);
-            if ((data.getStepNumber() == currStep) && (data.getPlacement() == index)){
-                index++;
-
-                orderedGuide.add(data);
-
-                if (orderedGuide.size() == guideData.size()){
-                    break;
-                }else{
-                    listIterator = 0;
-                    continue;
-                }
-            }
-
-            listIterator++;
-            //if i is greater than the data list length, we have searched the whole loop
-            //and haven't found the element at the index we are looking for, this means we have found all elements in the step
-            //increment currStep and start looking for the next step's elements
-            if (listIterator > guideData.size()-1){
-                currStep++;
-                index = 0;
-                listIterator = 0;
-            }
-        }
-
-        return orderedGuide;
-    }
 
     public WebView loadText(TextData text){
         try{
@@ -745,6 +546,8 @@ public class CreateNewGuide extends AppCompatActivity {
         try{
             //Creates the new imageview
             final ImageView newImgView = new ImageView(CreateNewGuide.this);
+            final int stepNumber = pictureData.getStepNumber();
+            final int placement = pictureData.getPlacement();
             //Glide.with(CreateNewGuide.this).load(imageUri).into(newImgView);
             Glide.with(CreateNewGuide.this)
                     .asBitmap()
@@ -753,6 +556,8 @@ public class CreateNewGuide extends AppCompatActivity {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                             newImgView.setImageBitmap(resource);
+
+                            //addImgBitmap(newImgView,resource);
 
                             //gets the mediapath of the image and parses it into a uri we can work with
                             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -783,6 +588,18 @@ public class CreateNewGuide extends AppCompatActivity {
         }catch(Exception ex){
             Log.i("IMAGE ERROR: ", ex.getMessage());
             return null;
+        }
+    }
+
+    public void addImgBitmap(final ImageView imgView, Bitmap bitmap){
+        if (mBitmaps.size() == 0){
+            mBitmaps.add(bitmap);
+            return;
+        }
+
+        for(int i = 0; i < mBitmaps.size();i++){
+            Bitmap bitmapToCompare = mBitmaps.get(i);
+
         }
     }
 
@@ -947,12 +764,13 @@ public class CreateNewGuide extends AppCompatActivity {
                             if (checkSwapping){
                                 Log.d("SWAP","Yes" + currentPictureSwap);
 
-                                View imageToReplace = selectedLayout.getChildAt(currentPictureSwap);
+                                //View imageToReplace = selectedLayout.getChildAt(currentPictureSwap);
                                 int index = (int)selectedImageView.getTag(R.id.bitmapIndex);
                                 Log.d("IMG TAGs (old)",""+ index);
                                 mBitmaps.add(index,resource);
                                 mBitmaps.remove(index+1);
-                                int newIndex = mBitmaps.indexOf(resource);
+                                //int newIndex = mBitmaps.indexOf(resource);
+                                //store placement as a tag so we can better arrange everything
                                 newImgView.setTag(R.id.bitmapIndex,index);
                             }else{
                                 Log.d("SWAP","No");
@@ -1250,62 +1068,6 @@ public class CreateNewGuide extends AppCompatActivity {
     }
 
     /**
-     * this function takes a GuideData object and adds it to our overall guide data list
-     * in the correct index according to the object's position in the actual guide
-     * @param data the object we are adding to the data list
-     * @return true if successfully added
-     */
-    private boolean addObjectToDataListInOrder(GuideData data){
-        try{
-            int dataStep = data.getStepNumber() - 1;
-            LinearLayout theSelectedLayout = (LinearLayout) layoutFeed.getChildAt(dataStep);
-            int num = (int)theSelectedLayout.getTag();//get the tag of the stepLayout, which is the view's id
-            boolean foundCorrectStep = false;//when we found the step we want to add text to, set to true
-            //add the new data object to the data list in the appropriate spot
-            for (int i = 0; i < mGuideDataArrayList.size();i++){
-                GuideData currentObj = mGuideDataArrayList.get(i);
-
-                //set to true when we have found the step we are adding text to
-                if (currentObj.getStepNumber() == num){
-                    foundCorrectStep = true;
-                }
-
-                //if we found the items proper placement in the step, i.e. its right before the current block in the guide layout
-                if ((data.getPlacement() != 0 ) && (currentObj.getPlacement() >= data.getPlacement())){
-                    //String newDataId = "";
-                    //if (data.getType().equals("Text"))newDataId=newGuide.getId()+"TEXT"+mGuideDataArrayList.size();
-                    //else if (data.getType().equals("Picture"))newDataId=newGuide.getId()+"IMG"+mGuideDataArrayList.size();
-                    //data.setId(newDataId);
-                    mGuideDataArrayList.add(i-1,data);
-                    break;
-                }
-
-                //new text is always added to the end of the step by default, we can only know when we reached it when
-                //we iterate onto the first object of the next step.
-                if (foundCorrectStep && (currentObj.getStepNumber() > num)){//first object that isn't equal to id of the new view, which is the first element THIS NEEDS TO BE FIXED
-                    data.setPlacement(i);
-                    mGuideDataArrayList.add(i,data);
-                    mGuideDataArrayList.remove(currentObj);
-                    currentObj.setPlacement(i+1);
-                    mGuideDataArrayList.add(i+1,currentObj);
-
-                    break;
-                }
-            }
-            //if we didn't find the next step we haven't added the data to the list
-            //that means the step we are adding to is the last step, put the data object at the end of the data list
-            if (!mGuideDataArrayList.contains(data)){
-                data.setStepNumber(num);
-                data.setPlacement(mGuideDataArrayList.size());
-                mGuideDataArrayList.add(data);
-            }
-        }catch (Exception ex){
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * Builds and displays a menu of options for selecting a photo in the guide
      */
     private void displayImageOptionMenu(final Uri imageUri, final View v){
@@ -1350,31 +1112,6 @@ public class CreateNewGuide extends AppCompatActivity {
             }
         });
         builder.show();
-    }
-
-    private void removeFromDataList(String dataId) {
-        boolean elementDeleted = false;
-        GuideData dataToDelete = new GuideData();
-        //go through list until we have found the element we want to delete
-        //once it is deleted, we need to lower the placement # of all elements after it by 1
-        for (GuideData data: mGuideDataArrayList){
-            if (elementDeleted){
-                int newPlacement = data.getPlacement()-1;
-                data.setPlacement(newPlacement);
-            }else{
-                if (data.getId().equals(dataId)){
-                    //mGuideDataArrayList.remove(data);
-                    dataToDelete = data;//get reference to the object we want to remove
-                    elementDeleted = true;
-                }
-            }
-        }
-
-        //add the ref to the list, if we are editing a guide previously saved, then we will delete any docs that we no longer want in the db
-        DocumentReference deletedDataRef = mFirestore.document(textData+"/textBlock-"+dataToDelete.getId());
-        deletedDataList.add(deletedDataRef);
-
-        mGuideDataArrayList.remove(dataToDelete);
     }
 
     /**
@@ -1503,6 +1240,10 @@ public class CreateNewGuide extends AppCompatActivity {
         textBlockNum++;
     }
 
+    /**
+     * Checks if the current data object has its step uploaded to firestore and uploads it if not
+     * @param data object that we are uploading the step of
+     */
     private void uploadStep(final GuideData data) {
         //if the current step has not had an object representing it stored in the db
         //then we will make one here before saving the text
@@ -1527,11 +1268,14 @@ public class CreateNewGuide extends AppCompatActivity {
         });
     }
 
-
-    public void uploadImages(ArrayList<PictureData> images){
-        //final ArrayList<Bitmap> bitmaps = new ArrayList<>();
+    /**
+     * Uploads all pictures in the guide to firestore and stores bitmaps in storage
+     * @param images list of data objects representing the pictures in the guide
+     */
+    public void uploadImages(final ArrayList<PictureData> images){
+        //arraylists to hold bitmaps and their paths in the firebase storage
+        final ArrayList<Bitmap> bitmapsToUpload = new ArrayList<>();
         final ArrayList<String> paths = new ArrayList<>();
-        boolean readyToUpload = false;
 
         //get each PictureData obj in guide and extract bitmaps/file paths for async uploading;then store the data in firestore
         for(PictureData image: images){
@@ -1541,48 +1285,58 @@ public class CreateNewGuide extends AppCompatActivity {
             //RequestOptions ro = new RequestOptions()
             //        .diskCacheStrategy(DiskCacheStrategy.RESOURCE);
 
-            String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + image.getId() + ".png";
+            final String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + image.getId() + ".png";
             image.setImgPath(path);
             paths.add(path);
+
+            Glide.with(getApplicationContext())
+                    .asBitmap()
+                    .load(image.getUri())
+                    .into(new SimpleTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                            bitmapsToUpload.add(resource);
+
+                            Log.d("BORBOT SIZE",""+mBitmaps.size());
+                            //if uploadlist is the same size as the images list we passed in
+                            //then all bitmaps have been processed and we are ready to upload
+                            if (bitmapsToUpload.size() == images.size()) {
+                                Log.d("BORBOT", "Uploading images asynchronously");
+                                //send all the bitmaps to the async task
+                                ImageUploadAsyncTask imageUploader = new ImageUploadAsyncTask(paths);
+                                imageUploader.execute(bitmapsToUpload);
+                            }
+                        }
+                    });
 
             //Can create a hashmap to upload but instead we use custom objects
             DocumentReference imgBlockRef = picData.document("imgBlock-" + image.getId());
             imgBlockRef.set(image);
-            Log.d("BORBOT SIZE",""+mBitmaps.size());
-            if (mBitmaps.size() == images.size()){
-                Log.d("BORBOT EQUALS","all bitmaps loaded");
-                readyToUpload = true;
-            }
-
         }
-
-        if (readyToUpload){
-            Log.d("BORBOT","Uploading images asynchronously");
-            //send all the bitmaps to the async task
-            new ImageUploadAsyncTask(paths).execute(mBitmaps);
-        }
-
     }
 
-    private static class ImageUploadAsyncTask extends AsyncTask<ArrayList<Bitmap>, Void, Long>{
+    private static class ImageUploadAsyncTask extends AsyncTask<ArrayList<Bitmap>,Void,Long>{
+        //private Activity sActivity;
         private static ArrayList<String> storagePaths;
+        //private static String storagePath;
         private final FirebaseStorage mStorageReference;
 
         private ImageUploadAsyncTask(ArrayList<String> paths){
+            //sActivity = activity;
             storagePaths = paths;
+            //storagePath = path;
             mStorageReference = FirebaseStorage.getInstance();
         }
 
         @Override
         protected Long doInBackground(ArrayList<Bitmap>[] bitmaps) {
+
             int storageindex = 0;
             for (Bitmap bmap: bitmaps[0]){
                 //create a byte array output stream to prepare the image bitmap for upload
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                //resource bitmap is compressed and stored into baos
                 bmap.compress(Bitmap.CompressFormat.PNG,100,baos);
                 byte[] data = baos.toByteArray();//outstream is converted into byte array for upload
-
                 String path = storagePaths.get(storageindex);
                 Log.d("BORBOT PATHs",path + " / " + bmap);
                 StorageReference imgRef = mStorageReference.getReference(path);
@@ -1604,7 +1358,6 @@ public class CreateNewGuide extends AppCompatActivity {
                         long progress = taskSnapshot.getBytesTransferred();
                     }
                 });
-
                 storageindex++;
             }
 
@@ -1643,7 +1396,7 @@ public class CreateNewGuide extends AppCompatActivity {
             Matcher matcher = pattern.matcher(TitleNum.getText().toString());
             while (matcher.find()){
                 stepNumber = Integer.parseInt(matcher.group());
-                Log.i("REGEX: ", ""+stepNumber);
+                //Log.i("REGEX: ", ""+stepNumber);
             }
 
 

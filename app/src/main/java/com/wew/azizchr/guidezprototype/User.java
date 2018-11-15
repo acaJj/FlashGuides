@@ -2,6 +2,7 @@ package com.wew.azizchr.guidezprototype;
 
 /**
  * Created by Jeffrey on 2018-05-27.
+ * Models the user info
  */
 
 public class User {

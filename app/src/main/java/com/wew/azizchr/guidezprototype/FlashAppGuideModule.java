@@ -15,9 +15,9 @@ import com.google.firebase.storage.StorageReference;
 import java.io.InputStream;
 
 /**
+ * Created by Jeffrey on 2018-09-10.
  * A custom AppGuideModule to handle image loading. We register a model loader in the registry
  * to let Glide handle the logic behind when to use a specific model loader to load an image
- * Created by Jeffrey on 2018-09-10.
  */
 
 @GlideModule
