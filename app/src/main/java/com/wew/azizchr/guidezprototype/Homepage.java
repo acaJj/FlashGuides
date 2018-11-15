@@ -101,7 +101,8 @@ public class Homepage extends AppCompatActivity {
 
         //Checks to see if the user is signed in. If not, start the auth activity
         if(currentUser != null){
-            String greet = greeting(hour);
+            User currUser = new User(mAuth.getCurrentUser().getUid());
+            String greet = greeting(hour) + ".";
             mGreeting.setText(greet + ". Signed in as: " + currentUser.getEmail() );
         }else{
             Intent intent = new Intent(Homepage.this, AuthActivity.class);
@@ -131,5 +132,6 @@ public class Homepage extends AppCompatActivity {
         Intent intent = new Intent(Homepage.this, AuthActivity.class);
         startActivity(intent);
         finish();
+        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
     }
 }

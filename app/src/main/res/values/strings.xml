@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">Guidez Prototype</string>
+    <string name="app_name">Flash Guides</string>
     <string name="default_item_text">This is a collection item</string>
-    
-    <item type="id" name="viewId"/>
-    <item type="id" name="index" />
-    <item type="id" name="bitmapIndex"/>
+
+    <item name="viewId" type="id" />
+    <item name="index" type="id" />
+    <item name="bitmapIndex" type="id" />
 </resources>

@@ -120,6 +120,7 @@ public class SignUpActivty extends AppCompatActivity {
                             //Account was created, user was signed in, and now switching to homepage
                             Intent intent = new Intent(SignUpActivty.this, Homepage.class);
                             startActivity(intent);
+                            overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                             finish();
                         } else {
                             Toast.makeText(SignUpActivty.this, "Signup failed. Reason:" + task.getException(),
@@ -127,5 +128,11 @@ public class SignUpActivty extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
     }
 }
