@@ -41,6 +41,10 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.algolia.search.saas.AlgoliaException;
+import com.algolia.search.saas.Client;
+import com.algolia.search.saas.CompletionHandler;
+import com.algolia.search.saas.Index;
 import com.bumptech.glide.GenericTransitionOptions;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -74,6 +78,8 @@ import com.kbeanie.multipicker.api.CameraImagePicker;
 import com.kbeanie.multipicker.api.Picker;
 import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
 import com.kbeanie.multipicker.api.entity.ChosenImage;
+
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Array;
@@ -148,6 +154,12 @@ public class CreateNewGuide extends AppCompatActivity {
     private CollectionReference picData;
     private DocumentReference userRef;
 
+    //Algolia id and api keys for search
+    private String updateApiKey = "132c50036e3241722083caa0a25393e2";//do not use the admin key
+    private String applicationId = "031024FLJM";
+    private Client client;
+    private Index algoliaIndex;
+
     //ArrayList stores metadata for the guide text and picture components
     private ArrayList<GuideData> mGuideDataArrayList = new ArrayList<>();
     //stores all documents that we are going to delete when we save a guide
@@ -216,11 +228,8 @@ public class CreateNewGuide extends AppCompatActivity {
                 guideNum = documentSnapshot.getLong("numGuides").intValue();
 
                 if (mode.equals("CREATE"))guideNum++;// increments guideNum by 1 because we are making a new guide so there is 1 more than before
-
-                //sets these 2 collections to point to the folders for the guide data of the new guide. for later uploading
-                textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
-                picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
-
+                String authorName = ""+documentSnapshot.getString("firstName") + documentSnapshot.getString("lastName");
+                newGuide.setAuthor(authorName);
                 editorSetup(bundle);
             }
 
@@ -228,7 +237,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
         mNewGuideTitle.setText(guideTitle);
 
-        newGuide.setAuthor(mCurrentUser.getUid());
+        //newGuide.setAuthor(mCurrentUser.getUid());
         newGuide.setTitle(guideTitle);
         //newGuide.setDateCreated();
         newGuide.setPublishedStatus(false);
@@ -300,6 +309,7 @@ public class CreateNewGuide extends AppCompatActivity {
         buttonLP = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         buttonLP.setMargins(0,0,0, 75);
+
     }
 
 
@@ -337,10 +347,15 @@ public class CreateNewGuide extends AppCompatActivity {
         }else if (mode.equals("EDIT")){
             newGuide.setId(bundle.getString("GUIDEID"));
             newGuide.setKey(bundle.getString("Key"));
-            haveLoaded = false;
+            newGuide.setTitle(bundle.getString("GUIDE_TITLE"));
+            guideNum = Integer.parseInt(bundle.getString("Key"));
+           // haveLoaded = true;
             loadGuide(newGuide.getId(),newGuide.getKey());
             Log.i(DEBUG_TAG+"EDITs","" + newGuide.getId());
         }
+        //sets these 2 collections to point to the folders for the guide data of the new guide. for later uploading
+        textData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/textData");
+        picData = mFirestore.collection("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum+"/imageData");
     }
 
     /**
@@ -378,7 +393,6 @@ public class CreateNewGuide extends AppCompatActivity {
             }
         };
 */
-        final ArrayList<Map<String,Object>> steps = new ArrayList<>();
         //get the stored guide data
         guideSteps.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<QuerySnapshot>() {
             @Override
@@ -564,6 +578,8 @@ public class CreateNewGuide extends AppCompatActivity {
                             resource.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
                             String path = MediaStore.Images.Media.insertImage(CreateNewGuide.this.getContentResolver(), resource, UUID.randomUUID().toString() + ".png", "drawing");
                             final Uri imageUri = Uri.parse(path);
+                            String viewTag = "PICTURE--" + imageUri.toString();
+                            newImgView.setTag(R.id.viewId,viewTag);
                             newImgView.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
@@ -588,18 +604,6 @@ public class CreateNewGuide extends AppCompatActivity {
         }catch(Exception ex){
             Log.i("IMAGE ERROR: ", ex.getMessage());
             return null;
-        }
-    }
-
-    public void addImgBitmap(final ImageView imgView, Bitmap bitmap){
-        if (mBitmaps.size() == 0){
-            mBitmaps.add(bitmap);
-            return;
-        }
-
-        for(int i = 0; i < mBitmaps.size();i++){
-            Bitmap bitmapToCompare = mBitmaps.get(i);
-
         }
     }
 
@@ -634,8 +638,27 @@ public class CreateNewGuide extends AppCompatActivity {
         PopulateUploadList();
 
         DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
-        newGuide.setKey(""+guideNum);
+        if (mode.equals("CREATE")){
+            newGuide.setKey(""+guideNum);
+        }
+
         guideRef.set(newGuide);
+
+        client = new Client(applicationId, updateApiKey);
+        algoliaIndex = client.getIndex("guides");
+
+        //index the guide title with Algolia so we can search it later
+        try{
+            //List<JSONObject> guideToIndex = new ArrayList<>();
+            JSONObject guideObject = new JSONObject().//guide object
+                    put("title",newGuide.getTitle()).put("author",newGuide.getAuthor());
+            //guideToIndex.add(new JSONObject(guideObject));
+            algoliaIndex.addObjectAsync(guideObject, newGuide.getId(),null);
+            Log.d(DEBUG_TAG,"indexing completed");
+        }catch(Exception ex){
+            Log.d(DEBUG_TAG, ex.getMessage());
+        }
+
 
         //informs the user that the save process is starting
         Toast.makeText(CreateNewGuide.this,"Saving...\nPlease wait",Toast.LENGTH_LONG).show();
@@ -661,8 +684,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
             }
         });
-        //TODO: Modify uploadImage method to take in an array of all pictures in the data list rather than one by one
-        //TODO: This array will be passed to the async task where the processing and uploading will be carried out
+
         picData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
@@ -685,7 +707,7 @@ public class CreateNewGuide extends AppCompatActivity {
                             //uploadImage(picDataPkg,picDataPkgUri);
                         }
                     }
-                    Log.i("BORBOT IMAGES",""+picturesToUpload.size());
+                    //Log.i("IMAGES",""+picturesToUpload.size());
                     uploadImages(picturesToUpload);
                 }
             }
@@ -699,8 +721,8 @@ public class CreateNewGuide extends AppCompatActivity {
         }
 
         //update the users guide count so the guides can be named differently, 'guide0', 'guide1', etc
-        userRef.update("numGuides", guideNum);
-        userRef.update("key", userRef.getId());
+        if (mode.equals("CREATE"))userRef.update("numGuides", guideNum);
+        //userRef.update("key", userRef.getId());
         Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
         for (int i = 0; i< mGuideDataArrayList.size();i++){
             Log.i("GUIDEDATA OBJ: ",mGuideDataArrayList.get(i).getType());
@@ -765,21 +787,21 @@ public class CreateNewGuide extends AppCompatActivity {
                                 Log.d("SWAP","Yes" + currentPictureSwap);
 
                                 //View imageToReplace = selectedLayout.getChildAt(currentPictureSwap);
-                                int index = (int)selectedImageView.getTag(R.id.bitmapIndex);
-                                Log.d("IMG TAGs (old)",""+ index);
-                                mBitmaps.add(index,resource);
-                                mBitmaps.remove(index+1);
+                                //int index = (int)selectedImageView.getTag(R.id.bitmapIndex);
+                                //Log.d("IMG TAGs (old)",""+ index);
+                                //mBitmaps.add(index,resource);
+                                //mBitmaps.remove(index+1);
                                 //int newIndex = mBitmaps.indexOf(resource);
                                 //store placement as a tag so we can better arrange everything
-                                newImgView.setTag(R.id.bitmapIndex,index);
+                                //newImgView.setTag(R.id.bitmapIndex,index);
                             }else{
                                 Log.d("SWAP","No");
 
-                                mBitmaps.add(resource);
+                                //mBitmaps.add(resource);
                                 //gets index of the bitmap in the list and stores it as a tag in the imgview
                                 //this is important for when we have to change the images in the list
-                                int index = mBitmaps.indexOf(resource);
-                                newImgView.setTag(R.id.bitmapIndex,index);
+                                //int index = mBitmaps.indexOf(resource);
+                                //newImgView.setTag(R.id.bitmapIndex,index);
                             }
 
                             LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
@@ -1410,6 +1432,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     //TODO: add the image or text to the list
                     //TODO: set any variables/modifiers that are needed in the back end
                 View dataView = stepLayout.getChildAt(j);
+                Log.d("GET TAG","");
                 String tag = dataView.getTag(R.id.viewId).toString();
                 String[] strings = tag.split("--");
                 String blockType = strings[0];

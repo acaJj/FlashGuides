@@ -1,24 +1,36 @@
 package com.wew.azizchr.guidezprototype;
 
 import android.content.Intent;
+import android.os.Debug;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.algolia.search.saas.AlgoliaException;
+import com.algolia.search.saas.Client;
+import com.algolia.search.saas.CompletionHandler;
+import com.algolia.search.saas.Index;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +40,11 @@ public class SearchResultActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore mFirestore;
     private FirebaseStorage mStorage;
+    //Algolia id and api keys for search
+    private String searchApiKey = "41400957b43bf3f86fd66e448345860f";//do not use the admin key
+    private String applicationId = "031024FLJM";
+    private Client client;
+    private Index guidesIndex;
 
     private RecyclerView mYourSearchResults;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -75,12 +92,13 @@ public class SearchResultActivity extends AppCompatActivity {
         mYourSearchResults.setLayoutManager(mLayoutManager);
 
 
-        //TODO: Jeff can you implement the search function here using the following strings?
+        //TODO: Jeff can you implement the search function here using the following strings? OK!!
 
         //Retrieves the content entered by the user from the previous activity
         searchByString = intent.getStringExtra("SearchString");
         searchByUser = intent.getStringExtra("SearchUser");
 
+        searchDatabase(searchByString,searchByUser);
         /*
 
         //Get all the guides that the user has created
@@ -109,6 +127,94 @@ public class SearchResultActivity extends AppCompatActivity {
                 }
             }
         });* */
+        client = new Client(applicationId, searchApiKey);
+        guidesIndex = client.getIndex("guides");
+    }
+
+    /**
+     * Begin searching based on the users search params
+     * @param searchByString guide should have this in the title
+     * @param searchByUser the user whose guides we want
+     * @return a list of all guides searched by the user
+     */
+    public void searchDatabase(String searchByString, String searchByUser){
+        //List<Result> results = new ArrayList<>();
+
+        //if both strings aren't empty, search by title and user
+        if (!searchByString.equals("") && !searchByUser.equals("")){
+            getResultsByTitleAndUser(searchByString,searchByUser);
+        }else if (searchByString.equals("") && !searchByUser.equals("")){//else if title is empty, search all guides by specific user
+            getResultsByUser(searchByUser);
+        }else if (!searchByString.equals("") && searchByUser.equals("")){//else if user is empty, search all guides by title
+            getResultsByTitle(searchByString);
+        }else{//both are empty, just get all guides
+            getAllResults();
+        }
+    }
+
+    private void getResultsByTitleAndUser(String searchByString, String searchByUser) {
+
+    }
+
+    private void getResultsByUser(String searchByUser) {
+        com.algolia.search.saas.Query query = new com.algolia.search.saas.Query( searchByString)
+                .setAttributesToRetrieve("title","author","objectID")
+                .setHitsPerPage(50);
+        guidesIndex.searchAsync(query, new CompletionHandler() {
+            @Override
+            public void requestCompleted(JSONObject jsonObject, AlgoliaException e) {
+                try {
+                    JSONArray hits = jsonObject.getJSONArray("hits");
+                    for (int i =0;i < hits.length();i++){
+                        JSONObject hitsJSONObject = hits.getJSONObject(i);
+                        Log.i("SEARCH RESULT:",""+hitsJSONObject.get("title")+"/"+hitsJSONObject.get("author")+"/"+hitsJSONObject.get("objectID"));
+                        Result result = new Result();
+                        result.setTitle(hitsJSONObject.getString("title"));
+                        result.setName(hitsJSONObject.getString("author"));
+                        result.setId(hitsJSONObject.getString("objectID"));
+                        searchResults.add(result);
+                    }
+                    //Once everything is obtained, it creates and sets the adapter
+                    mAdapter = new SearchAdapter(searchResults);
+                    mYourSearchResults.setAdapter(mAdapter);
+                    Toast.makeText(getApplicationContext(), searchResults.size() + " results." , Toast.LENGTH_SHORT).show();
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void getResultsByTitle(String searchByString) {
+        com.algolia.search.saas.Query query = new com.algolia.search.saas.Query( searchByString)
+                .setAttributesToRetrieve("title","author","objectID")
+                .setHitsPerPage(50);
+        guidesIndex.searchAsync(query, new CompletionHandler() {
+            @Override
+            public void requestCompleted(JSONObject jsonObject, AlgoliaException e) {
+                try {
+                    JSONArray hits = jsonObject.getJSONArray("hits");
+                    for (int i =0;i < hits.length();i++){
+                        JSONObject hitsJSONObject = hits.getJSONObject(i);
+                        Log.i("SEARCH RESULT:",""+hitsJSONObject.get("title")+"/"+hitsJSONObject.get("author")+"/"+hitsJSONObject.get("objectID"));
+                        Result result = new Result();
+                        result.setTitle(hitsJSONObject.getString("title"));
+                        result.setName(hitsJSONObject.getString("author"));
+                        result.setId(hitsJSONObject.getString("objectID"));
+                        searchResults.add(result);
+                    }
+                    //Once everything is obtained, it creates and sets the adapter
+                    mAdapter = new SearchAdapter(searchResults);
+                    mYourSearchResults.setAdapter(mAdapter);
+                    Toast.makeText(getApplicationContext(), searchResults.size() + " results." , Toast.LENGTH_SHORT).show();
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void getAllResults() {
     }
 
     // When back is pressed, do an animation

@@ -1,8 +1,6 @@
 package com.wew.azizchr.guidezprototype;
 
-import android.graphics.Bitmap;
-import android.net.Uri;
-//import java.io.ByteArrayOutputStream;
+import com.google.firebase.firestore.GeoPoint;
 
 /**
  * Created by Jeffrey on 2018-06-01.
@@ -16,8 +14,7 @@ public class PictureData extends GuideData {
     private String imgPath;
     private String uri;
 
-    public float longitude,latitude;
-    public boolean hasMap;
+    public GeoPoint coordinates;
 
     public PictureData() {
     }
@@ -25,12 +22,6 @@ public class PictureData extends GuideData {
     public PictureData(String id, String type, int placement, String guideId) {
         super(id, type, placement, guideId);
     }
-
-    /*public byte[] getImageData(){
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        img.compress(Bitmap.CompressFormat.PNG,100,baos);
-        return baos.toByteArray();
-    }*/
 
     public String getImgPath() {
         return imgPath;
@@ -46,5 +37,13 @@ public class PictureData extends GuideData {
 
     public void setUri(String uri) {
         this.uri = uri;
+    }
+
+    public GeoPoint getCoordinates() {
+        return coordinates;
+    }
+
+    public void setCoordinates(GeoPoint coordinates) {
+        this.coordinates = coordinates;
     }
 }
