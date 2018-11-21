@@ -13,7 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_fg"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-        <activity android:name=".TextBlockWriterActivity" />
+        <activity android:name=".TextBlockWriterActivity" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ViewPhoto" />
         <activity android:name=".AuthActivity" />
         <activity android:name=".SignUpActivty" />

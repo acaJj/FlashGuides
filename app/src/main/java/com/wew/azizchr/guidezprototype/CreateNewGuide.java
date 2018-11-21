@@ -562,7 +562,7 @@ public class CreateNewGuide extends AppCompatActivity {
             final ImageView newImgView = new ImageView(CreateNewGuide.this);
             final int stepNumber = pictureData.getStepNumber();
             final int placement = pictureData.getPlacement();
-            //Glide.with(CreateNewGuide.this).load(imageUri).into(newImgView);
+            Glide.with(CreateNewGuide.this).load(ref).into(newImgView);
             Glide.with(CreateNewGuide.this)
                     .asBitmap()
                     .load(ref)
@@ -774,6 +774,13 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setTag(R.id.viewId,viewTag);
             //Glide.with(CreateNewGuide.this).load(imageUri).into(newImgView);
             final Boolean checkSwapping = isSwapping;
+
+            //TODO: this kinda works, need to come back tomorrow bc google. Removing bitmap screws up the order
+            Glide.with(CreateNewGuide.this)
+                    .asBitmap()
+                    .load(imageUri)
+                    .transition(GenericTransitionOptions.with(R.anim.fui_slide_in_right))
+                    .into(newImgView);
             Glide.with(CreateNewGuide.this)
                     .asBitmap()
                     .load(imageUri)
@@ -783,37 +790,9 @@ public class CreateNewGuide extends AppCompatActivity {
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
                             //creates object to hold picture data
                             newImgView.setImageBitmap(resource);
-                            if (checkSwapping){
-                                Log.d("SWAP","Yes" + currentPictureSwap);
 
-                                //View imageToReplace = selectedLayout.getChildAt(currentPictureSwap);
-                                //int index = (int)selectedImageView.getTag(R.id.bitmapIndex);
-                                //Log.d("IMG TAGs (old)",""+ index);
-                                //mBitmaps.add(index,resource);
-                                //mBitmaps.remove(index+1);
-                                //int newIndex = mBitmaps.indexOf(resource);
-                                //store placement as a tag so we can better arrange everything
-                                //newImgView.setTag(R.id.bitmapIndex,index);
-                            }else{
-                                Log.d("SWAP","No");
-
-                                //mBitmaps.add(resource);
-                                //gets index of the bitmap in the list and stores it as a tag in the imgview
-                                //this is important for when we have to change the images in the list
-                                //int index = mBitmaps.indexOf(resource);
-                                //newImgView.setTag(R.id.bitmapIndex,index);
-                            }
-
-                            LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
-                            TextView title = (TextView)titleBlock.getChildAt(1);
-
-                            //Adds the tag to the new imageview (the tag is the step number + dataId)
-                            //String viewTag = selectedLayout.getTag().toString() + "--" + picData.getId();
-
-                            Log.i("IMG TAGs", ""+newImgView.getTag(R.id.viewId) + " / " + newImgView.getTag(R.id.bitmapIndex));
-                            //if we are swapping out a picture, replace the old location with new pic, otherwise just add it to end
-                            //WE WONT HAVE TO DO ANYTHING WITH THE DATALIST HERE WITH THE NEW ONE
-
+                            //LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
+                            //TextView title = (TextView)titleBlock.getChildAt(1);
                         }
                     });
 
