@@ -6,7 +6,9 @@ public class Result {
     public String name;
     public String date;
     public String id;
+    public String userId;//id of the user who created the guide, used only for searches
     public String key;
+    public String destination;//where the result will take you(eg. Edit for createGuide, View for ViewGuide)
 
     public Result() {
         title = "unknown";
@@ -50,6 +52,14 @@ public class Result {
         return id;
     }
 
+    public void setUserId(String id) {
+        this.userId = id;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
     public void setId(String id) {
         this.id = id;
     }
@@ -60,5 +70,13 @@ public class Result {
 
     public void setKey(String key) {
         this.key = key;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public void setDestination(String destination) {
+        this.destination = destination;
     }
 }

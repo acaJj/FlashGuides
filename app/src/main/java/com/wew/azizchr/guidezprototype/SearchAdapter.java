@@ -61,13 +61,26 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
                     Activity mContext = (Activity) view.getContext();
 
                     //Starts the intent with a transition
-                    Intent intent = new Intent(view.getContext(), CreateNewGuide.class);
-                    intent.putExtra("MODE","EDIT");
-                    intent.putExtra("GUIDEID",result.getId());
-                    intent.putExtra("GUIDE_TITLE",result.getTitle());
-                    intent.putExtra("Key",result.getKey());
+                    //set listener based on result destination
+                    if (result.getDestination().equals("Edit")){
+                        Intent intent = new Intent(view.getContext(), CreateNewGuide.class);
+                        intent.putExtra("MODE","EDIT");
+                        intent.putExtra("GUIDEID",result.getId());
+                        intent.putExtra("GUIDE_TITLE",result.getTitle());
+                        intent.putExtra("KEY",result.getKey());
 
-                    view.getContext().startActivity(intent);
+                        view.getContext().startActivity(intent);
+                    }else if (result.getDestination().equals("View")){
+                        Intent intent = new Intent(view.getContext(), ViewGuide.class);
+                        intent.putExtra("GUIDEID",result.getId());
+                        intent.putExtra("GUIDE_TITLE",result.getTitle());
+                        intent.putExtra("KEY",result.getKey());
+                        intent.putExtra("USERID",result.getUserId());
+                        intent.putExtra("AUTHOR",result.getName());
+
+                        view.getContext().startActivity(intent);
+                    }
+
                     mContext.overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
                 }
             });

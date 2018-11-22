@@ -346,9 +346,9 @@ public class CreateNewGuide extends AppCompatActivity {
             newGuide.setId(UUID.randomUUID().toString());
         }else if (mode.equals("EDIT")){
             newGuide.setId(bundle.getString("GUIDEID"));
-            newGuide.setKey(bundle.getString("Key"));
+            newGuide.setKey(bundle.getString("KEY"));
             newGuide.setTitle(bundle.getString("GUIDE_TITLE"));
-            guideNum = Integer.parseInt(bundle.getString("Key"));
+            guideNum = Integer.parseInt(bundle.getString("KEY"));
            // haveLoaded = true;
             loadGuide(newGuide.getId(),newGuide.getKey());
             Log.i(DEBUG_TAG+"EDITs","" + newGuide.getId());
@@ -385,14 +385,6 @@ public class CreateNewGuide extends AppCompatActivity {
             }
         });
 
-      /*
-        final Executor executor = new Executor() {
-            @Override
-            public void execute(@NonNull Runnable runnable) {
-                new Thread(runnable).start();
-            }
-        };
-*/
         //get the stored guide data
         guideSteps.get().addOnCompleteListener(CreateNewGuide.this,new OnCompleteListener<QuerySnapshot>() {
             @Override
@@ -562,14 +554,14 @@ public class CreateNewGuide extends AppCompatActivity {
             final ImageView newImgView = new ImageView(CreateNewGuide.this);
             final int stepNumber = pictureData.getStepNumber();
             final int placement = pictureData.getPlacement();
-            //Glide.with(CreateNewGuide.this).load(imageUri).into(newImgView);
+            Glide.with(CreateNewGuide.this).asBitmap().load(ref).into(newImgView);
             Glide.with(CreateNewGuide.this)
                     .asBitmap()
                     .load(ref)
                     .into(new SimpleTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            newImgView.setImageBitmap(resource);
+                            //newImgView.setImageBitmap(resource);
 
                             //addImgBitmap(newImgView,resource);
 
@@ -651,7 +643,8 @@ public class CreateNewGuide extends AppCompatActivity {
         try{
             //List<JSONObject> guideToIndex = new ArrayList<>();
             JSONObject guideObject = new JSONObject().//guide object
-                    put("title",newGuide.getTitle()).put("author",newGuide.getAuthor());
+                    put("title",newGuide.getTitle()).put("author",newGuide.getAuthor())
+                    .put("userId",mFirebaseAuth.getUid()).put("key",newGuide.getKey());
             //guideToIndex.add(new JSONObject(guideObject));
             algoliaIndex.addObjectAsync(guideObject, newGuide.getId(),null);
             Log.d(DEBUG_TAG,"indexing completed");
@@ -778,44 +771,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     .asBitmap()
                     .load(imageUri)
                     .transition(GenericTransitionOptions.with(R.anim.fui_slide_in_right))
-                    .into(new SimpleTarget<Bitmap>() {
-                        @Override
-                        public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
-                            //creates object to hold picture data
-                            newImgView.setImageBitmap(resource);
-                            if (checkSwapping){
-                                Log.d("SWAP","Yes" + currentPictureSwap);
-
-                                //View imageToReplace = selectedLayout.getChildAt(currentPictureSwap);
-                                //int index = (int)selectedImageView.getTag(R.id.bitmapIndex);
-                                //Log.d("IMG TAGs (old)",""+ index);
-                                //mBitmaps.add(index,resource);
-                                //mBitmaps.remove(index+1);
-                                //int newIndex = mBitmaps.indexOf(resource);
-                                //store placement as a tag so we can better arrange everything
-                                //newImgView.setTag(R.id.bitmapIndex,index);
-                            }else{
-                                Log.d("SWAP","No");
-
-                                //mBitmaps.add(resource);
-                                //gets index of the bitmap in the list and stores it as a tag in the imgview
-                                //this is important for when we have to change the images in the list
-                                //int index = mBitmaps.indexOf(resource);
-                                //newImgView.setTag(R.id.bitmapIndex,index);
-                            }
-
-                            LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
-                            TextView title = (TextView)titleBlock.getChildAt(1);
-
-                            //Adds the tag to the new imageview (the tag is the step number + dataId)
-                            //String viewTag = selectedLayout.getTag().toString() + "--" + picData.getId();
-
-                            Log.i("IMG TAGs", ""+newImgView.getTag(R.id.viewId) + " / " + newImgView.getTag(R.id.bitmapIndex));
-                            //if we are swapping out a picture, replace the old location with new pic, otherwise just add it to end
-                            //WE WONT HAVE TO DO ANYTHING WITH THE DATALIST HERE WITH THE NEW ONE
-
-                        }
-                    });
+                    .into(newImgView);
 
             newImgView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -990,49 +946,6 @@ public class CreateNewGuide extends AppCompatActivity {
             haveSaved = false;
         }catch (Exception ex){
             Log.e("BORBOT edit error: ",ex.getMessage());
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Overloaded method is used if we have a TextData object that we want to create in the editor.
-     * Used when we are loading a prior guide for editing
-     * @param data representing the text block we want to load into the editor
-     * @return true if success, otherwise false
-     */
-    private boolean addDescription(TextData data){
-        try{
-            //Creates a new textview and sets the tag (the tag is the current step number)
-            WebView mDescription = new WebView(CreateNewGuide.this);
-            int dataStep = data.getStepNumber() - 1;
-            LinearLayout theSelectedLayout = (LinearLayout) layoutFeed.getChildAt(dataStep);
-            String viewTag = theSelectedLayout.getTag().toString() + "--" + data.getId();
-            mDescription.setTag(viewTag);
-
-            //mDescription.setTextSize(data.getSize());
-            //mDescription.setTextColor(data.getColor());
-            mDescription.setPadding(5, 10, 5, 10);
-            mDescription.loadData(data.getStringFromBlob(),"text/html","UTF-8");
-            mDescription.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View view, MotionEvent motionEvent) {
-                    switch (motionEvent.getAction()){
-                        case MotionEvent.ACTION_UP:
-                            view.performClick();
-                            displayTextOptionsMenu(view);
-                    }
-                    return true;
-                }
-            });
-            mDescription.setBackgroundColor(Color.TRANSPARENT);
-
-            //adds the new textblock with the text to the selected step
-            theSelectedLayout.addView(mDescription, theSelectedLayout.getChildCount() - 1);
-
-        }catch (Exception ex){
-            ex.getMessage();
             return false;
         }
 
