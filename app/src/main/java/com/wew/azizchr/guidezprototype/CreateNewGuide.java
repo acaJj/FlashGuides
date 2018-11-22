@@ -1222,7 +1222,6 @@ public class CreateNewGuide extends AppCompatActivity {
 
             final String path = "guideimages/users/" + mFirebaseAuth.getUid() + "/guide"+guideNum+"/" + image.getId() + ".png";
             image.setImgPath(path);
-            paths.add(path);
 
             Glide.with(getApplicationContext())
                     .asBitmap()
@@ -1230,13 +1229,14 @@ public class CreateNewGuide extends AppCompatActivity {
                     .into(new SimpleTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                            Log.d(DEBUG_TAG,""+path);
                             bitmapsToUpload.add(resource);
-
-                            Log.d("BORBOT SIZE",""+mBitmaps.size());
+                            paths.add(path);
+                            Log.d(DEBUG_TAG,""+mBitmaps.size());
                             //if uploadlist is the same size as the images list we passed in
                             //then all bitmaps have been processed and we are ready to upload
                             if (bitmapsToUpload.size() == images.size()) {
-                                Log.d("BORBOT", "Uploading images asynchronously");
+                                Log.d(DEBUG_TAG, "Uploading images asynchronously");
                                 //send all the bitmaps to the async task
                                 ImageUploadAsyncTask imageUploader = new ImageUploadAsyncTask(paths);
                                 imageUploader.execute(bitmapsToUpload);
@@ -1272,7 +1272,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 bmap.compress(Bitmap.CompressFormat.PNG,100,baos);
                 byte[] data = baos.toByteArray();//outstream is converted into byte array for upload
-                String path = storagePaths.get(storageindex);
+                String path = storagePaths.get(storageindex);//get the path for the image
                 Log.d("BORBOT PATHs",path + " / " + bmap);
                 StorageReference imgRef = mStorageReference.getReference(path);
 
@@ -1338,12 +1338,7 @@ public class CreateNewGuide extends AppCompatActivity {
             // This loops through the content of each step. We start at 1 since 0 is the title
             // and we -1 since we do not need to access the end which just holds the buttons
             for (int j = 1; j < stepLayout.getChildCount() - 1; j++) {
-                    //This is where you can access each text or picture block and do whatever with it
-                    //You can access it by using
-                    // stepLayout.getChildAt(j);
-                    //TODO: decide if its an image or text from here (maybe using tags?)
-                    //TODO: add the image or text to the list
-                    //TODO: set any variables/modifiers that are needed in the back end
+                //Get each data block, create proper data object for it, and add to data list for upload
                 View dataView = stepLayout.getChildAt(j);
                 Log.d("GET TAG","");
                 String tag = dataView.getTag(R.id.viewId).toString();
