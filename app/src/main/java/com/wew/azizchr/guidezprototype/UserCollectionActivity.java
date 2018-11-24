@@ -27,11 +27,16 @@ import com.google.firebase.storage.FirebaseStorage;
 
 import org.w3c.dom.Text;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 
 public class UserCollectionActivity extends AppCompatActivity {
 
@@ -89,7 +94,7 @@ public class UserCollectionActivity extends AppCompatActivity {
                         Result guide = new Result();
                         guide.setTitle(doc.getString("title"));
                         guide.setName("you!");
-                        guide.setDate("October 29th, 2018");
+                        guide.setDate(doc.getString("dateCreated"));
                         guide.setKey(doc.getId());
                         guide.setId(doc.getString("id"));
                         guide.setDestination("Edit");
@@ -102,7 +107,7 @@ public class UserCollectionActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), searchResults.size() + " results." , Toast.LENGTH_SHORT).show();
                 } else{
 
-                    //This is included just incase something is wrong
+                    //This is included just in case something is wrong
                     testGuides();
                     mAdapter = new SearchAdapter(searchResults);
                     guideCollection.setAdapter(mAdapter);

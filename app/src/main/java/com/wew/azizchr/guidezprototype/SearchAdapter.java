@@ -100,7 +100,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
     public void onBindViewHolder(@NonNull SearchResultHolder holder, int position) {
         holder.guideTitle.setText(searchResults.get(position).title);
         holder.guideAuthor.setText("By: " + searchResults.get(position).name);
-        holder.guideDate.setText("Published: " + searchResults.get(position).date);
+        holder.guideDate.setText("Created: " + searchResults.get(position).date);
         //bind the listener
         holder.bindData(searchResults.get(position));
     }

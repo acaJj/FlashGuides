@@ -5,7 +5,6 @@ import com.google.firebase.firestore.GeoPoint;
 /**
  * Created by Jeffrey on 2018-06-01.
  *
- * Image Bitmap will be taken from here instead of being done in the uploadImage method
  *
  */
 

@@ -87,7 +87,7 @@
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/statusbarpurple"
                 android:ems="10"
-                android:hint="Ex. chrisaziz2112@gmail.com"
+                android:hint="Ex. Jeffrey Jaca"
                 android:inputType="textCapSentences"
                 android:paddingBottom="20dp"
                 android:paddingTop="25dp"
