@@ -5,4 +5,5 @@
     <item name="viewId" type="id" />
     <item name="index" type="id" />
     <item name="bitmapIndex" type="id" />
+    <item name="viewType" type="id" />
 </resources>

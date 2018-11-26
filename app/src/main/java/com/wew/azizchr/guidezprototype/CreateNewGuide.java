@@ -132,6 +132,7 @@ public class CreateNewGuide extends AppCompatActivity {
     private CameraImagePicker camera;
     public LinearLayout layoutFeed;
     public LinearLayout selectedLayout;
+    public int indexToPlaceView;//the index in the selected step layout where we place the next text/imageview
     public WebView selectedWebView; //changed from text to web view for better memory consumption and text formatting
     public ImageView selectedImageView;//used for bitmaps
 
@@ -165,8 +166,6 @@ public class CreateNewGuide extends AppCompatActivity {
     //Images used for the step buttons
     public Drawable textIcon;
     public Drawable photoIcon;
-
-    public LinearLayout.LayoutParams buttonLP;
 
     public ArrayList<Bitmap> mBitmaps;
 
@@ -293,11 +292,6 @@ public class CreateNewGuide extends AppCompatActivity {
         //Gets the images from the drawable folder for the step buttons
         textIcon = CreateNewGuide.this.getResources().getDrawable( R.drawable.icon_style_addtext );
         photoIcon = CreateNewGuide.this.getResources().getDrawable( R.drawable.icon_style_addpic );
-
-        //Sets the layout parameters for the buttonHolder layout
-        buttonLP = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        buttonLP.setMargins(0,0,0, 75);
 
     }
 
@@ -469,12 +463,21 @@ public class CreateNewGuide extends AppCompatActivity {
         for (int i =0; i< stepLayout.getChildCount()-1;i++){
             //if there is no object in the step (only the title and buttons), place the element and get out
             if (stepLayout.getChildCount() == 2){
-                stepLayout.addView(elementView,stepLayout.getChildCount()-1);
+                if (stepLayout.getChildAt(1).getTag(R.id.viewType).equals("ButtonBar")){
+                    stepLayout.removeViewAt(stepLayout.getChildCount()-1);
+                }
+                LinearLayout newDataBlock = new LinearLayout(CreateNewGuide.this);
+                newDataBlock.setOrientation(LinearLayout.VERTICAL);
+                newDataBlock.addView(elementView);
+                newDataBlock.addView(createAddDataButtonLayout(stepLayout));
+                newDataBlock.setTag(R.id.viewType,"DataBlock");
+                stepLayout.addView(newDataBlock);
                 break;
             }
             int currentViewIndex = i+1;
 
-            View currentView = stepLayout.getChildAt(currentViewIndex);
+            LinearLayout dataLayout = (LinearLayout) stepLayout.getChildAt(currentViewIndex);
+            View currentView = dataLayout.getChildAt(0);//gets the data block in the first index of the dataLayout
             Log.i("Placements:",""+(String)currentView.getTag(R.id.index)+"/"+(String)elementView.getTag(R.id.index));
             int currentViewPlacement = 0;
             try{
@@ -482,7 +485,11 @@ public class CreateNewGuide extends AppCompatActivity {
             }catch(NumberFormatException ex){
                 Log.i("EXCEPTION!",ex.getMessage());
                 //if we end up here then the element goes at the end of the step
-                stepLayout.addView(elementView,currentViewIndex);
+                LinearLayout newDataBlock = new LinearLayout(CreateNewGuide.this);
+                newDataBlock.setOrientation(LinearLayout.VERTICAL);
+                newDataBlock.addView(elementView);
+                newDataBlock.addView(createAddDataButtonLayout(stepLayout));
+                stepLayout.addView(newDataBlock,currentViewIndex);
                 break;
             }
 
@@ -490,7 +497,12 @@ public class CreateNewGuide extends AppCompatActivity {
 
             //compare the placement of the elementView and currentView
             if (elementViewPlacement<currentViewPlacement){//if less, then it goes before it in the step
-                stepLayout.addView(elementView,currentViewIndex);
+                LinearLayout newDataBlock = new LinearLayout(CreateNewGuide.this);
+                newDataBlock.setOrientation(LinearLayout.VERTICAL);
+                newDataBlock.addView(elementView);
+                newDataBlock.addView(createAddDataButtonLayout(stepLayout));
+                newDataBlock.setTag(R.id.viewType,"DataBlock");
+                stepLayout.addView(newDataBlock,currentViewIndex);
                 break;
             }
 
@@ -792,13 +804,28 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setAdjustViewBounds(true);
             newImgView.setPadding(3, 10, 3, 10);
 
+            LinearLayout newDataBlock = new LinearLayout(CreateNewGuide.this);
+            newDataBlock.setOrientation(LinearLayout.VERTICAL);
+            newDataBlock.addView(newImgView);
+            newDataBlock.addView(createAddDataButtonLayout(selectedLayout));
+            newDataBlock.setTag(R.id.viewType,"DataBlock");
             if(isSwapping){
-                selectedLayout.addView(newImgView, currentPictureSwap);
+                selectedLayout.addView(newDataBlock, currentPictureSwap);
                 selectedLayout.removeViewAt(currentPictureSwap + 1);
                 currentPictureSwap = 0;
                 isSwapping = false;
             }else {
-                selectedLayout.addView(newImgView, selectedLayout.getChildCount() - 1);
+
+                if (selectedLayout.getChildCount() == 2){
+                    if (selectedLayout.getChildAt(1).getTag(R.id.viewType).equals("ButtonBar")){
+                        selectedLayout.removeViewAt(selectedLayout.getChildCount()-1);
+                    }
+                    selectedLayout.addView(newDataBlock);
+                }else{
+                    Log.i(DEBUG_TAG,""+indexToPlaceView);
+                    selectedLayout.addView(newDataBlock,indexToPlaceView);
+                }
+
                 //currentIndex++;
             }
             haveSaved = false;
@@ -840,51 +867,6 @@ public class CreateNewGuide extends AppCompatActivity {
                 }
             });
 
-            //Creates the Layout Parameters for the buttons
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-            params.weight = 0.5f;
-
-            //Creates the add image button and its on click listener
-            Button mAddImage = new Button(CreateNewGuide.this);
-            mAddImage.setBackgroundResource(R.drawable.style_button_add);
-            mAddImage.setCompoundDrawablesWithIntrinsicBounds(photoIcon, null, null, null);
-            String addImageBtnDesc = "Add Image";
-            mAddImage.setText(addImageBtnDesc);
-            mAddImage.setLayoutParams(params);
-            mAddImage.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    selectedLayout = newStepBlock;
-                    SelectImage();
-                }
-            });
-
-            //Creates the add description button and its on click listener
-            Button mAddDesc = new Button (CreateNewGuide.this);
-            mAddDesc.setBackgroundResource(R.drawable.style_button_add);
-            mAddDesc.setCompoundDrawablesWithIntrinsicBounds(textIcon, null, null, null);
-            String addTextBtnDesc = "Add Text";
-            mAddDesc.setText(addTextBtnDesc);
-            mAddDesc.setLayoutParams(params);
-            mAddDesc.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    selectedLayout = newStepBlock;
-                    Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
-                    intent.putExtra("CurrStep", layoutFeed.getChildCount());
-                    intent.putExtra("isEditing", false);
-                    startActivityForResult(intent,WRITE_DESC);
-                    overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
-                }
-            });
-
-            //Creates the linear layout to hold the two buttons together
-            LinearLayout buttonHolder = new LinearLayout(CreateNewGuide.this);
-            buttonHolder.setBackgroundResource(R.drawable.border_new_content);
-            buttonHolder.setOrientation(LinearLayout.HORIZONTAL);
-            buttonHolder.setLayoutParams(buttonLP);
-            buttonHolder.setPadding(0,0,0,75);
-
-
             int num = layoutFeed.getChildCount();
 
             //Sets the tag for the step block and step description textview
@@ -899,9 +881,7 @@ public class CreateNewGuide extends AppCompatActivity {
             newTitleBlock.addView(mStepNumber);
             newTitleBlock.addView(mStepTitle);
             newStepBlock.addView(newTitleBlock);
-            newStepBlock.addView(buttonHolder);
-            buttonHolder.addView(mAddDesc);
-            buttonHolder.addView(mAddImage);
+            newStepBlock.addView(createAddDataButtonLayout(newStepBlock));
 
             //newStepBlock.setBackgroundResource(R.drawable.border_new_step);
             //Adds the new step block to the end of the main layout, before the button
@@ -910,6 +890,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
             //adds the starting description to the step block if not null/empty
             if (!desc.equals("")){
+                //indexToPlaceView = 1;//to ensure that it is placed in the first empty spot
                 addDescription(desc);
             }
             //currentIndex++;
@@ -918,6 +899,70 @@ public class CreateNewGuide extends AppCompatActivity {
         }catch (Exception ex){
             ex.getMessage();
         }
+    }
+
+    private LinearLayout createAddDataButtonLayout(final LinearLayout stepBlock){
+        //Creates the Layout Parameters for the buttons
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        params.weight = 0.5f;
+
+        //Creates the add image button and its on click listener
+        final Button mAddImage = new Button(CreateNewGuide.this);
+        mAddImage.setBackgroundResource(R.drawable.style_button_add);
+        mAddImage.setCompoundDrawablesWithIntrinsicBounds(photoIcon, null, null, null);
+        String addImageBtnDesc = "Add Image";
+        mAddImage.setText(addImageBtnDesc);
+        mAddImage.setLayoutParams(params);
+
+
+        //Creates the add description button and its on click listener
+        Button mAddDesc = new Button (CreateNewGuide.this);
+        mAddDesc.setBackgroundResource(R.drawable.style_button_add);
+        mAddDesc.setCompoundDrawablesWithIntrinsicBounds(textIcon, null, null, null);
+        String addTextBtnDesc = "Add Text";
+        mAddDesc.setText(addTextBtnDesc);
+        mAddDesc.setLayoutParams(params);
+
+        LinearLayout.LayoutParams buttonLP;
+        //Sets the layout parameters for the buttonHolder layout
+        buttonLP = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        buttonLP.setMargins(0,0,0, 75);
+
+        //Creates the linear layout to hold the two buttons together
+        final LinearLayout buttonHolder = new LinearLayout(CreateNewGuide.this);
+        buttonHolder.setBackgroundResource(R.drawable.border_new_content);
+        buttonHolder.setOrientation(LinearLayout.HORIZONTAL);
+        buttonHolder.setLayoutParams(buttonLP);
+        buttonHolder.setPadding(0,0,0,75);
+        buttonHolder.addView(mAddDesc);
+        buttonHolder.addView(mAddImage);
+
+        mAddImage.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                selectedLayout = stepBlock;
+                LinearLayout dataLayout = (LinearLayout)buttonHolder.getParent();
+                indexToPlaceView = ((LinearLayout)dataLayout.getParent()).indexOfChild(dataLayout) + 1;
+                SelectImage();
+            }
+        });
+        mAddDesc.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                selectedLayout = stepBlock;
+                LinearLayout dataLayout = (LinearLayout)buttonHolder.getParent();
+                indexToPlaceView = ((LinearLayout)dataLayout.getParent()).indexOfChild(dataLayout) + 1;
+                Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
+                intent.putExtra("CurrStep", layoutFeed.getChildCount());
+                intent.putExtra("isEditing", false);
+                startActivityForResult(intent,WRITE_DESC);
+                overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
+            }
+        });
+
+        buttonHolder.setTag(R.id.viewType,"ButtonBar");
+
+        return buttonHolder;
     }
 
     /**
@@ -976,9 +1021,21 @@ public class CreateNewGuide extends AppCompatActivity {
                     return true;
                 }
             });
-
-            //adds the new text block with the text to the selected step
-            selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 1);
+            LinearLayout newDataBlock = new LinearLayout(CreateNewGuide.this);
+            newDataBlock.setOrientation(LinearLayout.VERTICAL);
+            newDataBlock.addView(mDescription);
+            newDataBlock.addView(createAddDataButtonLayout(selectedLayout));
+            newDataBlock.setTag(R.id.viewType,"DataBlock");
+            if (selectedLayout.getChildCount() == 2){
+                if (selectedLayout.getChildAt(1).getTag(R.id.viewType).equals("ButtonBar")){
+                    selectedLayout.removeViewAt(selectedLayout.getChildCount()-1);
+                }
+                //adds the new text block with the text to the selected step
+                selectedLayout.addView(newDataBlock);
+            }else{
+                Log.i(DEBUG_TAG,""+indexToPlaceView);
+                selectedLayout.addView(newDataBlock,indexToPlaceView);
+            }
 
             //addObjectToDataListInOrder(dataToAdd);
             haveSaved = false;
@@ -1003,10 +1060,16 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Delete Picture")){
                     //Remove picture, indexes shift up
-                    //String dataId = (String)v.getTag();
-                    //String[] strings = dataId.split("--");
-                    //removeFromDataList(strings[1]);
-                    ((LinearLayout) v.getParent()).removeView(v);
+                    LinearLayout dataLayout = (LinearLayout) v.getParent();
+                    LinearLayout stepLayout = (LinearLayout)dataLayout.getParent();
+                    int indexToRemove = stepLayout.indexOfChild(dataLayout);
+                    //if (stepLayout.getChildCount() > 3) stepLayout.removeViewAt(indexToRemove+1);
+                    stepLayout.removeViewAt(indexToRemove);
+                    if (stepLayout.getChildCount() <= 1){
+                        //LinearLayout newDatBlock = new LinearLayout(CreateNewGuide.this);
+                        //newDatBlock.addView(createAddDataButtonLayout(stepLayout));
+                        stepLayout.addView(createAddDataButtonLayout(stepLayout));
+                    }
                 }else if(items[i].equals("View Picture")){
                     //calls the activty to view the picture and passes the URI
                     Intent intent = new Intent(CreateNewGuide.this, ViewPhoto.class);
@@ -1014,8 +1077,11 @@ public class CreateNewGuide extends AppCompatActivity {
                     startActivity(intent);
                 }else if(items[i].equals("Edit Picture")){
                     isSwapping = true;
-                    selectedLayout = ((LinearLayout) v.getParent());
-                    currentPictureSwap = ((LinearLayout) v.getParent()).indexOfChild(v);
+                    //selectedLayout = ((LinearLayout) v.getParent());
+                    //currentPictureSwap = ((LinearLayout) v.getParent()).indexOfChild(v);
+                    LinearLayout dataLayout = (LinearLayout) v.getParent();
+                    selectedLayout = (LinearLayout) dataLayout.getParent();
+                    currentPictureSwap = selectedLayout.indexOfChild(dataLayout);
                     selectedImageView = (ImageView)v;
                     Intent intent = new Intent(CreateNewGuide.this, EditorActivity.class);
                     intent.putExtra("imageUri", imageUri);
@@ -1025,8 +1091,9 @@ public class CreateNewGuide extends AppCompatActivity {
                 }else if(items[i].equals("Swap Picture")){
                     //sets isSwapping check to true and then calls SelectImage to replace the image we want in the layout hierarchy
                     isSwapping = true;
-                    selectedLayout = ((LinearLayout) v.getParent());
-                    currentPictureSwap = ((LinearLayout) v.getParent()).indexOfChild(v);
+                    LinearLayout dataLayout = (LinearLayout) v.getParent();
+                    selectedLayout = (LinearLayout) dataLayout.getParent();
+                    currentPictureSwap = selectedLayout.indexOfChild(dataLayout);
                     selectedImageView = (ImageView)v;
                     SelectImage();
                 }else if(items[i].equals("Cancel")){
@@ -1049,13 +1116,17 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Delete Text")) {
-                    //Removes the selected Textview from the layout and its corresponding data obj from our data list
-                    //TODO: After deleting a step, the data list disappears, and the tag just becomes the step number, WTF
-                    Log.i("BORBOT TAG",v.getTag().toString());
-                    //String dataId = (String)v.getTag();
-                    //String[] strings = dataId.split("--");
-                    //removeFromDataList(strings[1]);
-                    ((LinearLayout) v.getParent()).removeView(v);
+                    //Removes the selected Textview from the layout
+                    LinearLayout dataLayout = (LinearLayout) v.getParent();
+                    LinearLayout stepLayout = (LinearLayout)dataLayout.getParent();
+                    int indexToRemove = stepLayout.indexOfChild(dataLayout);
+                    //if (stepLayout.getChildCount() > 3)stepLayout.removeViewAt(indexToRemove+1);
+                    stepLayout.removeViewAt(indexToRemove);
+                    if (stepLayout.getChildCount() <= 1){
+                        //LinearLayout newDatBlock = new LinearLayout(CreateNewGuide.this);
+                        //newDatBlock.addView(createAddDataButtonLayout(stepLayout));
+                        stepLayout.addView(createAddDataButtonLayout(stepLayout));
+                    }
                 }else if(items[i].equals("Edit Text")){
                     //Stores the selected text view to edit later
                     selectedWebView = (WebView) v;
@@ -1174,9 +1245,10 @@ public class CreateNewGuide extends AppCompatActivity {
 
             // This loops through the content of each step. We start at 1 since 0 is the title
             // and we -1 since we do not need to access the end which just holds the buttons
-            for (int j = 1; j < stepLayout.getChildCount() - 1; j++) {
+            for (int j = 1; j < stepLayout.getChildCount(); j++) {
                 //Get each data block, create proper data object for it, and add to data list for upload
-                View dataView = stepLayout.getChildAt(j);
+                LinearLayout dataLayout = (LinearLayout) stepLayout.getChildAt(j);//get layout
+                View dataView = dataLayout.getChildAt(0);//get the view containing our data in the layout
                 Log.d("GET TAG","");
                 String tag = dataView.getTag(R.id.viewId).toString();
                 String[] strings = tag.split("--");

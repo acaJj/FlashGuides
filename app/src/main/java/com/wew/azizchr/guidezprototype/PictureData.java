@@ -13,7 +13,8 @@ public class PictureData extends GuideData {
     private String imgPath;
     private String uri;
 
-    public GeoPoint coordinates;
+    public double latitude;
+    public double longitude;
 
     public PictureData() {
     }
@@ -38,11 +39,19 @@ public class PictureData extends GuideData {
         this.uri = uri;
     }
 
-    public GeoPoint getCoordinates() {
-        return coordinates;
+    public double getLatitude() {
+        return latitude;
     }
 
-    public void setCoordinates(GeoPoint coordinates) {
-        this.coordinates = coordinates;
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 }
