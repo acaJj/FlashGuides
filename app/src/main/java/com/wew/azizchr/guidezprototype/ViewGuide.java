@@ -46,6 +46,10 @@ import com.google.firebase.storage.StorageReference;
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
 
+/**
+ * Created by Chris
+ * LoadGuide code written by Jeff James Valdez Jaca
+ */
 public class ViewGuide extends AppCompatActivity {
 
     public static String DEBUG_TAG = "BORBOT";
@@ -233,7 +237,7 @@ public class ViewGuide extends AppCompatActivity {
 
     public void addElement(GuideData data){
         int stepNumber = data.getStepNumber();
-        int stepPlacement = data.getPlacement();
+        //int stepPlacement = data.getPlacement();
 
         View elementView = new View(ViewGuide.this);
         if (data.getType().equals("Text")){

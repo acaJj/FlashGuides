@@ -106,7 +106,7 @@ import io.grpc.Context;
  * Both Chris and Jeffrey have worked on this
  *
  * Chris was responsible for:
- * Jeff was responsible for:
+ * Jeff was responsible for: all firebase methods
  */
 
 public class CreateNewGuide extends AppCompatActivity {
@@ -127,7 +127,8 @@ public class CreateNewGuide extends AppCompatActivity {
     private int guideNum = 0;//the current guide index thing
     private int currentPictureSwap;
 
-    private Boolean isSwapping;
+    private Boolean isSwapping;//used as check whenw we add an image
+    private int stepIndex;//used to determine where the step should be created
 
     private CameraImagePicker camera;
     public LinearLayout layoutFeed;
@@ -297,6 +298,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
 
     //JavaScript interface used to get html content from our webviews so that we can do stuff with them like editing
+    //JJ - This doesn't work, must get html text another way
     public class WebViewJavascriptInterface{
         private TextView contentView;
         private String Html;
@@ -604,10 +606,8 @@ public class CreateNewGuide extends AppCompatActivity {
     }
 
     public void onClickStep(View view) {
-        Intent intent = new Intent(CreateNewGuide.this,AddStepActivity.class);
-        intent.putExtra("CurrStep", layoutFeed.getChildCount());
-        startActivityForResult(intent,WRITE_STEP);
-        overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
+        stepIndex = layoutFeed.getChildCount()-1;//if user clicks add step button, new step is added at the end
+        createNewStep();
     }
 
     public void onClickGuideTitle(View view) {
@@ -841,9 +841,9 @@ public class CreateNewGuide extends AppCompatActivity {
      * Creates and adds a new text block to the layoutFeed
      * @param title of the new step block
      * @param desc of the new step block
+     * @return true if success, otherwise false
      */
-
-    public void addStep(String title, String desc){
+    public boolean addStep(String title, String desc){
         try{
             final LinearLayout newStepBlock = new LinearLayout(CreateNewGuide.this);
             newStepBlock.generateViewId();
@@ -884,8 +884,8 @@ public class CreateNewGuide extends AppCompatActivity {
             newStepBlock.addView(createAddDataButtonLayout(newStepBlock));
 
             //newStepBlock.setBackgroundResource(R.drawable.border_new_step);
-            //Adds the new step block to the end of the main layout, before the button
-            layoutFeed.addView(newStepBlock, layoutFeed.getChildCount()-1);
+            //Adds the new step block to the index specified by the stepIndex variable
+            layoutFeed.addView(newStepBlock, stepIndex);
             selectedLayout = newStepBlock;
 
             //adds the starting description to the step block if not null/empty
@@ -898,7 +898,9 @@ public class CreateNewGuide extends AppCompatActivity {
 
         }catch (Exception ex){
             ex.getMessage();
+            return false;
         }
+        return true;
     }
 
     private LinearLayout createAddDataButtonLayout(final LinearLayout stepBlock){
@@ -1160,7 +1162,7 @@ public class CreateNewGuide extends AppCompatActivity {
      * Builds and displays a menu of options for selecting the step title
      */
     private void displayStepOptionsMenu(final View v){
-        final CharSequence[] items = {"Edit step title","Delete entire step", "Cancel"};
+        final CharSequence[] items = {"Edit step title","Add step above","Add step below","Delete entire step", "Cancel"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
         builder.setTitle("What would you like to do?");
@@ -1169,6 +1171,27 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Edit step title")) {
                     editTitle(v);
+                }else if(items[i].equals("Add step above")){
+                    //get the index of the step in the overall guide layout feed
+                    LinearLayout titleLayout = ((LinearLayout) v.getParent());
+                    LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());
+                    int index = layoutFeed.indexOfChild(stepLayout);
+                    if (index == 0){
+                        stepIndex = 0;
+                    }else{
+                        stepIndex = index - 1;
+                    }
+
+                    Log.i(DEBUG_TAG,"NUMBER: " + index +"/" + stepIndex);
+                    createNewStep();
+                    reorderSteps();
+                }else if(items[i].equals("Add step below")){
+                    //get the index of the step in the overall guide layout feed
+                    LinearLayout titleLayout = ((LinearLayout) v.getParent());
+                    LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());
+                    stepIndex = layoutFeed.indexOfChild(stepLayout) + 1;
+                    Log.i(DEBUG_TAG,"NUMBER: " + stepIndex);
+                    createNewStep();
                 }else if(items[i].equals("Delete entire step")){
                     deleteStep(v);
                 }else if(items[i].equals("Cancel")){
@@ -1179,6 +1202,15 @@ public class CreateNewGuide extends AppCompatActivity {
         builder.show();
     }
 
+    /**
+     * Starts activity to create and add a new step to the guide
+     */
+    public void createNewStep(){
+        Intent intent = new Intent(CreateNewGuide.this,AddStepActivity.class);
+        //intent.putExtra("CurrStep", layoutFeed.getChildCount());
+        startActivityForResult(intent,WRITE_STEP);
+        overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
+    }
     /**
      * Builds and displays a edittext to allow the user to edit the title
      */
@@ -1375,6 +1407,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 newStepTitle = AddStepActivity.getTitle(data);
                 newStepDesc = AddStepActivity.getDesc(data);
                 addStep(newStepTitle, newStepDesc);
+                reorderSteps();
             } else if (requestCode == WRITE_DESC){
                 if (data == null){
                     return;

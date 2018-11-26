@@ -46,13 +46,13 @@ public class AddStepActivity extends AppCompatActivity {
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
 
-        stepNumber = intent.getIntExtra("CurrStep", 0);
+        //stepNumber = intent.getIntExtra("CurrStep", 0);
         mStepTitle = (EditText) findViewById(R.id.etNewStepTitle);
         mStepDesc = (EditText) findViewById(R.id.etNewStepDescription);
         mStepNumber = (TextView) findViewById(R.id.txtNewStepHeader);
         mDone = (Button) findViewById(R.id.btnDoneAddStep);
 
-        mStepNumber.setText("Add Step " + stepNumber);
+        mStepNumber.setText("Add New Step ");
     }
 
     public void onDoneClick(View view) {

@@ -4,8 +4,7 @@ import com.google.firebase.firestore.GeoPoint;
 
 /**
  * Created by Jeffrey on 2018-06-01.
- *
- *
+ * Models a picture object for upload to the database
  */
 
 public class PictureData extends GuideData {
