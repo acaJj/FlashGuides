@@ -6,9 +6,15 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -32,6 +38,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +47,7 @@ import java.util.UUID;
 /**
  * Class contains all the methods that interact with firebase
  * Created by Jeffrey on 2018-09-23.
+ * Chris also worked on adding a progress bar in the doInBackground method.
  */
 
 public class FirebaseConnection {
@@ -51,6 +59,8 @@ public class FirebaseConnection {
     private FirebaseFirestore mFirestoreInstance;
     private FirebaseAuth mFirebaseAuthInstance;
     private FirebaseUser mCurrentUser;
+
+    private View rootView;
 
 //    private CollectionReference textData;
 //    private CollectionReference picData;
@@ -181,7 +191,9 @@ public class FirebaseConnection {
      *
      * @param images list of data objects representing the pictures in the guide
      */
-    public void uploadImages(final Context context, int guideNum,final CollectionReference picData, final ArrayList<PictureData> images) {
+    public void uploadImages(final Context context, int guideNum, final CollectionReference picData,
+                             final ArrayList<PictureData> images, final LinearLayout PBLL, final TextView PBT) {
+
         //arraylists to hold bitmaps and their paths in the firebase storage
         final ArrayList<Bitmap> bitmapsToUpload = new ArrayList<>();
         final ArrayList<String> paths = new ArrayList<>();
@@ -212,7 +224,8 @@ public class FirebaseConnection {
                             if (bitmapsToUpload.size() == images.size()) {
                                 Log.d(DEBUG_TAG, "Uploading images asynchronously");
                                 //send all the bitmaps to the async task
-                                FirebaseConnection.ImageUploadAsyncTask imageUploader = new FirebaseConnection.ImageUploadAsyncTask(paths);
+                                FirebaseConnection.ImageUploadAsyncTask imageUploader =
+                                        new FirebaseConnection.ImageUploadAsyncTask(paths,PBLL,PBT);
                                 imageUploader.execute(bitmapsToUpload);
                             }
                         }
@@ -225,16 +238,21 @@ public class FirebaseConnection {
     }
 
     private static class ImageUploadAsyncTask extends AsyncTask<ArrayList<Bitmap>, Void, Long> {
+
         //private Activity sActivity;
         private static ArrayList<String> storagePaths;
         //private static String storagePath;
         private final FirebaseStorage mStorageReference;
+        private final LinearLayout mProgBarLL;
+        private final TextView mProgBarText;
 
-        private ImageUploadAsyncTask(ArrayList<String> paths) {
+        private ImageUploadAsyncTask(ArrayList<String> paths, LinearLayout pbll, TextView pbt) {
             //sActivity = activity;
             storagePaths = paths;
             //storagePath = path;
             mStorageReference = FirebaseStorage.getInstance();
+            mProgBarLL = pbll;
+            mProgBarText = pbt;
         }
 
         @Override
@@ -253,25 +271,31 @@ public class FirebaseConnection {
 
                 //image byte array is uploaded with our metadata
                 UploadTask uploadTask = imgRef.putBytes(data);
+                final int finalStorageindex = storageindex;
                 uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Log.d("ASYNCIMAGEUPLOADA", "Upload Success: " + taskSnapshot.getUploadSessionUri());
                         StorageMetadata storageMetadata = taskSnapshot.getMetadata();
-                        Log.d("BORBOT", "Image upload successful. x out of " + BitmapArraySize );
-                    }
-                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                        //display the progress to the user
-                        //TODO: TO CHRIS, this is where we can get the upload progress to show the user, dont know how tho
-                        long progress = taskSnapshot.getBytesTransferred();
+                        Log.d("BORBOT", "Image upload successful. " + (finalStorageindex + 1) +  " out of " + (BitmapArraySize + 1));
+
+                        //Checks if the last image was uploaded
+                        if(finalStorageindex == BitmapArraySize ){
+                            Log.d("BORBOT", "Done uploading everything.");
+                            mProgBarText.setText("Finishing up, hold tight!");
+                            //Wait 3 seconds to finish up uploading, then remove the progress bar
+                            Handler handler = new Handler();
+                            handler.postDelayed(new Runnable() {
+                                public void run() {
+                                    mProgBarLL.setVisibility(View.GONE);
+                                }
+                            }, 3000);
+
+                        }
                     }
                 });
                 storageindex++;
             }
-
-            Log.d("BORBOT", "Uploading Complete");
             return null;
         }
     }

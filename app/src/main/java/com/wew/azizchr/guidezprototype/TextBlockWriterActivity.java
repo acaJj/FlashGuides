@@ -5,13 +5,17 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import jp.wasabeef.richeditor.RichEditor;
 
@@ -19,7 +23,8 @@ import jp.wasabeef.richeditor.RichEditor;
 /**
  * Both Chris and Jeffrey have worked on this
  *
- * Chris was responsible for: Creating xml layout and sending data back to CreateNewGuide.java
+ * Chris was responsible for: Creating xml layout, setting button color functionality
+ *                            and sending data back to CreateNewGuide.java
  * Jeff was responsible for: implementing the edit text activity
  */
 public class TextBlockWriterActivity extends AppCompatActivity {
@@ -156,6 +161,7 @@ public class TextBlockWriterActivity extends AppCompatActivity {
         super.onSaveInstanceState(savedInstanceState);
         savedInstanceState.putString("Text", text);
     }
+
     @Override
     public void onBackPressed() {
         super.onBackPressed();

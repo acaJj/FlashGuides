@@ -18,6 +18,7 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
+import android.support.v4.widget.CircularProgressDrawable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -38,6 +39,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -171,6 +173,9 @@ public class CreateNewGuide extends AppCompatActivity {
 
     public ArrayList<Bitmap> mBitmaps;
 
+    public LinearLayout uploadGuideProgressBar;
+    public TextView uploadGuideText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -186,6 +191,11 @@ public class CreateNewGuide extends AppCompatActivity {
 
         newGuide = new Guide();
         mBitmaps = new ArrayList<>();
+
+        //Gets a handle on the progress bar layout and hides it
+        uploadGuideProgressBar = (LinearLayout) findViewById(R.id.uploadGuideLL);
+        uploadGuideProgressBar.setVisibility(View.GONE);
+        uploadGuideText = (TextView) findViewById(R.id.uploadGuideTextView);
 
         mNewGuideTitle = (TextView) findViewById(R.id.txtNewGuideTitle);
 
@@ -557,10 +567,16 @@ public class CreateNewGuide extends AppCompatActivity {
      * @param ref of the image we are getting from storage
      */
     public ImageView loadImage(PictureData pictureData,StorageReference ref){
+        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(getApplicationContext());
+        circularProgressDrawable.setStrokeWidth(5f);
+        circularProgressDrawable.setCenterRadius(30f);
+        circularProgressDrawable.start();
+
         try{
             //Creates the new imageview
             final ImageView newImgView = new ImageView(CreateNewGuide.this);
-            Glide.with(CreateNewGuide.this).asBitmap().load(ref).into(newImgView);
+            GlideApp.with(CreateNewGuide.this).asBitmap().load(ref)
+                    .placeholder(circularProgressDrawable).into(newImgView);
             Glide.with(CreateNewGuide.this)
                     .asBitmap()
                     .load(ref)
@@ -629,6 +645,9 @@ public class CreateNewGuide extends AppCompatActivity {
      * Saves the guide into firestore
      */
     private void saveGuide(){
+
+        //Shows the progress bar
+        uploadGuideProgressBar.setVisibility(View.VISIBLE);
 
         //clear current guide list and populate it with all current block data
         mGuideDataArrayList.clear();
@@ -721,7 +740,7 @@ public class CreateNewGuide extends AppCompatActivity {
                         }
                     }
                     //Log.i("IMAGES",""+picturesToUpload.size());
-                    mFirebaseConnection.uploadImages(getApplicationContext(),guideNum,picData,picturesToUpload);
+                    mFirebaseConnection.uploadImages(getApplicationContext(),guideNum,picData,picturesToUpload, uploadGuideProgressBar,uploadGuideText);
                 }
             }
         });
