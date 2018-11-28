@@ -12,6 +12,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+/**
+ * Chris created on all of this as well as the matching XML file.
+ */
+
 public class CreateGuideTitle extends AppCompatActivity {
 
     private static final String NEW_GUIDE = "NEW_GUIDE";

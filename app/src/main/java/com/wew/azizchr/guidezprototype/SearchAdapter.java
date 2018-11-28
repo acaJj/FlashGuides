@@ -12,6 +12,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import java.util.List;
 
+
+/**
+ * Created by Jeffrey
+ * Attaches the data to the adapter and sets the onClick to the appropriate guide
+ */
 public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResultHolder> {
 
     List<Result> searchResults;

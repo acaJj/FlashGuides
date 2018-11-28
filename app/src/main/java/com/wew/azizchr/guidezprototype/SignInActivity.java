@@ -17,6 +17,11 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+/**
+ * Chris created all of this as well as the matching XML file.
+ * The user signs in with their email and password.
+ */
+
 public class SignInActivity extends AppCompatActivity {
 
     TextView mEmail;

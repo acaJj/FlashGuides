@@ -241,6 +241,7 @@ public class FirebaseConnection {
         protected Long doInBackground(ArrayList<Bitmap>[] bitmaps) {
 
             int storageindex = 0;
+            final int BitmapArraySize = bitmaps.length;
             for (Bitmap bmap : bitmaps[0]) {
                 //create a byte array output stream to prepare the image bitmap for upload
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -257,7 +258,7 @@ public class FirebaseConnection {
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Log.d("ASYNCIMAGEUPLOADA", "Upload Success: " + taskSnapshot.getUploadSessionUri());
                         StorageMetadata storageMetadata = taskSnapshot.getMetadata();
-                        Log.d("BORBOT", "Image upload successful");
+                        Log.d("BORBOT", "Image upload successful. x out of " + BitmapArraySize );
                     }
                 }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                     @Override

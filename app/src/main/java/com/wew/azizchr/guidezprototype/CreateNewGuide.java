@@ -105,7 +105,8 @@ import io.grpc.Context;
 /**
  * Both Chris and Jeffrey have worked on this
  *
- * Chris was responsible for:
+ * Chris was responsible for: Creating xml layout, add text, step and image, implementing image editor,
+ *                            swapping and deleting images, deleting steps, and reordering steps.
  * Jeff was responsible for: all firebase methods
  */
 

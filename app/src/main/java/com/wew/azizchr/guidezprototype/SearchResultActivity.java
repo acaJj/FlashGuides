@@ -35,6 +35,11 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Created by Jeffrey on 2018-11-22.
+ * Lets the user search using a string and or an email
+ */
+
 public class SearchResultActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;

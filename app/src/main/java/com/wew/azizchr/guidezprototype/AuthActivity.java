@@ -8,6 +8,10 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+/**
+ * Chris created on all of this as well as the matching XML file.
+ */
+
 public class AuthActivity extends AppCompatActivity {
 
     @Override

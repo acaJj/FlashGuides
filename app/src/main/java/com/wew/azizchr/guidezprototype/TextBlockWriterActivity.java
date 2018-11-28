@@ -15,6 +15,13 @@ import android.widget.Toast;
 
 import jp.wasabeef.richeditor.RichEditor;
 
+
+/**
+ * Both Chris and Jeffrey have worked on this
+ *
+ * Chris was responsible for: Creating xml layout and sending data back to CreateNewGuide.java
+ * Jeff was responsible for: implementing the edit text activity
+ */
 public class TextBlockWriterActivity extends AppCompatActivity {
 
     private EditText mEditText;

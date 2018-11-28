@@ -38,6 +38,13 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 
+/**
+ * Both Chris and Jeffrey have worked on this
+ *
+ * Chris was responsible for: Creating xml layout and adapter
+ * Jeff was responsible for: Retrieving data into the adapter from Firebase and starting the correct activity
+ */
+
 public class UserCollectionActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;

@@ -36,6 +36,15 @@ import java.io.Console;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * Both Chris and Jeffrey have worked on this
+ *
+ * Chris was responsible for: Creating xml layout, adding checked listener and animation
+ * Jeff was responsible for: all firebase methods
+ */
+
+
 public class SearchActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;

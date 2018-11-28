@@ -22,6 +22,13 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * Both Chris and Jeffrey have worked on this
+ *
+ * Chris was responsible for: Creating xml layout
+ * Jeff was responsible for: Sending data in the edittext fields back to firebase
+ */
+
 public class SettingsActivity extends AppCompatActivity {
 
     private EditText mFirstName;
