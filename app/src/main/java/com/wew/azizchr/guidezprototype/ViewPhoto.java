@@ -8,6 +8,11 @@ import android.view.WindowManager;
 
 import com.github.chrisbanes.photoview.PhotoView;
 
+/**
+ * Created by Chris
+ * Lets the user view an image using the photoview API.
+ */
+
 public class ViewPhoto extends AppCompatActivity {
 
     @Override

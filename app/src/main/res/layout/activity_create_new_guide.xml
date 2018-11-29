@@ -11,6 +11,32 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <LinearLayout
+            android:id="@+id/uploadGuideLL"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <ProgressBar
+                android:id="@+id/uploadGuideProgressBar"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:indeterminateTint="@color/purple"
+                android:padding="150dp" />
+
+            <TextView
+                android:id="@+id/uploadGuideTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-condensed"
+                android:text="Uploading guide, please wait!"
+                android:textAlignment="center"
+                android:textColor="#8e55d3"
+                android:textSize="25dp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <TextView
             android:id="@+id/txtNewGuideTitle"
             android:layout_width="match_parent"

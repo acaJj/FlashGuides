@@ -26,7 +26,14 @@ import org.w3c.dom.Text;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Chris created all of this as well as the matching XML file.
+ * Signs the user up for an account on Firebase with their email, password and name.
+ */
+
+
 public class SignUpActivty extends AppCompatActivity {
+
 
     TextView mEmail;
     TextView mPassword;

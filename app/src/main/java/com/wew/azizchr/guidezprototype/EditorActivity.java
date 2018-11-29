@@ -32,6 +32,10 @@ import ly.img.android.pesdk.ui.model.state.UiConfigText;
 import ly.img.android.pesdk.ui.utils.PermissionRequest;
 import ly.img.android.serializer._3._0._0.PESDKFileWriter;
 
+/**
+ * Chris created on all of this as well as the matching XML file.
+ */
+
 public class EditorActivity extends Activity implements PermissionRequest.Response {
 
     private Boolean isNewPic;

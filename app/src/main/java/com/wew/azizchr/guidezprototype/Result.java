@@ -1,5 +1,13 @@
 package com.wew.azizchr.guidezprototype;
 
+
+/**
+ * Both Chris and Jeffrey have worked on this
+ *
+ * Chris was responsible for: Starting the Result model
+ * Jeff was responsible for: Adding the needed variables to make his part work
+ */
+
 public class Result {
 
     public String title;

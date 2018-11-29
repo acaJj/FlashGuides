@@ -11,6 +11,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+/**
+ * Not in use anymore, succeeded by TextBlockWriterActivity? - Chris
+ */
+
 public class AddDescriptionActivity extends AppCompatActivity {
 
     private EditText mStepDesc;

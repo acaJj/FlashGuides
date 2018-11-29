@@ -36,20 +36,21 @@ import java.io.Console;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SearchActivity extends AppCompatActivity {
 
-    private FirebaseAuth mAuth;
-    private FirebaseFirestore mFirestore;
-    //private FirebaseStorage mStorage;
+/**
+ * Both Chris and Jeffrey have worked on this
+ *
+ * Chris was responsible for: Creating xml layout, adding checked listener and animation
+ * Jeff was responsible for: all firebase methods
+ */
+
+
+public class SearchActivity extends AppCompatActivity {
 
     //private Spinner spinner;
     private CheckBox cbSearchUser;
     private EditText etSearchString;
     private EditText etSearchUser;
-
-    //private RecyclerView searchCollection;
-    //private RecyclerView.LayoutManager mLayoutManager;
-    //private CollectionAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,50 +83,6 @@ public class SearchActivity extends AppCompatActivity {
                 }
             }
         });
-/*
-        mAuth = FirebaseAuth.getInstance();
-        FirebaseUser mCurrentUser = mAuth.getCurrentUser();
-
-        mStorage = FirebaseStorage.getInstance();
-        mFirestore = FirebaseFirestore.getInstance();
-        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
-                .setTimestampsInSnapshotsEnabled(true)
-                .build();
-        mFirestore.setFirestoreSettings(settings);
-
-        spinner = findViewById(R.id.userIdSpinner);
-        btnSearch = findViewById(R.id.btnSearch);
-
-        searchCollection = findViewById(R.id.searchResults);
-        mLayoutManager = new LinearLayoutManager(SearchActivity.this);
-        searchCollection.setLayoutManager(mLayoutManager);
-        final List<String> list = new ArrayList<>();
-
-        CollectionReference users = mFirestore.collection("Users");
-        users.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()){
-                    for (QueryDocumentSnapshot doc: task.getResult()){
-                        list.add(doc.getId());
-                    }
-                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(SearchActivity.this,
-                            R.layout.support_simple_spinner_dropdown_item,list);
-                    adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
-                    spinner.setAdapter(adapter);
-                }else{
-                    Log.i("WHAT:","damn");
-                }
-            }
-        });
-
-        btnSearch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //mAdapter.clear();
-                retrievePublishedGuides(id);
-            }
-        });*/
     }
 
     //Store the first edittext in the bundle, and if the second one is filled out store that too.
@@ -140,45 +97,6 @@ public class SearchActivity extends AppCompatActivity {
         startActivity(intent);
         overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
     }
-
-    /*
-    private void retrievePublishedGuides(String id) {
-        CollectionReference userGuides = mFirestore.collection("Users/" +id+"/guides");
-
-        userGuides.whereEqualTo("published",true).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()) {
-                    ArrayList<Guide> guideList = new ArrayList<>();
-                    int counter = 0;
-                    for (QueryDocumentSnapshot doc : task.getResult()) {
-                        //For each document in the collection, populate the list with info for adapter
-                        Guide guide = new Guide(doc.getString("title"));
-                        guide.setKey(doc.getId());
-                        guide.setId(doc.getString("id"));
-                        guideList.add(counter, guide);
-                        counter++;
-                    }
-
-                    //set the adapter to the recycler view
-                    mAdapter = new CollectionAdapter(guideList, new CollectionAdapter.OnItemClickListener() {
-                        @Override
-                        public void OnItemClick(Guide item) {
-                            Intent intent = new Intent(SearchActivity.this, CreateNewGuide.class);
-                            //the guide Id is used for lookup on which specific guide to get while EDIT mode tells the activity we are not making a guide from scratch
-                            intent.putExtra("GUIDEID", item.getId());
-                            intent.putExtra("Key", item.getKey());
-                            intent.putExtra("MODE", "EDIT");
-                            startActivity(intent);
-                        }
-                    });
-
-                    searchCollection.setAdapter(mAdapter);
-                }
-            }
-        });
-    }*/
-
 
     //When back is pressed, do an animation
     @Override

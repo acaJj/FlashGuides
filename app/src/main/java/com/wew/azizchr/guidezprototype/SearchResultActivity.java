@@ -35,6 +35,11 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Created by Jeffrey on 2018-11-22.
+ * Lets the user search using a string and or a user's name
+ */
+
 public class SearchResultActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
@@ -91,9 +96,6 @@ public class SearchResultActivity extends AppCompatActivity {
         mLayoutManager = new LinearLayoutManager(this);
         mYourSearchResults.setLayoutManager(mLayoutManager);
 
-
-        //TODO: Jeff can you implement the search function here using the following strings? OK!!
-
         //Retrieves the content entered by the user from the previous activity
         searchByString = intent.getStringExtra("SearchString");
         searchByUser = intent.getStringExtra("SearchUser");
@@ -101,34 +103,6 @@ public class SearchResultActivity extends AppCompatActivity {
         client = new Client(applicationId, searchApiKey);
         guidesIndex = client.getIndex("guides");
         searchDatabase(searchByString,searchByUser);
-        /*
-
-        //Get all the guides that the user has created
-        CollectionReference userGuides = mFirestore.collection("Users/" + mAuth.getUid() + "/guides");
-        userGuides.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()) {
-                    for (QueryDocumentSnapshot doc : task.getResult()) {
-                        //For each document in the collection, create a Result object and add it to the list
-                        Result guide = new Result();
-                        guide.setTitle(doc.getString("title"));
-                        guide.setName("idk man");
-                        guide.setDate(doc.getString("dateCreated"));
-                        guide.setKey(doc.getId());
-                        guide.setId(doc.getString("id"));
-                        searchResults.add(guide);
-                    }
-
-                    //Once everything is obtained, it creates and sets the adapter
-                    mAdapter = new SearchAdapter(searchResults);
-                    mYourSearchResults.setAdapter(mAdapter);
-                    Toast.makeText(getApplicationContext(), searchResults.size() + " results.", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(getApplicationContext(), "Something went wrong.", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });* */
     }
 
     /**

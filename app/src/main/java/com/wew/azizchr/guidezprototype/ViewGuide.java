@@ -48,7 +48,7 @@ import java.util.UUID;
 
 /**
  * Created by Chris
- * LoadGuide code written by Jeff James Valdez Jaca
+ * LoadGuide code written by Jeff
  */
 public class ViewGuide extends AppCompatActivity {
 

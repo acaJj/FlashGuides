@@ -12,6 +12,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import java.util.List;
 
+
+/**
+ * Created by Jeffrey
+ * Attaches the data to the adapter and sets the onClick to the appropriate guide
+ */
 public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResultHolder> {
 
     List<Result> searchResults;
@@ -34,22 +39,6 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
 
             //Starts the view guide activity for the selected guide
             itemView.setClickable(true);
-            /*
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @SuppressLint("ResourceAsColor")
-                @Override
-                public void onClick(View v) {
-                    //Get the activity in which the cardview resides in
-                    Activity mContext = (Activity) v.getContext();
-
-                    //Starts the intent with a transition
-                    Intent intent = new Intent(v.getContext(), CreateNewGuide.class);
-                    intent.putExtra("MODE","EDIT");
-
-                    v.getContext().startActivity(intent);
-                    mContext.overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
-                }
-            });*/
         }
 
         public void bindData(final Result result){

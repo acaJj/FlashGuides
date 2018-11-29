@@ -1,30 +1,35 @@
 package com.wew.azizchr.guidezprototype;
 
-import android.app.ActivityOptions;
+import android.Manifest;
 import android.content.Intent;
-import android.graphics.Color;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import org.w3c.dom.Text;
 
 import java.util.Calendar;
 import java.util.Locale;
 
+/**
+ * Both Chris and Jeffrey have worked on this
+ *
+ * Jeff was responsible for: implementing search, collection, settings, and makeGuide buttons
+ * Chris was responsible for: Creating xml layout, implementing logout,
+ */
 public class Homepage extends AppCompatActivity {
 
     private static final String NEW_GUIDE = "NEW_GUIDE";
     private static final String EDIT_MODE = "MODE";
+    private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 264;
+    private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 265;
 
     private Button btnMakeGuide, btnSettings, btnCollection, btnSearch;
     private FirebaseAuth mAuth;
@@ -44,6 +49,9 @@ public class Homepage extends AppCompatActivity {
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
+
+        checkWriteStoragePermissions();
+        checkFineAccessPermissions();
 
         btnMakeGuide = findViewById(R.id.btnMakeGuide);
         btnSettings = findViewById(R.id.btnSettings);
@@ -124,6 +132,40 @@ public class Homepage extends AppCompatActivity {
             greet = "Good night";
         }
         return greet;
+    }
+
+    public void checkWriteStoragePermissions(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                if (shouldShowRequestPermissionRationale(
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    // Explain to the user why we need to read the contacts
+                }
+
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+                return;
+            }
+        }
+    }
+
+    public void checkFineAccessPermissions(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                if (shouldShowRequestPermissionRationale(
+                        Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    // Explain to the user why we need to read the contacts
+                }
+
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+                return;
+            }
+        }
     }
 
     //Signs the user our and starts the auth activity

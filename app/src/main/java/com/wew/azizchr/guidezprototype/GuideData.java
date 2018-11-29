@@ -2,10 +2,6 @@ package com.wew.azizchr.guidezprototype;
 
 /**
  * Created by Jeffrey on 2018-05-19.
- */
-
-
-/**
  * Models the data that make up a guide
  */
 
