@@ -188,12 +188,14 @@ public class ViewGuide extends AppCompatActivity {
                                         String guideId = "";
                                         String stepTitle = snap.get("stepTitle").toString();
                                         String type = snap.get("type").toString();
+                                        String textType = snap.get("textType").toString();
                                         int num = snap.getLong("stepNumber").intValue();
                                         int placement = snap.getLong("placement").intValue();
                                         TextData data = new TextData(type,placement,guideId,stepTitle,num);
                                         data.setText(text);
+                                        data.setTextType(textType);
                                         data.setId(id);
-                                        Log.i(DEBUG_TAG+"-TEXT EXECUTE","in chained task, data added / " + data.getId() );
+                                        //Log.i(DEBUG_TAG+"-TEXT EXECUTE","in chained task, data added / " + data.getId() );
 
                                         addElement(data);
                                     }
@@ -220,14 +222,14 @@ public class ViewGuide extends AppCompatActivity {
                                         data.setUri(uri);
                                         data.setImgPath(imgPath);
 
-                                        Log.i(DEBUG_TAG+"IMG EXECUTE","in chained task, data added / " + data.getId() );
+                                        //Log.i(DEBUG_TAG+"IMG EXECUTE","in chained task, data added / " + data.getId() );
                                         addElement(data);
                                     }
                                 }
                             }
                         });
 
-                        Log.i(DEBUG_TAG+"EXECUTE","in Guide steps / " + doc.getId());
+                        //Log.i(DEBUG_TAG+"EXECUTE","in Guide steps / " + doc.getId());
                     }
                 }
 
@@ -237,9 +239,9 @@ public class ViewGuide extends AppCompatActivity {
 
     public void addElement(GuideData data){
         int stepNumber = data.getStepNumber();
-        //int stepPlacement = data.getPlacement();
 
         View elementView = new View(ViewGuide.this);
+        //depending on the data's type, load the proper view for the data
         if (data.getType().equals("Text")){
             TextData textData = (TextData) data;
             elementView = loadText(textData);
@@ -249,17 +251,20 @@ public class ViewGuide extends AppCompatActivity {
             elementView = loadImage(pictureData,imageToLoad);
         }
         LinearLayout stepLayout = (LinearLayout)layoutFeed.getChildAt(stepNumber-1);
-        Log.i(DEBUG_TAG+"-Elements",""+data.getStepNumber()+"/"+data.getPlacement());
+        //Log.i(DEBUG_TAG+"-Elements",""+data.getStepNumber()+"/"+data.getPlacement());
+
+        //goes through the step to find the right location for the element and place it in
         for (int i =0; i< stepLayout.getChildCount()-1;i++){
-            //if there is no object in the step (only the title and buttons), place the element and get out
+            //if there is no data object in the step (only the title and buttons), place the element and get out
             if (stepLayout.getChildCount() == 2){
                 stepLayout.addView(elementView,stepLayout.getChildCount()-1);
                 break;
             }
-            int currentViewIndex = i+1;
+
+            int currentViewIndex = i+1;//add 1 because the first element in step is the title layout
 
             View currentView = stepLayout.getChildAt(currentViewIndex);
-            Log.i("Placements:",""+(String)currentView.getTag(R.id.index)+"/"+(String)elementView.getTag(R.id.index));
+            //Log.i("Placements:",""+(String)currentView.getTag(R.id.index)+"/"+(String)elementView.getTag(R.id.index));
             int currentViewPlacement = 0;
             try{
                 currentViewPlacement = Integer.parseInt((String)currentView.getTag(R.id.index));
@@ -278,7 +283,7 @@ public class ViewGuide extends AppCompatActivity {
                 break;
             }
 
-            Log.i(DEBUG_TAG,data.getId()+"/"+elementView.getParent());
+            //Log.i(DEBUG_TAG,data.getId()+"/"+elementView.getParent());
         }
     }
 
@@ -358,7 +363,6 @@ public class ViewGuide extends AppCompatActivity {
             newImgView.setPadding(3, 10, 3, 10);
 
             //add it to the layout
-            //Log.i("Placement",""+pictureData.getPlacement());
             newImgView.setTag(R.id.index,""+pictureData.getPlacement());
             return newImgView;
 

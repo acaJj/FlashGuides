@@ -24,6 +24,8 @@ import android.os.Bundle;
 import android.text.Html;
 import android.text.InputType;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +40,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -123,9 +126,11 @@ public class CreateNewGuide extends AppCompatActivity {
     private String newStepDesc;
     private String newDesc;
     private String mode;//used to determine whether we are making a new guide or editing an old one
+    private String linkHtml;//holds the html of the last link added
 
     private int guideNum = 0;//the current guide index thing
     private int currentPictureSwap;
+    private int indexToPlaceView;//the index in the selected step layout where we place the next text/imageview
 
     private Boolean isSwapping;//used as check whenw we add an image
     private int stepIndex;//used to determine where the step should be created
@@ -133,7 +138,6 @@ public class CreateNewGuide extends AppCompatActivity {
     private CameraImagePicker camera;
     public LinearLayout layoutFeed;
     public LinearLayout selectedLayout;
-    public int indexToPlaceView;//the index in the selected step layout where we place the next text/imageview
     public WebView selectedWebView; //changed from text to web view for better memory consumption and text formatting
     public ImageView selectedImageView;//used for bitmaps
 
@@ -141,6 +145,7 @@ public class CreateNewGuide extends AppCompatActivity {
 
     //The title of the guide, initialized as NULL so we can easily check through string methods if it hasn't been set
     String guideTitle = "NULL";
+
 
     //Firebase Instance Variables
     private FirebaseConnection mFirebaseConnection;
@@ -379,11 +384,11 @@ public class CreateNewGuide extends AppCompatActivity {
                 String stepTitle;
                 if (task.isSuccessful()){
                     //for each step in the guide, get its info and recreate the step
-                    int totalSteps = task.getResult().size();
                     for (QueryDocumentSnapshot doc: task.getResult()){
                         stepNum = doc.getLong("stepNumber").intValue();
                         stepTitle = doc.get("stepTitle").toString();
                         addStep(stepTitle,"");
+                        stepIndex++;//increment stepIndex so steps are placed in order
 
                         Query stepText = guideText.whereEqualTo("stepNumber",stepNum);
                         Query stepImgs = guideImgs.whereEqualTo("stepNumber", stepNum);
@@ -397,12 +402,14 @@ public class CreateNewGuide extends AppCompatActivity {
                                         String guideId = "";
                                         String stepTitle = snap.get("stepTitle").toString();
                                         String type = snap.get("type").toString();
+                                        String textType = snap.get("textType").toString();
                                         int num = snap.getLong("stepNumber").intValue();
                                         int placement = snap.getLong("placement").intValue();
                                         TextData data = new TextData(type,placement,guideId,stepTitle,num);
                                         data.setText(text);
+                                        data.setTextType(textType);
                                         data.setId(id);
-                                        Log.i(DEBUG_TAG+"-TEXT EXECUTE","in chained task, data added / " + data.getId() );
+                                        //Log.i(DEBUG_TAG+"-TEXT EXECUTE","in chained task, data added / " + data.getId() );
 
                                         addElement(data);
                                     }
@@ -429,14 +436,14 @@ public class CreateNewGuide extends AppCompatActivity {
                                         data.setUri(uri);
                                         data.setImgPath(imgPath);
 
-                                        Log.i(DEBUG_TAG+"IMG EXECUTE","in chained task, data added / " + data.getId() );
+                                        //Log.i(DEBUG_TAG+"IMG EXECUTE","in chained task, data added / " + data.getId() );
                                         addElement(data);
                                     }
                                 }
                             }
                         });
 
-                        Log.i(DEBUG_TAG+"EXECUTE","in Guide steps / " + doc.getId());
+                        //Log.i(DEBUG_TAG+"EXECUTE","in Guide steps / " + doc.getId());
                     }
                 }
 
@@ -446,7 +453,6 @@ public class CreateNewGuide extends AppCompatActivity {
 
     public void addElement(GuideData data){
         int stepNumber = data.getStepNumber();
-        int stepPlacement = data.getPlacement();
 
         View elementView = new View(CreateNewGuide.this);
         //create the right view with the objects data and sets it to elementView
@@ -461,36 +467,48 @@ public class CreateNewGuide extends AppCompatActivity {
         }
 
         LinearLayout stepLayout = (LinearLayout)layoutFeed.getChildAt(stepNumber-1);
-        Log.i(DEBUG_TAG+"-Elements",""+data.getStepNumber()+"/"+data.getPlacement());
-        for (int i =0; i< stepLayout.getChildCount()-1;i++){
+        //Log.i(DEBUG_TAG+"-Elements",""+data.getStepNumber()+"/"+data.getPlacement());
+
+        //create data block for the view and the buttons
+        LinearLayout newDataBlock = new LinearLayout(CreateNewGuide.this);
+        newDataBlock.setOrientation(LinearLayout.VERTICAL);
+        newDataBlock.addView(elementView);
+        newDataBlock.addView(createAddDataButtonLayout(stepLayout));
+        newDataBlock.setTag(R.id.viewType,"DataBlock");
+
+        //goes through the step to find the right location for the element and place it in
+        for (int i =0; i<= stepLayout.getChildCount()-1;i++){
             //if there is no object in the step (only the title and buttons), place the element and get out
             if (stepLayout.getChildCount() == 2){
+                //if the second child directly in step has viewType tag of 'ButtonBar', then delete it
                 if (stepLayout.getChildAt(1).getTag(R.id.viewType).equals("ButtonBar")){
                     stepLayout.removeViewAt(stepLayout.getChildCount()-1);
+                    stepLayout.addView(newDataBlock);
+                    break;
                 }
-                LinearLayout newDataBlock = new LinearLayout(CreateNewGuide.this);
-                newDataBlock.setOrientation(LinearLayout.VERTICAL);
-                newDataBlock.addView(elementView);
-                newDataBlock.addView(createAddDataButtonLayout(stepLayout));
-                newDataBlock.setTag(R.id.viewType,"DataBlock");
+            }
+            int currentViewIndex = i+1;//add 1 because the first element in step is the title layout
+
+            //if we have reached the end of the layout and still haven't added it, put it at the end
+
+            Log.i("PLACEMENTS-END",""+currentViewIndex + "/" + stepLayout.getChildCount());
+            if (currentViewIndex == stepLayout.getChildCount()){
                 stepLayout.addView(newDataBlock);
+                Log.i("PLACEMENTS-END","Adding to the end");
                 break;
             }
-            int currentViewIndex = i+1;
+            int currentViewPlacement = 0;
 
             LinearLayout dataLayout = (LinearLayout) stepLayout.getChildAt(currentViewIndex);
             View currentView = dataLayout.getChildAt(0);//gets the data block in the first index of the dataLayout
-            Log.i("Placements:",""+(String)currentView.getTag(R.id.index)+"/"+(String)elementView.getTag(R.id.index));
-            int currentViewPlacement = 0;
+            Log.i("Placements:",""+currentView.getTag(R.id.index)+"/"+(String)elementView.getTag(R.id.index));
+            //try to get the placement for the currentView we are comparing to
             try{
+
                 currentViewPlacement = Integer.parseInt((String)currentView.getTag(R.id.index));
             }catch(NumberFormatException ex){
-                Log.i("EXCEPTION!",ex.getMessage());
+                Log.i(DEBUG_TAG+"EXCEPTION!",ex.getMessage());
                 //if we end up here then the element goes at the end of the step
-                LinearLayout newDataBlock = new LinearLayout(CreateNewGuide.this);
-                newDataBlock.setOrientation(LinearLayout.VERTICAL);
-                newDataBlock.addView(elementView);
-                newDataBlock.addView(createAddDataButtonLayout(stepLayout));
                 stepLayout.addView(newDataBlock,currentViewIndex);
                 break;
             }
@@ -499,20 +517,15 @@ public class CreateNewGuide extends AppCompatActivity {
 
             //compare the placement of the elementView and currentView
             if (elementViewPlacement<currentViewPlacement){//if less, then it goes before it in the step
-                LinearLayout newDataBlock = new LinearLayout(CreateNewGuide.this);
-                newDataBlock.setOrientation(LinearLayout.VERTICAL);
-                newDataBlock.addView(elementView);
-                newDataBlock.addView(createAddDataButtonLayout(stepLayout));
-                newDataBlock.setTag(R.id.viewType,"DataBlock");
                 stepLayout.addView(newDataBlock,currentViewIndex);
                 break;
             }
 
-            //Log.i(DEBUG_TAG,data.getId()+"/"+elementView.getParent());
+            Log.i(DEBUG_TAG,data.getId()+"/"+elementView.getParent());
         }
     }
 
-    public WebView loadText(TextData text){
+    public WebView loadText(final TextData text){
         try{
             //Creates a new textview and sets the tag (the tag is the current step number)
             WebView mDescription = new WebView(CreateNewGuide.this);
@@ -521,7 +534,8 @@ public class CreateNewGuide extends AppCompatActivity {
             //set tag to the text so we can easily get it when uploading, haven't yet figured out how to get from webview
             String viewTag = "TEXT--" +description;
             mDescription.setTag(R.id.viewId,viewTag);
-            Log.i("Placement",""+text.getPlacement());
+            mDescription.setTag(R.id.textType,text.getTextType());
+            Log.i("Placement","text-"+text.getPlacement());
             mDescription.setTag(R.id.index,""+text.getPlacement());
 
             mDescription.setPadding(5, 10, 5, 10);
@@ -534,14 +548,13 @@ public class CreateNewGuide extends AppCompatActivity {
                     switch (motionEvent.getAction()){
                         case MotionEvent.ACTION_UP:
                             view.performClick();
-                            displayTextOptionsMenu(view);
+                            displayTextOptionsMenu(view,text.getTextType());
                     }
                     return true;
                 }
             });
 
             //adds the new text block with the text to the selected step
-            //selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 1);
 
             haveSaved = false;
             return mDescription;
@@ -576,7 +589,7 @@ public class CreateNewGuide extends AppCompatActivity {
                             String path = MediaStore.Images.Media.insertImage(CreateNewGuide.this.getContentResolver(), resource, UUID.randomUUID().toString(), "drawing");
                             final Uri imageUri = Uri.parse(path);
                             String viewTag = "PICTURE--" + imageUri.toString();
-                            Log.d(DEBUG_TAG+" imageViewTag",viewTag);
+                            //Log.d(DEBUG_TAG+" imageViewTag",viewTag);
                             newImgView.setTag(R.id.viewId,viewTag);
                             newImgView.setOnClickListener(new View.OnClickListener() {
                                 @Override
@@ -593,9 +606,7 @@ public class CreateNewGuide extends AppCompatActivity {
             newImgView.setPadding(3, 10, 3, 10);
 
             //add it to the layout
-            //layout.addView(newImgView, layout.getChildCount() - 1);
-            //currentIndex++;
-            Log.i("Placement",""+pictureData.getPlacement());
+            Log.i("Placement","img-"+pictureData.getPlacement());
             newImgView.setTag(R.id.index,""+pictureData.getPlacement());
             return newImgView;
 
@@ -891,7 +902,7 @@ public class CreateNewGuide extends AppCompatActivity {
             //adds the starting description to the step block if not null/empty
             if (!desc.equals("")){
                 //indexToPlaceView = 1;//to ensure that it is placed in the first empty spot
-                addDescription(desc);
+                addDescription(desc,"Text");
             }
             //currentIndex++;
             haveSaved = false;
@@ -917,7 +928,6 @@ public class CreateNewGuide extends AppCompatActivity {
         mAddImage.setText(addImageBtnDesc);
         mAddImage.setLayoutParams(params);
 
-
         //Creates the add description button and its on click listener
         Button mAddDesc = new Button (CreateNewGuide.this);
         mAddDesc.setBackgroundResource(R.drawable.style_button_add);
@@ -925,6 +935,14 @@ public class CreateNewGuide extends AppCompatActivity {
         String addTextBtnDesc = "Add Text";
         mAddDesc.setText(addTextBtnDesc);
         mAddDesc.setLayoutParams(params);
+
+        //create button that will hold reference to a menu of other options
+        Button mAddOther = new Button(CreateNewGuide.this);
+        mAddOther.setBackgroundResource(R.drawable.style_button_add);
+        mAddOther.setCompoundDrawablesWithIntrinsicBounds(textIcon, null, null, null);
+        String addOtherBtnDesc = "Add Other";
+        mAddOther.setText(addOtherBtnDesc);
+        mAddOther.setLayoutParams(params);
 
         LinearLayout.LayoutParams buttonLP;
         //Sets the layout parameters for the buttonHolder layout
@@ -940,6 +958,7 @@ public class CreateNewGuide extends AppCompatActivity {
         buttonHolder.setPadding(0,0,0,75);
         buttonHolder.addView(mAddDesc);
         buttonHolder.addView(mAddImage);
+        buttonHolder.addView(mAddOther);
 
         mAddImage.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -961,10 +980,65 @@ public class CreateNewGuide extends AppCompatActivity {
                 overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
             }
         });
+        final PopupMenu options = new PopupMenu(CreateNewGuide.this,mAddOther);
+        options.getMenu().add(0,0, Menu.NONE,"Add Link");
+        options.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                int i = menuItem.getItemId();
+                //set the current stepBlock and the proper index for when we place the link
+                selectedLayout = stepBlock;
+                LinearLayout dataLayout = (LinearLayout)buttonHolder.getParent();
+                indexToPlaceView = ((LinearLayout)dataLayout.getParent()).indexOfChild(dataLayout) + 1;
+                if (i == 0){
+                    //set the linkHtml with a modal and add the link to the layout if the user didn't leave it empty or cancel
+                    displayModalForLink("Add");
+
+                }
+                return true;
+            }
+        });
+        mAddOther.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                options.show();
+            }
+        });
 
         buttonHolder.setTag(R.id.viewType,"ButtonBar");
 
         return buttonHolder;
+    }
+
+    /**
+     * Builds and displays a modal to take user input for a google link they want to add to their guide
+     * @param type of operation you are performing: "Add", add a new link; "Edit", edit an existing link based on which is the selectedWebview
+     */
+    private void displayModalForLink(final String type) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter what you want a google link for");
+        final EditText input = new EditText(this);
+        input.setHint("ex. threading a needle");
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        builder.setView(input);
+
+        builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String linkHtml = "<a href='http://lmgtfy.com/?q="+input.getText()+"'>"+input.getText()+"</a>";
+                //Add or edit th textblock based on the type
+                if (type.equals("Add"))addDescription(linkHtml,"Link");
+                else if (type.equals("Edit"))editDescription(linkHtml);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                linkHtml = "";
+                dialog.cancel();
+            }
+        });
+        builder.show();
     }
 
     /**
@@ -991,34 +1065,29 @@ public class CreateNewGuide extends AppCompatActivity {
      * Adds a text block to the editor, then creates a data object representing the block and
      * calls the function to add it to the data list
      * @param newStepDesc The text of the new text block
+     * @param type of text block we are adding (default text or link text)
      * @return true if success, otherwise false
      */
-    private boolean addDescription(String newStepDesc) {
+    private boolean addDescription(String newStepDesc,final String type) {
         try{
-            LinearLayout titleBlock = (LinearLayout) selectedLayout.getChildAt(0);
-            TextView title = (TextView)titleBlock.getChildAt(1);
-
             //Creates a new textview and sets the tag (the tag is the current step number)
             WebView mDescription = new WebView(CreateNewGuide.this);
             //set tag to the stepNum as the first section for proper placement in data list
             //set second section of tag to data id, so we can get the view to manipulate it with the data object simultaneously
-            //String viewTag = selectedLayout.getTag().toString() + "--" + dataToAdd.getId();
             String viewTag = "TEXT--" +newStepDesc;
             mDescription.setTag(R.id.viewId,viewTag);
+            mDescription.setTag(R.id.textType,type);
 
-           // mDescription.setTextSize(17);
-            //mDescription.setTextColor(Color.DKGRAY);
             mDescription.setPadding(5, 10, 5, 10);
             mDescription.loadData(newStepDesc,"text/html","UTF-8");
             mDescription.setBackgroundColor(Color.TRANSPARENT);
-
             mDescription.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View view, MotionEvent motionEvent) {
                     switch (motionEvent.getAction()){
                         case MotionEvent.ACTION_UP:
                             view.performClick();
-                            displayTextOptionsMenu(view);
+                            displayTextOptionsMenu(view,type);
                     }
                     return true;
                 }
@@ -1109,49 +1178,61 @@ public class CreateNewGuide extends AppCompatActivity {
     /**
      * Builds and displays a menu of options for selecting a text block in the guide
      */
-    private void displayTextOptionsMenu(final View v){
-        final CharSequence[] items = {"Delete Text","Edit Text", "Cancel"};
-
+    private void displayTextOptionsMenu(final View v, final String type){
+        List<String> itemList = new ArrayList<>(Arrays.asList("Delete Text","Edit Text","Cancel"));
+        if (type.equals("Link")){
+            itemList.add(2,"View Link");
+        }
+        final CharSequence[] items = itemList.toArray(new CharSequence[itemList.size()]);
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateNewGuide.this);
         builder.setTitle("What would you like to do?");
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
+                //Stores the selected text view to edit later
+                selectedWebView = (WebView) v;
+                String tag = v.getTag(R.id.viewId).toString();
+                String[] strings = tag.split("--");
                 if(items[i].equals("Delete Text")) {
-                    //Removes the selected Textview from the layout
+                    //Removes the selected textviews dataLayout from the layout
                     LinearLayout dataLayout = (LinearLayout) v.getParent();
                     LinearLayout stepLayout = (LinearLayout)dataLayout.getParent();
                     int indexToRemove = stepLayout.indexOfChild(dataLayout);
-                    //if (stepLayout.getChildCount() > 3)stepLayout.removeViewAt(indexToRemove+1);
                     stepLayout.removeViewAt(indexToRemove);
-                    if (stepLayout.getChildCount() <= 1){
-                        //LinearLayout newDatBlock = new LinearLayout(CreateNewGuide.this);
-                        //newDatBlock.addView(createAddDataButtonLayout(stepLayout));
+                    if (stepLayout.getChildCount() <= 1){//if removing the layout would mean there is no more elements, add a button bar
                         stepLayout.addView(createAddDataButtonLayout(stepLayout));
                     }
                 }else if(items[i].equals("Edit Text")){
-                    //Stores the selected text view to edit later
-                    selectedWebView = (WebView) v;
                     //Starts a new activity
-                    //TODO: Have to find way to get text from a web view
-                    String currText = "";
-                    TextView contentView = new TextView(getApplicationContext());
-                    selectedWebView.getSettings().setJavaScriptEnabled(true); //someone can use an XSS attack to screw us while js is enabled
-                    selectedWebView.addJavascriptInterface(new WebViewJavascriptInterface(currText,contentView),"INTERFACE");
-                    selectedWebView.setWebViewClient(new WebViewClient(){
-                        @Override
-                        public void onPageFinished(WebView view, String url){
-                            view.loadUrl("javascript:window.INTERFACE.processContent(document.getElementsByTagName('body')[0].innerText);");
-                        }
-                    });
-                    selectedWebView.getSettings().setJavaScriptEnabled(false);// disable js to remove possibility of XSS attack
+                    if (type.equals("Text")){
+                        String currText = strings[1];
+                       /* TextView contentView = new TextView(getApplicationContext());
+                        selectedWebView.getSettings().setJavaScriptEnabled(true); //someone can use an XSS attack to screw us while js is enabled
+                        selectedWebView.addJavascriptInterface(new WebViewJavascriptInterface(currText,contentView),"INTERFACE");
+                        selectedWebView.setWebViewClient(new WebViewClient(){
+                            @Override
+                            public void onPageFinished(WebView view, String url){
+                                view.loadUrl("javascript:window.INTERFACE.processContent(document.getElementsByTagName('body')[0].innerText);");
+                            }
+                        });
+                        selectedWebView.getSettings().setJavaScriptEnabled(false);// disable js to remove possibility of XSS attack
+*/
+                        Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
+                        intent.putExtra("CurrText", currText);
+                        //intent.putExtra("isEditing", true);
+                        startActivityForResult(intent,EDIT_DESC);
+                    }else if (type.equals("Link")){
+                        displayModalForLink("Edit");
+                        //if (!linkHtml.equals(""))editDescription(linkHtml);
+                    }
 
-                    Intent intent = new Intent(CreateNewGuide.this,TextBlockWriterActivity.class);
-                    intent.putExtra("CurrText", currText);
-                    //intent.putExtra("isEditing", true);
-                    startActivityForResult(intent,EDIT_DESC);
                 }else if(items[i].equals("Cancel")){
                     dialogInterface.dismiss();
+                }else if(items[i].equals("View Link")){
+                    //get the html text and split it by "'" in order to get the link so we can parse it
+                    String[] linkHtml = strings[1].split("'");
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(linkHtml[1]));
+                    startActivity(browserIntent);
                 }
             }
         });
@@ -1176,11 +1257,6 @@ public class CreateNewGuide extends AppCompatActivity {
                     LinearLayout titleLayout = ((LinearLayout) v.getParent());
                     LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());
                     int index = layoutFeed.indexOfChild(stepLayout);
-                    if (index == 0){
-                        stepIndex = 0;
-                    }else{
-                        stepIndex = index - 1;
-                    }
 
                     Log.i(DEBUG_TAG,"NUMBER: " + index +"/" + stepIndex);
                     createNewStep();
@@ -1297,6 +1373,8 @@ public class CreateNewGuide extends AppCompatActivity {
                     String currText = strings[1];
                     dataToAdd.stringToBlob(currText);
                     dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
+                    String textType = dataView.getTag(R.id.textType).toString();
+                    dataToAdd.setTextType(textType);
                     //Log.i("BORBOT text blob: ",""+dataToAdd.getStringFromBlob());
                     mGuideDataArrayList.add(dataToAdd);
                     dataToAdd.setId(UUID.randomUUID() +"TEXT"+mGuideDataArrayList.size());
@@ -1413,7 +1491,7 @@ public class CreateNewGuide extends AppCompatActivity {
                     return;
                 }
                 newDesc = TextBlockWriterActivity.getNewDesc(data);
-                addDescription(newDesc);
+                addDescription(newDesc,"Text");
             }else if (requestCode == EDIT_DESC){
                 if (data == null){
                     return;

@@ -19,6 +19,8 @@ public class TextData extends GuideData {
     private boolean isItalic;
     private int color; //color of the text
     private int size; //font size of the text
+    private String textType;
+
 
     public TextData() {
 
@@ -101,5 +103,13 @@ public class TextData extends GuideData {
         isItalic = italic;
         this.color = color;
         this.size = size;
+    }
+
+    public String getTextType() {
+        return textType;
+    }
+
+    public void setTextType(String textType) {
+        this.textType = textType;
     }
 }
