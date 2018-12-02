@@ -292,7 +292,7 @@ public class ViewGuide extends AppCompatActivity {
         try{
             //Creates a new textview and sets the tag (the tag is the current step number)
             WebView mDescription = new WebView(ViewGuide.this);
-            String description = text.getStringFromBlob();
+            final String description = text.getStringFromBlob();
 
             //set tag to the text so we can easily get it when uploading, haven't yet figured out how to get from webview
             String viewTag = "TEXT--" +description;
@@ -310,7 +310,10 @@ public class ViewGuide extends AppCompatActivity {
                     switch (motionEvent.getAction()){
                         case MotionEvent.ACTION_UP:
                             view.performClick();
-                            //displayTextOptionsMenu(view);
+                            //get the html text and split it by "'" in order to get the link so we can parse it
+                            String[] linkHtml = description.split("'");
+                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(linkHtml[1]));
+                            startActivity(browserIntent);
                     }
                     return true;
                 }
