@@ -12,20 +12,40 @@ public class Guide {
     private String author;
     private boolean published;
     private String description;
-    private String dateCreated;
+    private String dateCreated;//should be stored as timestamp
 
-    public Guide(){}
+    //Used when creating a new guide, empty except for its id
+    public Guide(String id){
+        if (id == null)return;
 
-    public Guide(String title){
-        this.title = title;
+        if (!id.equals("")){
+            this.id = id;
+        }
     }
 
+    //Used when loading up a guide for editing; we pass the id, key, and title from the UserCollectionActivity
+    public Guide(String id, String key, String title){
+        if (id == null || key == null || title == null)return;
+
+        if (!id.equals("") && !key.equals("") && !title.equals("")){
+            this.id = id;
+            this.key = key;
+            this.title = title;
+        }
+    }
+
+    //another constructor, might be unnecessary,
     public Guide(String id, String title, String author, String description, String dateCreated) {
-        this.id = id;
-        this.title = title;
-        this.author = author;
-        this.description = description;
-        this.dateCreated = dateCreated;
+        if (id == null || title == null || author == null || description == null || dateCreated == null)return;
+
+        if (!id.equals("") && !title.equals("") && !author.equals("") && !description.equals("") && !dateCreated.equals("")){
+            this.id = id;
+            this.title = title;
+            this.author = author;
+            this.description = description;
+            this.dateCreated = dateCreated;
+        }
+
     }
 
     public String getKey() {
@@ -33,7 +53,11 @@ public class Guide {
     }
 
     public void setKey(String key) {
-        this.key = key;
+        if (key == null)return;
+
+        if (!key.equals("")){
+            this.key = key;
+        }
     }
 
     public String getId() {
@@ -41,7 +65,11 @@ public class Guide {
     }
 
     public void setId(String id) {
-        this.id = id;
+        if (id == null)return;
+
+        if (!id.equals("")){
+            this.id = id;
+        }
     }
 
     public String getTitle() {
@@ -49,7 +77,11 @@ public class Guide {
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        if (title == null)return;
+
+        if (!title.equals("")){
+            this.title = title;
+        }
     }
 
     public String getAuthor() {
@@ -57,7 +89,12 @@ public class Guide {
     }
 
     public void setAuthor(String author) {
-        this.author = author;
+        if (author == null)return;
+
+        if (!author.equals("")){
+            this.author = author;
+        }
+
     }
 
     public String getDescription() {
@@ -65,7 +102,11 @@ public class Guide {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        if (description == null)return;
+
+        if (!description.equals("")){
+            this.description = description;
+        }
     }
 
     public String getDateCreated() {
@@ -73,6 +114,8 @@ public class Guide {
     }
 
     public void setDateCreated(String dateCreated) {
+        if (dateCreated == null)return;
+
         this.dateCreated = dateCreated;
     }
 

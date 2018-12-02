@@ -6,6 +6,9 @@ package com.wew.azizchr.guidezprototype;
  */
 
 public class GuideData {
+    private final static String PIC_TYPE = "Picture";
+    private final static String TEXT_TYPE = "Text";
+
     private String id;
     private String type;
     private int placement;
@@ -13,21 +16,15 @@ public class GuideData {
     private String stepTitle;
     private int stepNumber;
 
-    public GuideData(){}
-
     public GuideData(String id, String type, int placement, String guideId) {
-        this.id = id;
-        this.type = type;
-        this.placement = placement;
-        this.guideId = guideId;
-    }
+        if (id == null || type == null || guideId == null)return;
 
-    public GuideData(String type, int placement, String guideId, String stepTitle, int stepNumber) {
-        this.type = type;
-        this.placement = placement;
-        this.guideId = guideId;
-        this.stepTitle = stepTitle;
-        this.stepNumber = stepNumber;
+        if (!id.equals("") && !type.equals("") && !guideId.equals("") && placement >= 0){
+            this.id = id;
+            this.type = type;
+            this.placement = placement;
+            this.guideId = guideId;
+        }
     }
 
     public String getId() {
@@ -35,7 +32,11 @@ public class GuideData {
     }
 
     public void setId(String id) {
-        this.id = id;
+        if (id == null)return;
+
+        if (!id.equals("")){
+            this.id = id;
+        }
     }
 
     public String getType() {
@@ -43,7 +44,11 @@ public class GuideData {
     }
 
     public void setType(String type) {
-        this.type = type;
+        if (type == null)return;
+
+        if (type.equals(PIC_TYPE) || type.equals(TEXT_TYPE)){
+            this.type = type;
+        }
     }
 
     public int getPlacement() {
@@ -51,6 +56,8 @@ public class GuideData {
     }
 
     public void setPlacement(int placement) {
+        if (placement <0)return;//should never be a negative
+
         this.placement = placement;
     }
 
@@ -59,7 +66,11 @@ public class GuideData {
     }
 
     public void setGuideId(String guideId) {
-        this.guideId = guideId;
+        if (guideId == null)return;
+
+        if (!guideId.equals("")){
+            this.guideId = guideId;
+        }
     }
 
     public String getStepTitle() {
@@ -67,7 +78,11 @@ public class GuideData {
     }
 
     public void setStepTitle(String stepTitle) {
-        this.stepTitle = stepTitle;
+        if (stepTitle == null)return;
+
+        if (!stepTitle.equals("")){
+            this.stepTitle = stepTitle;
+        }
     }
 
     public int getStepNumber() {
@@ -75,11 +90,19 @@ public class GuideData {
     }
 
     public void setStepNumber(int stepNumber) {
-        this.stepNumber = stepNumber;
+        if (stepNumber >= 0){
+            this.stepNumber = stepNumber;
+        }
     }
 
     public void setStep(int stepNumber, String stepTitle){
-        this.stepNumber = stepNumber;
-        this.stepTitle = stepTitle;
+        if (stepTitle == null)return;
+
+        if (!stepTitle.equals("")){
+            this.stepTitle = stepTitle;
+        }
+        if (stepNumber >= 0){
+            this.stepNumber = stepNumber;
+        }
     }
 }

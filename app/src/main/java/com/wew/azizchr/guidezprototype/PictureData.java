@@ -15,9 +15,6 @@ public class PictureData extends GuideData {
     public double latitude;
     public double longitude;
 
-    public PictureData() {
-    }
-
     public PictureData(String id, String type, int placement, String guideId) {
         super(id, type, placement, guideId);
     }
@@ -27,6 +24,8 @@ public class PictureData extends GuideData {
     }
 
     public void setImgPath(String imgPath) {
+        if (imgPath == null)return;
+
         this.imgPath = imgPath;
     }
 
@@ -35,6 +34,8 @@ public class PictureData extends GuideData {
     }
 
     public void setUri(String uri) {
+        if (uri == null)return;
+
         this.uri = uri;
     }
 

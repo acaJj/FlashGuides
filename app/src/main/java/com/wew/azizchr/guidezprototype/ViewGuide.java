@@ -185,16 +185,17 @@ public class ViewGuide extends AppCompatActivity {
                                     for (QueryDocumentSnapshot snap: task.getResult()){
                                         Blob text = (Blob)snap.get("text");
                                         String id = snap.get("id").toString();
-                                        String guideId = "";
+                                        String guideId =  snap.get("guideId").toString();
                                         String stepTitle = snap.get("stepTitle").toString();
                                         String type = snap.get("type").toString();
                                         String textType = snap.get("textType").toString();
                                         int num = snap.getLong("stepNumber").intValue();
                                         int placement = snap.getLong("placement").intValue();
-                                        TextData data = new TextData(type,placement,guideId,stepTitle,num);
+                                        TextData data = new TextData(id,type,placement,guideId);
                                         data.setText(text);
                                         data.setTextType(textType);
-                                        data.setId(id);
+                                        data.setStep(num,stepTitle);
+                                        //data.setId(id);
                                         //Log.i(DEBUG_TAG+"-TEXT EXECUTE","in chained task, data added / " + data.getId() );
 
                                         addElement(data);
@@ -210,7 +211,7 @@ public class ViewGuide extends AppCompatActivity {
                                     for (QueryDocumentSnapshot snap: task.getResult()){
                                         //get the data from fire store and add a data object to the data list
                                         String id = snap.get("id").toString();
-                                        String guideId = "";
+                                        String guideId =  snap.get("guideId").toString();
                                         String stepTitle = snap.get("stepTitle").toString();
                                         String type = (String)snap.get("type");
                                         int num = snap.getLong("stepNumber").intValue();

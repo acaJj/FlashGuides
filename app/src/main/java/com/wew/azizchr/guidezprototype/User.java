@@ -14,12 +14,19 @@ public class User {
     private String password;
     private int numGuides;
 
+    //in settings activity, we instantiate an empty object before filling values
     public User(){}
 
+    //used in homepage and signupActivity
     public User(String id){
-        this.id = id;
+        if (id == null)return;
+
+        if (!id.equals("")){
+            this.id = id;
+        }
     }
 
+    /*not used anywhere, may use it later
     public User(String id,String userName, String firstName, String lastName, String email, String password, int numGuides) {
         this.id = id;
         this.userName = userName;
@@ -28,14 +35,18 @@ public class User {
         this.email = email;
         this.password = password;
         this.numGuides = numGuides;
-    }
+    }*/
 
     public String getId() {
         return id;
     }
 
     public void setId(String id) {
-        this.id = id;
+        if (id == null)return;
+
+        if (!id.equals("")){
+            this.id = id;
+        }
     }
 
     public String getUserName() {
@@ -43,7 +54,11 @@ public class User {
     }
 
     public void setUserName(String userName) {
-        this.userName = userName;
+        if (userName == null)return;
+
+        if (!userName.equals("")){
+            this.userName = userName;
+        }
     }
 
     public String getFirstName() {
@@ -51,7 +66,12 @@ public class User {
     }
 
     public void setFirstName(String firstName) {
-        this.firstName = firstName;
+        if (firstName == null)return;
+
+        if (!firstName.equals("")){
+            this.firstName = firstName;
+        }
+
     }
 
     public String getLastName() {
@@ -59,7 +79,11 @@ public class User {
     }
 
     public void setLastName(String lastName) {
-        this.lastName = lastName;
+        if (lastName == null)return;
+
+        if (!lastName.equals("")){
+            this.lastName = lastName;
+        }
     }
 
     public String getEmail() {
@@ -67,7 +91,11 @@ public class User {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        if (email == null)return;
+
+        if (!email.equals("")){
+            this.email = email;
+        }
     }
 
     public String getPassword() {
@@ -75,7 +103,11 @@ public class User {
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        if (password == null)return;
+
+        if (!password.equals("")){
+            this.password = password;
+        }
     }
 
     public int getNumGuides() {
@@ -83,6 +115,8 @@ public class User {
     }
 
     public void setNumGuides(int numGuides) {
-        this.numGuides = numGuides;
+        if (numGuides >= 0){
+            this.numGuides = numGuides;
+        }
     }
 }

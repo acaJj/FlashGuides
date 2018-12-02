@@ -128,7 +128,7 @@ public class SearchResultActivity extends AppCompatActivity {
 
     private void getResultsByTitleAndUser(String searchByString, final String searchByUser) {
         com.algolia.search.saas.Query query = new com.algolia.search.saas.Query(searchByString)
-                .setAttributesToRetrieve("title","author","userId","objectID","key")
+                .setAttributesToRetrieve("title","author","userId","objectID","key","date")
                 .setHitsPerPage(50);
         guidesIndex.searchAsync(query, new CompletionHandler() {
             @Override
@@ -147,6 +147,7 @@ public class SearchResultActivity extends AppCompatActivity {
                             result.setId(hitsJSONObject.getString("objectID"));
                             result.setUserId(hitsJSONObject.getString("userId"));
                             result.setKey(hitsJSONObject.getString("key"));
+                            result.setDate(hitsJSONObject.getString("date"));
                             result.setDestination("View");
                             searchResults.add(result);
                         }
@@ -164,7 +165,7 @@ public class SearchResultActivity extends AppCompatActivity {
 
     private void getResultsByUser(String searchByUser) {
         com.algolia.search.saas.Query query = new com.algolia.search.saas.Query( searchByUser)
-                .setAttributesToRetrieve("title","author","userId","objectID","key")
+                .setAttributesToRetrieve("title","author","userId","objectID","key","date")
                 .setHitsPerPage(50);
         guidesIndex.searchAsync(query, new CompletionHandler() {
             @Override
@@ -181,6 +182,7 @@ public class SearchResultActivity extends AppCompatActivity {
                         result.setId(hitsJSONObject.getString("objectID"));
                         result.setUserId(hitsJSONObject.getString("userId"));
                         result.setKey(hitsJSONObject.getString("key"));
+                        result.setDate(hitsJSONObject.getString("date"));
                         result.setDestination("View");
                         searchResults.add(result);
                     }
@@ -197,7 +199,7 @@ public class SearchResultActivity extends AppCompatActivity {
 
     private void getResultsByTitle(String searchByString) {
         com.algolia.search.saas.Query query = new com.algolia.search.saas.Query( searchByString)
-                .setAttributesToRetrieve("title","author","objectID","userId","key")
+                .setAttributesToRetrieve("title","author","objectID","userId","key","date")
                 .setHitsPerPage(50);
         guidesIndex.searchAsync(query, new CompletionHandler() {
             @Override
@@ -214,6 +216,7 @@ public class SearchResultActivity extends AppCompatActivity {
                         result.setId(hitsJSONObject.getString("objectID"));
                         result.setUserId(hitsJSONObject.getString("userId"));
                         result.setKey(hitsJSONObject.getString("key"));
+                        result.setDate(hitsJSONObject.getString("date"));
                         result.setDestination("View");
                         searchResults.add(result);
                     }
@@ -230,7 +233,7 @@ public class SearchResultActivity extends AppCompatActivity {
 
     private void getAllResults() {
         com.algolia.search.saas.Query query = new com.algolia.search.saas.Query()
-                .setAttributesToRetrieve("title","author","objectID","userId","key")
+                .setAttributesToRetrieve("title","author","objectID","userId","key","date")
                 .setHitsPerPage(50);
         guidesIndex.searchAsync(query, new CompletionHandler() {
             @Override
@@ -246,6 +249,7 @@ public class SearchResultActivity extends AppCompatActivity {
                         result.setId(hitsJSONObject.getString("objectID"));
                         result.setUserId(hitsJSONObject.getString("userId"));
                         result.setKey(hitsJSONObject.getString("key"));
+                        result.setDate(hitsJSONObject.getString("date"));
                         result.setDestination("View");
                         searchResults.add(result);
                     }

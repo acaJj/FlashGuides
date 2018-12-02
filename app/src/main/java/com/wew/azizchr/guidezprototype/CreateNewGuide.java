@@ -86,20 +86,20 @@ public class CreateNewGuide extends AppCompatActivity {
     private static final int WRITE_STEP =1;//used when making a new step
     private static final int WRITE_DESC =2;//used when making a new text block
     private static final int EDIT_DESC = 3;//used when editing a text block
-    public static final int PESDK_RESULT = 4;
+    public static final int PESDK_RESULT = 4;//used when getting a picture from the image editor
 
-    private String outputPath;
+    private String outputPath;//stores path of an image f
     private String newStepTitle;
     private String newStepDesc;
     private String newDesc;
     private String mode;//used to determine whether we are making a new guide or editing an old one
 
     private int guideNum = 0;//the current guide index thing
-    private int currentPictureSwap;
+    private int currentPictureSwap;//index of the picture being swapped out for a different/edited pic
     private int indexToPlaceView;//the index in the selected step layout where we place the next text/imageview
 
     private Boolean isSwapping;//used as check whenw we add an image
-    private int stepIndex;//used to determine where the step should be created
+    private int stepIndex;//used to determine where the step should be created in the layout feed
 
     private CameraImagePicker camera;
     public LinearLayout layoutFeed;
@@ -154,7 +154,7 @@ public class CreateNewGuide extends AppCompatActivity {
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
 
-        newGuide = new Guide();
+        //newGuide = new Guide();
         mBitmaps = new ArrayList<>();
 
         //Gets a handle on the progress bar layout and hides it
@@ -194,18 +194,15 @@ public class CreateNewGuide extends AppCompatActivity {
 
                 if (mode.equals("CREATE"))guideNum++;// increments guideNum by 1 because we are making a new guide so there is 1 more than before
                 String authorName = ""+documentSnapshot.getString("firstName") + documentSnapshot.getString("lastName");
-                newGuide.setAuthor(authorName);
                 editorSetup(bundle);
+                newGuide.setAuthor(authorName);
+                newGuide.setTitle(guideTitle);
+                newGuide.setPublishedStatus(false);
             }
 
         });
 
         mNewGuideTitle.setText(guideTitle);
-
-        //newGuide.setAuthor(mCurrentUser.getUid());
-        newGuide.setTitle(guideTitle);
-        //newGuide.setDateCreated();
-        newGuide.setPublishedStatus(false);
 
         //Sets up the Camera Image Picker values
         camera = new CameraImagePicker(CreateNewGuide.this);
@@ -278,11 +275,10 @@ public class CreateNewGuide extends AppCompatActivity {
      */
     private void editorSetup(Bundle bundle){
         if (mode.equals("CREATE")){
-            newGuide.setId(UUID.randomUUID().toString());
+            newGuide = new Guide(UUID.randomUUID().toString());
         }else if (mode.equals("EDIT")){
-            newGuide.setId(bundle.getString("GUIDEID"));
-            newGuide.setKey(bundle.getString("KEY"));
-            newGuide.setTitle(bundle.getString("GUIDE_TITLE"));
+            newGuide = new Guide(bundle.getString("GUIDEID"),bundle.getString("KEY"),bundle.getString("GUIDE_TITLE"));
+            newGuide.setDateCreated(bundle.getString("DATE"));
             guideNum = Integer.parseInt(bundle.getString("KEY"));
            // haveLoaded = true;
             loadGuide(newGuide.getId(),newGuide.getKey());
@@ -344,16 +340,17 @@ public class CreateNewGuide extends AppCompatActivity {
                                     for (QueryDocumentSnapshot snap: task.getResult()){
                                         Blob text = (Blob)snap.get("text");
                                         String id = snap.get("id").toString();
-                                        String guideId = "";
+                                        String guideId = snap.get("guideId").toString();
                                         String stepTitle = snap.get("stepTitle").toString();
                                         String type = snap.get("type").toString();
                                         String textType = snap.get("textType").toString();
                                         int num = snap.getLong("stepNumber").intValue();
                                         int placement = snap.getLong("placement").intValue();
-                                        TextData data = new TextData(type,placement,guideId,stepTitle,num);
+                                        TextData data = new TextData(id,type,placement,guideId);
                                         data.setText(text);
                                         data.setTextType(textType);
-                                        data.setId(id);
+                                        data.setStep(num,stepTitle);
+                                        //data.setId(id);
                                         //Log.i(DEBUG_TAG+"-TEXT EXECUTE","in chained task, data added / " + data.getId() );
 
                                         addElement(data);
@@ -369,7 +366,7 @@ public class CreateNewGuide extends AppCompatActivity {
                                     for (QueryDocumentSnapshot snap: task.getResult()){
                                         //get the data from fire store and add a data object to the data list
                                         String id = snap.get("id").toString();
-                                        String guideId = "";
+                                        String guideId = snap.get("guideId").toString();
                                         String stepTitle = snap.get("stepTitle").toString();
                                         String type = (String)snap.get("type");
                                         int num = snap.getLong("stepNumber").intValue();
@@ -590,8 +587,13 @@ public class CreateNewGuide extends AppCompatActivity {
 
         DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
         Log.d(DEBUG_TAG+"-SAVE",mode);
+        //set the document key to guideNum for upload
         if (mode.equals("CREATE")){
             newGuide.setKey(""+guideNum);
+        }
+
+        //if theres no date, set it to the current date
+        if (newGuide.getDateCreated() == null || newGuide.getDateCreated().equals("unknown")){
             Date currentDate = Calendar.getInstance().getTime();
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.CANADA);
             //DateFormat.getDateInstance(DateFormat.LONG, Locale.CANADA);
@@ -611,7 +613,8 @@ public class CreateNewGuide extends AppCompatActivity {
             //List<JSONObject> guideToIndex = new ArrayList<>();
             JSONObject guideObject = new JSONObject().//guide object
                     put("title",newGuide.getTitle()).put("author",newGuide.getAuthor())
-                    .put("userId",mFirebaseAuth.getUid()).put("key",newGuide.getKey());
+                    .put("userId",mFirebaseAuth.getUid()).put("key",newGuide.getKey())
+                    .put("date",newGuide.getDateCreated());
             //guideToIndex.add(new JSONObject(guideObject));
             algoliaIndex.addObjectAsync(guideObject, newGuide.getId(),null);
             Log.d(DEBUG_TAG,"indexing completed");
@@ -1109,9 +1112,9 @@ public class CreateNewGuide extends AppCompatActivity {
                     //get the index of the step in the overall guide layout feed
                     LinearLayout titleLayout = ((LinearLayout) v.getParent());
                     LinearLayout stepLayout = ((LinearLayout) titleLayout.getParent());
-                    int index = layoutFeed.indexOfChild(stepLayout);
+                    stepIndex = layoutFeed.indexOfChild(stepLayout);
 
-                    Log.i(DEBUG_TAG,"NUMBER: " + index +"/" + stepIndex);
+                    Log.i(DEBUG_TAG,"NUMBER: " + stepIndex);
                     createNewStep();
                     reorderSteps();
                 }else if(items[i].equals("Add step below")){
@@ -1288,25 +1291,28 @@ public class CreateNewGuide extends AppCompatActivity {
                 if (blockType.equals("TEXT")){
                     //Log.i("BORBOT text blob: ","getting text");
                     //make the text data object
-                    TextData dataToAdd = new TextData("Text",j-1,newGuide.getId(),TitleDesc.getText().toString(),stepNumber);
+                    String textId = UUID.randomUUID() +"TEXT"+mGuideDataArrayList.size();
+                    TextData dataToAdd = new TextData(textId,"Text",j-1,newGuide.getId());
+                    dataToAdd.setStep(stepNumber,TitleDesc.getText().toString());
                     String currText = strings[1];
                     dataToAdd.stringToBlob(currText);
                     dataToAdd.setTextStyle(false, false, Color.DKGRAY, 17);
                     String textType = dataView.getTag(R.id.textType).toString();
                     dataToAdd.setTextType(textType);
+                    //dataToAdd.setId();
                     mGuideDataArrayList.add(dataToAdd);
-                    dataToAdd.setId(UUID.randomUUID() +"TEXT"+mGuideDataArrayList.size());
                 }else if (blockType.equals("PICTURE")){
                     //make picture obj
-                    PictureData picData = new PictureData();
-                    picData.setType("Picture");
-                    picData.setStepNumber(stepNumber);
-                    picData.setStepTitle(TitleDesc.getText().toString());
-                    picData.setPlacement(j-1);
+                    String pictureId = UUID.randomUUID()+"IMG"+mGuideDataArrayList.size();
+                    PictureData picData = new PictureData(pictureId,"Picture",j-1,newGuide.getId());
+                    //picData.setType("Picture");
+                    picData.setStep(stepNumber,TitleDesc.getText().toString());
+                    //picData.setStepNumber(stepNumber);
+                    //picData.setStepTitle(TitleDesc.getText().toString());
+                    //picData.setPlacement(j-1);
                     String picUri = strings[1];
                     picData.setUri(picUri);
                     mGuideDataArrayList.add(picData);
-                    picData.setId(UUID.randomUUID()+"IMG"+mGuideDataArrayList.size());
                 }
             }
         }

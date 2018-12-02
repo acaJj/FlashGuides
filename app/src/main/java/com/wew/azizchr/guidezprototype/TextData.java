@@ -14,6 +14,9 @@ import java.util.Iterator;
  */
 
 public class TextData extends GuideData {
+    private final static String TYPE_TEXT = "Text";
+    private final static String TYPE_LINK = "Link";
+
     private Blob text; //all separate text sections that the user adds to the step
     private boolean isBold;
     private boolean isItalic;
@@ -21,29 +24,8 @@ public class TextData extends GuideData {
     private int size; //font size of the text
     private String textType;
 
-
-    public TextData() {
-
-    }
-
-    public TextData(String type, int placement, String guideId, String stepTitle,int stepNumber) {
-        super(type, placement, guideId, stepTitle,stepNumber);
-    }
-
-    public TextData( String type, int placement, String guideId, String stepTitle,int stepNumber, Blob text, boolean isBold, boolean isItalic, int color, int size) {
-        super(type, placement, guideId, stepTitle,stepNumber);
-        this.text = text;
-        this.isBold = isBold;
-        this.isItalic = isItalic;
-        this.color = color;
-        this.size = size;
-    }
-
-    public TextData(String id, String type, int placement, String guideId, boolean isBold, boolean isItalic, int color) {
-        super(id, type, placement, guideId);
-        this.isBold = isBold;
-        this.isItalic = isItalic;
-        this.color = color;
+    public TextData(String id, String type, int placement, String guideId) {
+        super(id,type, placement, guideId);
     }
 
     public Blob getText() {
@@ -51,13 +33,19 @@ public class TextData extends GuideData {
     }
 
     public void setText(Blob text) {
-        this.text = text;
+        if (text != null){
+            this.text = text;
+        }
     }
 
     public void stringToBlob(String text){
-        byte[] bytes = text.getBytes();
-        Blob data = Blob.fromBytes(bytes);
-        setText(data);
+        if (text == null)return;
+
+        if (!text.equals("")){
+            byte[] bytes = text.getBytes();
+            Blob data = Blob.fromBytes(bytes);
+            setText(data);
+        }
     }
 
     public String getStringFromBlob(){
@@ -99,8 +87,8 @@ public class TextData extends GuideData {
     }
 
     public void setTextStyle(boolean bold, boolean italic, int color, int size){
-        isBold = bold;
-        isItalic = italic;
+        this.isBold = bold;
+        this.isItalic = italic;
         this.color = color;
         this.size = size;
     }
@@ -110,6 +98,10 @@ public class TextData extends GuideData {
     }
 
     public void setTextType(String textType) {
-        this.textType = textType;
+        if (textType == null)return;
+
+        if (textType.equals(TYPE_LINK) || textType.equals(TYPE_TEXT)){
+            this.textType = textType;
+        }
     }
 }

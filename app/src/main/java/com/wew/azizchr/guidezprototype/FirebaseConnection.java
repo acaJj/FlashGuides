@@ -31,6 +31,8 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageMetadata;
@@ -41,6 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -97,6 +100,31 @@ public class FirebaseConnection {
 
     public FirebaseUser getCurrentUser() {
         return mCurrentUser;
+    }
+
+    /**
+     * returns all of the guides belonging to a given user
+     */
+    public void GetAllUserGuides(CollectionReference userGuides){
+        userGuides.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            List<Result> searchResults = new ArrayList<>();
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()){
+                    for (QueryDocumentSnapshot doc:task.getResult()){
+                        //For each document in the collection, create a Result object and add it to the list
+                        Result guide = new Result();
+                        guide.setTitle(doc.getString("title"));
+                        guide.setName("you!");
+                        guide.setDate(doc.getString("dateCreated"));
+                        guide.setKey(doc.getId());
+                        guide.setId(doc.getString("id"));
+                        guide.setDestination("Edit");
+                        searchResults.add(guide);
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -221,6 +249,8 @@ public class FirebaseConnection {
 
             int storageindex = 0;
             final int BitmapArraySize = bitmaps.length;
+            //for each loop creates a deep copy of the bitmap[0] and stores it in bmap
+            //so we have two bitmap objects in memory, causes memory stack to be filled up, for loop is fine
             for (Bitmap bmap : bitmaps[0]) {
                 //create a byte array output stream to prepare the image bitmap for upload
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();

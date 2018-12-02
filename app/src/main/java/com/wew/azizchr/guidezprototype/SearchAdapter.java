@@ -57,6 +57,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
                         intent.putExtra("GUIDEID",result.getId());
                         intent.putExtra("GUIDE_TITLE",result.getTitle());
                         intent.putExtra("KEY",result.getKey());
+                        intent.putExtra("DATE",result.getDate());
 
                         view.getContext().startActivity(intent);
                     }else if (result.getDestination().equals("View")){
@@ -87,9 +88,9 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
     //Binds the data to the appropriate area of the cardview
     @Override
     public void onBindViewHolder(@NonNull SearchResultHolder holder, int position) {
-        holder.guideTitle.setText(searchResults.get(position).title);
-        holder.guideAuthor.setText("By: " + searchResults.get(position).name);
-        holder.guideDate.setText("Created: " + searchResults.get(position).date);
+        holder.guideTitle.setText(searchResults.get(position).getTitle());
+        holder.guideAuthor.setText("By: " + searchResults.get(position).getName());
+        holder.guideDate.setText("Created: " + searchResults.get(position).getDate());
         //bind the listener
         holder.bindData(searchResults.get(position));
     }
