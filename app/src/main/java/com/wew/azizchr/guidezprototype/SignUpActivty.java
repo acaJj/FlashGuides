@@ -41,6 +41,7 @@ public class SignUpActivty extends AppCompatActivity {
     TextView mFirstName;
     TextView mLastName;
 
+    private FirebaseConnection mFirebaseConnection;
     private FirebaseAuth mAuth;
     private FirebaseFirestore mFirebaseFirestore;
 
@@ -63,8 +64,9 @@ public class SignUpActivty extends AppCompatActivity {
         mPassword = (TextView) findViewById(R.id.txtSignUpPassword);
         mConfirmPassword = (TextView) findViewById(R.id.txtConfirmPassword);
 
-        mAuth = FirebaseAuth.getInstance();
-        mFirebaseFirestore = FirebaseFirestore.getInstance();
+        mFirebaseConnection = new FirebaseConnection();
+        mAuth = mFirebaseConnection.getFirebaseAuthInstance();
+        mFirebaseFirestore = mFirebaseConnection.getFirestoreInstance();
     }
 
     public void onSignUpClick(View view) {

@@ -63,7 +63,7 @@ public class FirebaseConnection {
     private FirebaseAuth mFirebaseAuthInstance;
     private FirebaseUser mCurrentUser;
 
-    private View rootView;
+    //private View rootView;
 
 //    private CollectionReference textData;
 //    private CollectionReference picData;

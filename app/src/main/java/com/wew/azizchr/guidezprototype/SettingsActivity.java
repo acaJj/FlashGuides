@@ -39,6 +39,8 @@ public class SettingsActivity extends AppCompatActivity {
     private Button mBack;
     private Button mConfirm;
 
+    private FirebaseConnection mFirebaseConnection;
+    private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mCurrentUser;
     private FirebaseFirestore mFirestore;
     private DocumentReference userAccountRef;
@@ -59,9 +61,10 @@ public class SettingsActivity extends AppCompatActivity {
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
 
-        FirebaseAuth mFirebaseAuth = FirebaseAuth.getInstance();
+        mFirebaseConnection = new FirebaseConnection();
+        mFirebaseAuth = mFirebaseConnection.getFirebaseAuthInstance();
         mCurrentUser = mFirebaseAuth.getCurrentUser();
-        mFirestore = FirebaseFirestore.getInstance();
+        mFirestore = mFirebaseConnection.getFirestoreInstance();
 
         userAccountRef = mFirestore.document("Users/" + mFirebaseAuth.getUid());
         //gets user account info from db and sets it to our object
@@ -95,7 +98,6 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (changesMade){
-                    //TODO: Make a menu that prompts the user to confirm their choices before updating firestore
                     new AlertDialog.Builder(SettingsActivity.this)
                             .setMessage("Pressing Yes will save all changes, are you sure you want to change these settings?")
                             .setCancelable(false)
