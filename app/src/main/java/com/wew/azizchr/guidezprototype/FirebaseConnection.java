@@ -17,6 +17,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.algolia.search.saas.Client;
+import com.algolia.search.saas.Index;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -289,6 +291,78 @@ public class FirebaseConnection {
             }
             return null;
         }
+    }
+
+    /**
+     * Deletes a guide from firebase
+     * @param context activity context used to create a toast informing user when deletion is done
+     * @param guideRef guide we are deleting
+     */
+    public void deleteGuide(final Context context,DocumentReference guideRef){
+        final CollectionReference textData = guideRef.collection("textData");
+        final CollectionReference picData = guideRef.collection("imageData");
+        CollectionReference stepData = guideRef.collection("stepData");
+
+        stepData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()){
+                    for (int i =0;i< task.getResult().size();i++){
+                        DocumentSnapshot doc = task.getResult().getDocuments().get(i);
+                        doc.getReference().delete();
+                    }
+                }
+                textData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()){
+                            for (int i =0;i< task.getResult().size();i++){
+                                DocumentSnapshot doc = task.getResult().getDocuments().get(i);
+                                doc.getReference().delete();
+                            }
+                        }
+                        picData.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                if (task.isSuccessful()){
+                                    for (int i =0;i< task.getResult().size();i++){
+                                        DocumentSnapshot doc = task.getResult().getDocuments().get(i);
+                                        doc.getReference().delete();
+                                    }
+                                    //Let user know deletion is completed
+                                    Toast.makeText(context,"Your guide has been deleted",Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        guideRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()){
+                    DocumentSnapshot doc = task.getResult();
+                    String guideId = doc.getString("id");
+                    //remove the guide object from the algolia 'guides' index
+                    //Algolia id and api keys for search
+                    String updateApiKey = "132c50036e3241722083caa0a25393e2";//do not use the admin key
+                    String applicationId = "031024FLJM";
+                    Client client = new Client(applicationId, updateApiKey);
+                    Index algoliaIndex = client.getIndex("guides");
+                    try{
+                        algoliaIndex.deleteObjectAsync(guideId,null);
+                        Log.d(DEBUG_TAG,"indexing completed");
+                    }catch(Exception ex){
+                        Log.d(DEBUG_TAG, ex.getMessage());
+                    }
+
+                    //delete this guide reference
+                    doc.getReference().delete();
+                }
+            }
+        });
     }
 
 }

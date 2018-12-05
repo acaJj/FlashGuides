@@ -153,7 +153,7 @@ public class SearchResultActivity extends AppCompatActivity {
                         }
                     }
                     //Once everything is obtained, it creates and sets the adapter
-                    mAdapter = new SearchAdapter(searchResults);
+                    mAdapter = new SearchAdapter(searchResults,null);
                     mYourSearchResults.setAdapter(mAdapter);
                     Toast.makeText(getApplicationContext(), searchResults.size() + " results." , Toast.LENGTH_SHORT).show();
                 } catch (JSONException e1) {
@@ -187,7 +187,7 @@ public class SearchResultActivity extends AppCompatActivity {
                         searchResults.add(result);
                     }
                     //Once everything is obtained, it creates and sets the adapter
-                    mAdapter = new SearchAdapter(searchResults);
+                    mAdapter = new SearchAdapter(searchResults,null);
                     mYourSearchResults.setAdapter(mAdapter);
                     Toast.makeText(getApplicationContext(), searchResults.size() + " results." , Toast.LENGTH_SHORT).show();
                 } catch (JSONException e1) {
@@ -221,7 +221,7 @@ public class SearchResultActivity extends AppCompatActivity {
                         searchResults.add(result);
                     }
                     //Once everything is obtained, it creates and sets the adapter
-                    mAdapter = new SearchAdapter(searchResults);
+                    mAdapter = new SearchAdapter(searchResults,null);
                     mYourSearchResults.setAdapter(mAdapter);
                     Toast.makeText(getApplicationContext(), searchResults.size() + " results." , Toast.LENGTH_SHORT).show();
                 } catch (JSONException e1) {
@@ -254,7 +254,7 @@ public class SearchResultActivity extends AppCompatActivity {
                         searchResults.add(result);
                     }
                     //Once everything is obtained, it creates and sets the adapter
-                    mAdapter = new SearchAdapter(searchResults);
+                    mAdapter = new SearchAdapter(searchResults,null);
                     mYourSearchResults.setAdapter(mAdapter);
                     Toast.makeText(getApplicationContext(), searchResults.size() + " results." , Toast.LENGTH_SHORT).show();
                 } catch (JSONException e1) {

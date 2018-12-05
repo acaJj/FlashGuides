@@ -235,6 +235,7 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (haveSaved){
+                    setSearchIndex();//index the guide into algolia
                     newGuide.setPublishedStatus(true);
                     DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
                     guideRef.update("publishedStatus",true);
@@ -245,7 +246,9 @@ public class CreateNewGuide extends AppCompatActivity {
                             .setCancelable(false)
                             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
+                                    //save the guide before adding it to the index so newGuide has values set for Algolia indexing
                                     saveGuide();
+                                    setSearchIndex();
                                     newGuide.setPublishedStatus(true);
                                     DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
                                     guideRef.update("publishedStatus",true);
@@ -602,25 +605,6 @@ public class CreateNewGuide extends AppCompatActivity {
         }
 
         guideRef.set(newGuide);
-        //Algolia id and api keys for search
-        String updateApiKey = "132c50036e3241722083caa0a25393e2";//do not use the admin key
-        String applicationId = "031024FLJM";
-        Client client = new Client(applicationId, updateApiKey);
-        Index algoliaIndex = client.getIndex("guides");
-
-        //index the guide title with Algolia so we can search it later
-        try{
-            //List<JSONObject> guideToIndex = new ArrayList<>();
-            JSONObject guideObject = new JSONObject().//guide object
-                    put("title",newGuide.getTitle()).put("author",newGuide.getAuthor())
-                    .put("userId",mFirebaseAuth.getUid()).put("key",newGuide.getKey())
-                    .put("date",newGuide.getDateCreated());
-            //guideToIndex.add(new JSONObject(guideObject));
-            algoliaIndex.addObjectAsync(guideObject, newGuide.getId(),null);
-            Log.d(DEBUG_TAG,"indexing completed");
-        }catch(Exception ex){
-            Log.d(DEBUG_TAG, ex.getMessage());
-        }
 
         //informs the user that the save process is starting
         Toast.makeText(CreateNewGuide.this,"Saving...\nPlease wait",Toast.LENGTH_LONG).show();
@@ -686,6 +670,28 @@ public class CreateNewGuide extends AppCompatActivity {
         if (mode.equals("CREATE"))userRef.update("numGuides", guideNum);
         Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
         haveSaved = true;
+    }
+
+    public void setSearchIndex(){
+        //Algolia id and api keys for search
+        String updateApiKey = "132c50036e3241722083caa0a25393e2";//do not use the admin key
+        String applicationId = "031024FLJM";
+        Client client = new Client(applicationId, updateApiKey);
+        Index algoliaIndex = client.getIndex("guides");
+
+        //index the guide title with Algolia so we can search it later
+        try{
+            //List<JSONObject> guideToIndex = new ArrayList<>();
+            JSONObject guideObject = new JSONObject().//guide object
+                    put("title",newGuide.getTitle()).put("author",newGuide.getAuthor())
+                    .put("userId",mFirebaseAuth.getUid()).put("key",newGuide.getKey())
+                    .put("date",newGuide.getDateCreated());
+            //guideToIndex.add(new JSONObject(guideObject));
+            algoliaIndex.addObjectAsync(guideObject, newGuide.getId(),null);
+            Log.d(DEBUG_TAG,"indexing completed");
+        }catch(Exception ex){
+            Log.d(DEBUG_TAG, ex.getMessage());
+        }
     }
 
     /**

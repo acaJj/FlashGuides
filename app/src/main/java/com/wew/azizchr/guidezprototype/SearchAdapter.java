@@ -2,14 +2,22 @@ package com.wew.azizchr.guidezprototype;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.List;
 
 
@@ -19,15 +27,20 @@ import java.util.List;
  */
 public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResultHolder> {
 
-    List<Result> searchResults;
+    private List<Result> searchResults;
+    private FirebaseFirestore mFirestore;
 
-    SearchAdapter(List<Result> sr){ this.searchResults = sr; }
+    SearchAdapter( List<Result> sr,FirebaseFirestore firestore){
+        this.searchResults = sr;
+        mFirestore = firestore;
+    }
 
     public static class SearchResultHolder extends RecyclerView.ViewHolder{
         CardView cardView;
         TextView guideTitle;
         TextView guideAuthor;
         TextView guideDate;
+
 
         //Creates ViewHolder class and sets the attributes
         SearchResultHolder (final View itemView){
@@ -41,26 +54,16 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
             itemView.setClickable(true);
         }
 
-        public void bindData(final Result result){
+        public void bindData(final Result result,final FirebaseFirestore mFirestore){
             //set cardview listener
             cardView.setOnClickListener(new View.OnClickListener() {
+
                 @Override
-                public void onClick(View view) {
+                public void onClick(final View view) {
                     //Get the activity in which the cardview resides in
-                    Activity mContext = (Activity) view.getContext();
+                    final Activity mContext = (Activity) view.getContext();
 
-                    //Starts the intent with a transition
-                    //set listener based on result destination
-                    if (result.getDestination().equals("Edit")){
-                        Intent intent = new Intent(view.getContext(), CreateNewGuide.class);
-                        intent.putExtra("MODE","EDIT");
-                        intent.putExtra("GUIDEID",result.getId());
-                        intent.putExtra("GUIDE_TITLE",result.getTitle());
-                        intent.putExtra("KEY",result.getKey());
-                        intent.putExtra("DATE",result.getDate());
-
-                        view.getContext().startActivity(intent);
-                    }else if (result.getDestination().equals("View")){
+                    if (result.getDestination().equals("View")){
                         Intent intent = new Intent(view.getContext(), ViewGuide.class);
                         intent.putExtra("GUIDEID",result.getId());
                         intent.putExtra("GUIDE_TITLE",result.getTitle());
@@ -69,9 +72,51 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
                         intent.putExtra("AUTHOR",result.getName());
 
                         view.getContext().startActivity(intent);
+
+                        mContext.overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
+                        return;
                     }
 
-                    mContext.overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
+                    final CharSequence[] items = {"Continue Editing","Publish","Unpublish","Delete Guide", "Cancel"};
+                    AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+                    builder.setTitle("What would you like to do?");
+                    builder.setItems(items, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            //get firestore reference to the guide in this view so we can do stuff with it
+                            DocumentReference guideRef = mFirestore.document("Users/" + result.getUserId() +"/guides/"+result.getKey());
+                            if (items[i].equals("Continue Editing")){
+                                //Starts the intent with a transition
+                                //set listener based on result destination
+                                if (result.getDestination().equals("Edit")){
+                                    Intent intent = new Intent(view.getContext(), CreateNewGuide.class);
+                                    intent.putExtra("MODE","EDIT");
+                                    intent.putExtra("GUIDEID",result.getId());
+                                    intent.putExtra("GUIDE_TITLE",result.getTitle());
+                                    intent.putExtra("KEY",result.getKey());
+                                    intent.putExtra("DATE",result.getDate());
+
+                                    view.getContext().startActivity(intent);
+
+                                    mContext.overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
+                                }
+                            }else if (items[i].equals("Publish")){
+                                guideRef.update("publishedStatus",true);
+                                Toast.makeText(mContext, "'"+result.getTitle() + "' has been published!",Toast.LENGTH_SHORT).show();
+                            }else if (items[i].equals("Unpublish")){
+                                guideRef.update("publishedStatus",false);
+                                Toast.makeText(mContext,"Your guide is no longer published, others can not see it",Toast.LENGTH_SHORT).show();
+                            }else if (items[i].equals("Delete Guide")){
+                                FirebaseConnection mFirebaseConnection = new FirebaseConnection();
+                                mFirebaseConnection.deleteGuide(mContext,guideRef);
+                            }else if (items[i].equals("Cancel")){
+                                dialogInterface.dismiss();
+                            }
+                        }
+                    });
+
+                    builder.show();
+
                 }
             });
         }
@@ -92,7 +137,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
         holder.guideAuthor.setText("By: " + searchResults.get(position).getName());
         holder.guideDate.setText("Created: " + searchResults.get(position).getDate());
         //bind the listener
-        holder.bindData(searchResults.get(position));
+        holder.bindData(searchResults.get(position),mFirestore );
     }
 
     //Returns the number of search results

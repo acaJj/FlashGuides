@@ -47,6 +47,7 @@ import java.util.Locale;
 
 public class UserCollectionActivity extends AppCompatActivity {
 
+    private FirebaseConnection mFirebaseConnection;
     private FirebaseAuth mAuth;
     private FirebaseFirestore mFirestore;
     private FirebaseStorage mStorage;
@@ -71,13 +72,10 @@ public class UserCollectionActivity extends AppCompatActivity {
         }
 
         //Gets a handle on the firebase modules
-        mAuth = FirebaseAuth.getInstance();
-        mFirestore = FirebaseFirestore.getInstance();
-        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
-                .setTimestampsInSnapshotsEnabled(true)
-                .build();
-        mFirestore.setFirestoreSettings(settings);
-        mStorage = FirebaseStorage.getInstance();
+        mFirebaseConnection = new FirebaseConnection();
+        mAuth = mFirebaseConnection.getFirebaseAuthInstance();
+        mFirestore = mFirebaseConnection.getFirestoreInstance();
+        mStorage = mFirebaseConnection.getStorageInstance();
 
         //init the list
         searchResults = new ArrayList<>();
@@ -104,19 +102,20 @@ public class UserCollectionActivity extends AppCompatActivity {
                         guide.setDate(doc.getString("dateCreated"));
                         guide.setKey(doc.getId());
                         guide.setId(doc.getString("id"));
+                        guide.setUserId(mAuth.getUid());
                         guide.setDestination("Edit");
                         searchResults.add(guide);
                     }
 
                     //Once everything is obtained, it creates and sets the adapter
-                    mAdapter = new SearchAdapter(searchResults);
+                    mAdapter = new SearchAdapter(searchResults,mFirestore);
                     guideCollection.setAdapter(mAdapter);
                     Toast.makeText(getApplicationContext(), searchResults.size() + " results." , Toast.LENGTH_SHORT).show();
                 } else{
 
                     //This is included just in case something is wrong
                     testGuides();
-                    mAdapter = new SearchAdapter(searchResults);
+                    mAdapter = new SearchAdapter(searchResults,mFirestore);
                     guideCollection.setAdapter(mAdapter);
                 }
             }
