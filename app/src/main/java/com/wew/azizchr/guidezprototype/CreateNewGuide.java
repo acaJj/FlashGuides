@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -235,8 +236,9 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (haveSaved){
-                    setSearchIndex();//index the guide into algolia
+                    //set guide to published and then index it and update the doc in firestore
                     newGuide.setPublishedStatus(true);
+                    setSearchIndex();//index the guide into algolia
                     DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
                     guideRef.update("publishedStatus",true);
                     Toast.makeText(CreateNewGuide.this,"You've been published!",Toast.LENGTH_SHORT).show();
@@ -248,8 +250,8 @@ public class CreateNewGuide extends AppCompatActivity {
                                 public void onClick(DialogInterface dialog, int id) {
                                     //save the guide before adding it to the index so newGuide has values set for Algolia indexing
                                     saveGuide();
-                                    setSearchIndex();
                                     newGuide.setPublishedStatus(true);
+                                    setSearchIndex();
                                     DocumentReference guideRef = mFirestore.document("Users/" + mFirebaseAuth.getUid() +"/guides/"+guideNum);
                                     guideRef.update("publishedStatus",true);
                                     Toast.makeText(CreateNewGuide.this,"You've been published!",Toast.LENGTH_SHORT).show();
@@ -669,6 +671,25 @@ public class CreateNewGuide extends AppCompatActivity {
         //update the users guide count so the guides can be named differently, 'guide0', 'guide1', etc
         if (mode.equals("CREATE"))userRef.update("numGuides", guideNum);
         Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
+
+        //after guide is saved, wait 5 seconds for the last uploading to finish up then ask the user if they want to leave or go back
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                new AlertDialog.Builder(CreateNewGuide.this)
+                        .setMessage("Do you want to continue editing, or go back?")
+                        .setCancelable(false)
+                        .setPositiveButton("Go Back", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                CreateNewGuide.this.finish();
+                                overridePendingTransition(R.anim.leftslidebackward, R.anim.rightslidebackward);
+                            }
+                        })
+                        .setNegativeButton("Stay", null)
+                        .show();
+            }
+        }, 5000);
+
         haveSaved = true;
     }
 

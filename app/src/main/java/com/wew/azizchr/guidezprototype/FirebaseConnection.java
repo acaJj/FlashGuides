@@ -2,6 +2,7 @@ package com.wew.azizchr.guidezprototype;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -9,6 +10,7 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -179,7 +181,6 @@ public class FirebaseConnection {
 
     /**
      * Uploads all pictures in the guide to firestore and stores bitmaps in storage
-     *
      * @param images list of data objects representing the pictures in the guide
      */
     public void uploadImages(final Context context, int guideNum, final CollectionReference picData,
@@ -298,7 +299,7 @@ public class FirebaseConnection {
                                     mProgBarLL.setVisibility(View.GONE);
                                     Log.d("BORBOT", "Display is done, finished uploading" + (finalStorageindex + 1) + " images." );
                                 }
-                            }, 3000);
+                            }, 2000);
                         }
                     }
                 });
