@@ -1241,9 +1241,22 @@ public class CreateNewGuide extends AppCompatActivity {
         builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                textview.setText(input.getText().toString());
-                newGuide.setTitle(input.getText().toString());
-                haveSaved = false;
+                if(input.getText().toString().isEmpty()){
+                    new AlertDialog.Builder(CreateNewGuide.this)
+                            .setMessage("You can't leave it blank! Please try again.")
+                            .setCancelable(false)
+                            .setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+
+                                }
+                            })
+                            .show();
+                }else {
+                    textview.setText(input.getText().toString());
+                    newGuide.setTitle(input.getText().toString());
+                    haveSaved = false;
+                }
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -1269,8 +1282,21 @@ public class CreateNewGuide extends AppCompatActivity {
         builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                textview.setText(input.getText().toString());
-                haveSaved = false;
+                if(input.getText().toString().isEmpty()){
+                    new AlertDialog.Builder(CreateNewGuide.this)
+                            .setMessage("You can't leave it blank! Please try again.")
+                            .setCancelable(false)
+                            .setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+
+                                }
+                            })
+                            .show();
+                }else{
+                    textview.setText(input.getText().toString());
+                    haveSaved = false;
+                }
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

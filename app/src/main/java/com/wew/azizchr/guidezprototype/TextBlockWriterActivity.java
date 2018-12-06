@@ -1,8 +1,10 @@
 package com.wew.azizchr.guidezprototype;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -79,6 +81,8 @@ public class TextBlockWriterActivity extends AppCompatActivity {
 
         if (savedInstanceState != null){
             text = savedInstanceState.getString("Text");
+            //Puts in the text if there is anyting
+            mEditor.setHtml(text);
         }
 
         mEditor.setOnTextChangeListener(new RichEditor.OnTextChangeListener() {
@@ -133,7 +137,17 @@ public class TextBlockWriterActivity extends AppCompatActivity {
                 try{
                     text = mEditor.getHtml();
                     if (text.equals("") || text == null){
-                        Toast.makeText(TextBlockWriterActivity.this, "You have to enter something!", Toast.LENGTH_SHORT).show();
+                        new AlertDialog.Builder(TextBlockWriterActivity.this)
+                                .setMessage("You have to enter something!")
+                                .setCancelable(false)
+                                .setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                                    }
+                                })
+                                .show();
+                        //Toast.makeText(TextBlockWriterActivity.this, "You have to enter something!", Toast.LENGTH_SHORT).show();
                     }else{
                         setTextResult(text);
                     }

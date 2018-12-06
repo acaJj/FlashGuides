@@ -1,6 +1,8 @@
 package com.wew.azizchr.guidezprototype;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -63,8 +65,17 @@ public class AddStepActivity extends AppCompatActivity {
         try{
             stepTitle = mStepTitle.getText().toString();
             stepDesc = mStepDesc.getText().toString();
-            if (stepTitle == "" || stepTitle == null || stepDesc == "" || stepDesc == null){
-                Toast.makeText(AddStepActivity.this, "You have to fill out both fields!", Toast.LENGTH_SHORT).show();
+            if (stepTitle.isEmpty() || stepDesc.isEmpty()){
+                new AlertDialog.Builder(AddStepActivity.this)
+                        .setMessage("You have to fill out both fields!")
+                        .setCancelable(false)
+                        .setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+
+                            }
+                        })
+                        .show();
             }else{
                 setStepResult(stepTitle, stepDesc);
             }

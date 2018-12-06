@@ -185,6 +185,20 @@ public class FirebaseConnection {
     public void uploadImages(final Context context, int guideNum, final CollectionReference picData,
                              final ArrayList<PictureData> images, final LinearLayout PBLL, final TextView PBT) {
 
+        //Checks to see if any images are saved
+        if(images.size() == 0)
+        {
+            PBT.setText("Finishing up, hold tight!");
+            //Wait 3 seconds to finish up uploading, then remove the progress bar
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                public void run() {
+                    PBLL.setVisibility(View.GONE);
+                    Log.d("BORBOT", "Did not upload any images." );
+                }
+            }, 3000);
+        }
+
         //arraylists to hold bitmaps and their paths in the firebase storage
         final ArrayList<Bitmap> bitmapsToUpload = new ArrayList<>();
         final ArrayList<String> paths = new ArrayList<>();
@@ -216,7 +230,7 @@ public class FirebaseConnection {
                                 Log.d(DEBUG_TAG, "Uploading images asynchronously");
                                 //send all the bitmaps to the async task
                                 FirebaseConnection.ImageUploadAsyncTask imageUploader =
-                                        new FirebaseConnection.ImageUploadAsyncTask(paths,PBLL,PBT);
+                                        new FirebaseConnection.ImageUploadAsyncTask(images.size(), paths,PBLL,PBT);
                                 imageUploader.execute(bitmapsToUpload);
                             }
                         }
@@ -236,19 +250,21 @@ public class FirebaseConnection {
         private final FirebaseStorage mStorageReference;
         private final LinearLayout mProgBarLL;
         private final TextView mProgBarText;
+        private final int imageListSize;
 
-        private ImageUploadAsyncTask(ArrayList<String> paths, LinearLayout pbll, TextView pbt) {
+        private ImageUploadAsyncTask(int imageListLength, ArrayList<String> paths, LinearLayout pbll, TextView pbt) {
             //sActivity = activity;
             storagePaths = paths;
             //storagePath = path;
             mStorageReference = FirebaseStorage.getInstance();
             mProgBarLL = pbll;
             mProgBarText = pbt;
+            imageListSize = imageListLength;
         }
 
         @Override
         protected Long doInBackground(ArrayList<Bitmap>[] bitmaps) {
-
+            Log.d("BORBOT", "Does this even run?");
             int storageindex = 0;
             final int BitmapArraySize = bitmaps.length;
             //for each loop creates a deep copy of the bitmap[0] and stores it in bmap
@@ -270,10 +286,9 @@ public class FirebaseConnection {
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Log.d("ASYNCIMAGEUPLOADA", "Upload Success: " + taskSnapshot.getUploadSessionUri());
                         StorageMetadata storageMetadata = taskSnapshot.getMetadata();
-                        Log.d("BORBOT", "Image upload successful. " + (finalStorageindex + 1) +  " out of " + (BitmapArraySize + 1));
-
+                        Log.d("BORBOT", "Image upload successful. " + (finalStorageindex + 1) +  " out of " + imageListSize);
                         //Checks if the last image was uploaded
-                        if(finalStorageindex == BitmapArraySize ){
+                        if((finalStorageindex + 1) == imageListSize ){
                             Log.d("BORBOT", "Done uploading everything.");
                             mProgBarText.setText("Finishing up, hold tight!");
                             //Wait 3 seconds to finish up uploading, then remove the progress bar
@@ -281,9 +296,9 @@ public class FirebaseConnection {
                             handler.postDelayed(new Runnable() {
                                 public void run() {
                                     mProgBarLL.setVisibility(View.GONE);
+                                    Log.d("BORBOT", "Display is done, finished uploading" + (finalStorageindex + 1) + " images." );
                                 }
                             }, 3000);
-
                         }
                     }
                 });
