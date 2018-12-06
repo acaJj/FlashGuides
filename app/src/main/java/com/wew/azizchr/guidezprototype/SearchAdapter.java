@@ -9,14 +9,19 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.algolia.search.saas.Client;
+import com.algolia.search.saas.Index;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -29,6 +34,11 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
 
     private List<Result> searchResults;
     private FirebaseFirestore mFirestore;
+    //Algolia id and api keys for search
+    private static String updateApiKey = "132c50036e3241722083caa0a25393e2";//do not use the admin key
+    private static String applicationId = "031024FLJM";
+    private static Client client = new Client(applicationId, updateApiKey);
+    private static Index algoliaIndex = client.getIndex("guides");
 
     SearchAdapter( List<Result> sr,FirebaseFirestore firestore){
         this.searchResults = sr;
@@ -103,9 +113,33 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
                             }else if (items[i].equals("Publish")){
                                 guideRef.update("publishedStatus",true);
                                 Toast.makeText(mContext, "'"+result.getTitle() + "' has been published!",Toast.LENGTH_SHORT).show();
+
+                                //index the guide title with Algolia so we can search it later
+                                try{
+
+                                    JSONObject guideObject = new JSONObject().//guide object
+                                            put("title",result.getTitle()).put("author",result.getName())
+                                            .put("userId",result.getUserId()).put("key",result.getKey())
+                                            .put("date",result.getDate()).put("publishedStatus",true);
+
+                                    algoliaIndex.addObjectAsync(guideObject, result.getId(),null);
+                                }catch(Exception ex){
+                                    Log.d("BORBOT", ex.getMessage());
+                                }
                             }else if (items[i].equals("Unpublish")){
                                 guideRef.update("publishedStatus",false);
                                 Toast.makeText(mContext,"Your guide is no longer published, others can not see it",Toast.LENGTH_SHORT).show();
+
+                                //index the guide title with Algolia so we can search it later
+                                try{
+                                    JSONObject guideObject = new JSONObject().//guide object
+                                            put("title",result.getTitle()).put("author",result.getName())
+                                            .put("userId",result.getUserId()).put("key",result.getKey())
+                                            .put("date",result.getDate()).put("publishedStatus",false);
+                                    algoliaIndex.addObjectAsync(guideObject, result.getId(),null);
+                                }catch(Exception ex){
+                                    Log.d("BORBOT", ex.getMessage());
+                                }
                             }else if (items[i].equals("Delete Guide")){
                                 FirebaseConnection mFirebaseConnection = new FirebaseConnection();
                                 mFirebaseConnection.deleteGuide(mContext,guideRef);

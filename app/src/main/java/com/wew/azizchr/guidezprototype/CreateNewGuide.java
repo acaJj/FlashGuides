@@ -193,7 +193,7 @@ public class CreateNewGuide extends AppCompatActivity {
                 guideNum = documentSnapshot.getLong("numGuides").intValue();
 
                 if (mode.equals("CREATE"))guideNum++;// increments guideNum by 1 because we are making a new guide so there is 1 more than before
-                String authorName = ""+documentSnapshot.getString("firstName") + documentSnapshot.getString("lastName");
+                String authorName = ""+documentSnapshot.getString("firstName") + " " + documentSnapshot.getString("lastName");
                 editorSetup(bundle);
                 newGuide.setAuthor(authorName);
                 newGuide.setTitle(guideTitle);
@@ -573,7 +573,7 @@ public class CreateNewGuide extends AppCompatActivity {
     }
 
     public void onClickGuideTitle(View view) {
-        editTitle(view);
+        editGuideTitle(view);
     }
 
     /**
@@ -685,7 +685,7 @@ public class CreateNewGuide extends AppCompatActivity {
             JSONObject guideObject = new JSONObject().//guide object
                     put("title",newGuide.getTitle()).put("author",newGuide.getAuthor())
                     .put("userId",mFirebaseAuth.getUid()).put("key",newGuide.getKey())
-                    .put("date",newGuide.getDateCreated());
+                    .put("date",newGuide.getDateCreated()).put("publishedStatus",newGuide.getPublishedStatus());
             //guideToIndex.add(new JSONObject(guideObject));
             algoliaIndex.addObjectAsync(guideObject, newGuide.getId(),null);
             Log.d(DEBUG_TAG,"indexing completed");
@@ -1113,7 +1113,7 @@ public class CreateNewGuide extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 if(items[i].equals("Edit step title")) {
-                    editTitle(v);
+                    editStepTitle(v);
                 }else if(items[i].equals("Add step above")){
                     //get the index of the step in the overall guide layout feed
                     LinearLayout titleLayout = ((LinearLayout) v.getParent());
@@ -1226,9 +1226,9 @@ public class CreateNewGuide extends AppCompatActivity {
         overridePendingTransition(R.anim.rightslide, R.anim.leftslide);
     }
     /**
-     * Builds and displays a edittext to allow the user to edit the title
+     * Builds and displays a edittext to allow the user to edit the title of the guide
      */
-    public void editTitle(View v){
+    public void editGuideTitle(View v){
         final TextView textview = (TextView) v;
         String currentText = textview.getText().toString();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -1243,6 +1243,33 @@ public class CreateNewGuide extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 textview.setText(input.getText().toString());
                 newGuide.setTitle(input.getText().toString());
+                haveSaved = false;
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
+    }
+
+    //Lets users edit the title of a step
+    public void editStepTitle(View v){
+        final TextView textview = (TextView) v;
+        String currentText = textview.getText().toString();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Rename Title");
+        final EditText input = new EditText(this);
+        input.setText(currentText);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        builder.setView(input);
+
+        builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                textview.setText(input.getText().toString());
                 haveSaved = false;
             }
         });

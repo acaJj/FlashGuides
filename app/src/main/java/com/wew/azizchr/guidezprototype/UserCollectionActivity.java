@@ -98,12 +98,13 @@ public class UserCollectionActivity extends AppCompatActivity {
                         //For each document in the collection, create a Result object and add it to the list
                         Result guide = new Result();
                         guide.setTitle(doc.getString("title"));
-                        guide.setName("you!");
+                        guide.setName(doc.getString("author"));
                         guide.setDate(doc.getString("dateCreated"));
                         guide.setKey(doc.getId());
                         guide.setId(doc.getString("id"));
                         guide.setUserId(mAuth.getUid());
                         guide.setDestination("Edit");
+                        //guide.setPublishedStatus(doc.getBoolean("publishedStatus"));
                         searchResults.add(guide);
                     }
 
