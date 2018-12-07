@@ -673,7 +673,8 @@ public class CreateNewGuide extends AppCompatActivity {
         Toast.makeText(CreateNewGuide.this, "Guide Saved!", Toast.LENGTH_SHORT).show();
 
         //after guide is saved, wait 5 seconds for the last uploading to finish up then ask the user if they want to leave or go back
-        Handler handler = new Handler();
+        //pops up too early sometimes, leave out until we can figure out a better solution
+       /* Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
                 new AlertDialog.Builder(CreateNewGuide.this)
@@ -689,7 +690,7 @@ public class CreateNewGuide extends AppCompatActivity {
                         .show();
             }
         }, 5000);
-
+*/
         haveSaved = true;
     }
 

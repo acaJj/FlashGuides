@@ -61,7 +61,7 @@
             android:ems="10"
             android:inputType="text" />
 
-        <TextView
+       <!-- <TextView
             android:id="@+id/txtCurrNick"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -76,7 +76,7 @@
             android:backgroundTint="@color/statusbarpurple"
             android:ems="10"
             android:inputType="text" />
-
+-->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

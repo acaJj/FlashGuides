@@ -33,7 +33,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private EditText mFirstName;
     private EditText mLastName;
-    private EditText mNickName;
+    //private EditText mNickName; we dont use the username for anything so leave out for now
     private EditText mPassword;
     private EditText mConfirmPassword;
     private Button mBack;
@@ -61,6 +61,14 @@ public class SettingsActivity extends AppCompatActivity {
             window.setStatusBarColor(this.getResources().getColor(R.color.statusbarpurple));
         }
 
+        mFirstName = findViewById(R.id.eFirstname);
+        mLastName = findViewById(R.id.eLastname);
+        //mNickName = findViewById(R.id.eUsername);
+        mPassword = findViewById(R.id.ePassword);
+        mConfirmPassword = findViewById(R.id.ePasswordChangeConfirm);
+        mBack = findViewById(R.id.btnBackSettings);
+        mConfirm = findViewById(R.id.btnConfirmSettings);
+
         mFirebaseConnection = new FirebaseConnection();
         mFirebaseAuth = mFirebaseConnection.getFirebaseAuthInstance();
         mCurrentUser = mFirebaseAuth.getCurrentUser();
@@ -75,24 +83,18 @@ public class SettingsActivity extends AppCompatActivity {
                 mUser.setUserName( documentSnapshot.getString("username"));
                 mUser.setPassword(documentSnapshot.getString("password"));
                 mUser.setFirstName(documentSnapshot.getString("firstName"));
-                mUser.setFirstName(documentSnapshot.getString("lastName"));
+                mUser.setLastName(documentSnapshot.getString("lastName"));
                 int num = documentSnapshot.getLong("numGuides").intValue();
                 mUser.setNumGuides(num);
                 mUser.setId(documentSnapshot.getString("id"));
                 mUser.setEmail("email");
+
+                //Sets the current user information for the user's convenience
+                mFirstName.setText(mUser.getFirstName());
+                mLastName.setText(mUser.getLastName());
+                mPassword.setText(mUser.getPassword());
             }
         });
-
-        mFirstName = findViewById(R.id.eFirstname);
-        mLastName = findViewById(R.id.eLastname);
-        mNickName = findViewById(R.id.eUsername);
-        mPassword = findViewById(R.id.ePassword);
-        mConfirmPassword = findViewById(R.id.ePasswordChangeConfirm);
-        mBack = findViewById(R.id.btnBackSettings);
-        mConfirm = findViewById(R.id.btnConfirmSettings);
-
-        //Sets the current user information for the user's convenience
-        mPassword.setText(mUser.getPassword());
 
         mConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -126,7 +128,7 @@ public class SettingsActivity extends AppCompatActivity {
         String newFirstName = mFirstName.getText().toString();
         String newLastName = mLastName.getText().toString();
         String newPass = mPassword.getText().toString();
-        String newNick = mNickName.getText().toString();
+        //String newNick = mNickName.getText().toString();
         if (!newFirstName.equals(mUser.getFirstName())){
             userAccountRef.update("firstName",newFirstName);
         }
@@ -135,9 +137,9 @@ public class SettingsActivity extends AppCompatActivity {
             userAccountRef.update("lastName",newLastName);
         }
 
-        if (!newNick.equals(mUser.getUserName())){
+       /* if (!newNick.equals(mUser.getUserName())){
             userAccountRef.update("userName",newNick);
-        }
+        }*/
 
         if (!newPass.equals(mUser.getPassword())){
             //if there is a new password typed out, it must be between 6 and 20 chars

@@ -304,21 +304,23 @@ public class ViewGuide extends AppCompatActivity {
             mDescription.loadData(description,"text/html","UTF-8");
             mDescription.setBackgroundColor(Color.TRANSPARENT);
 
-            mDescription.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View view, MotionEvent motionEvent) {
-                    switch (motionEvent.getAction()){
-                        case MotionEvent.ACTION_UP:
-                            view.performClick();
-                            //get the html text and split it by "'" in order to get the link so we can parse it
-                            String[] linkHtml = description.split("'");
-                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(linkHtml[1]));
-                            startActivity(browserIntent);
+            //if the text is a link then open a browser when that link is clicked on
+            if (text.getTextType().equals("Link")){
+                mDescription.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View view, MotionEvent motionEvent) {
+                        switch (motionEvent.getAction()){
+                            case MotionEvent.ACTION_UP:
+                                view.performClick();
+                                //get the html text and split it by "'" in order to get the link so we can parse it
+                                String[] linkHtml = description.split("'");
+                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(linkHtml[1]));
+                                startActivity(browserIntent);
+                        }
+                        return true;
                     }
-                    return true;
-                }
-            });
-
+                });
+            }
             //adds the new text block with the text to the selected step
             //selectedLayout.addView(mDescription, selectedLayout.getChildCount() - 1);
 
