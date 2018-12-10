@@ -143,6 +143,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchResu
                             }else if (items[i].equals("Delete Guide")){
                                 FirebaseConnection mFirebaseConnection = new FirebaseConnection();
                                 mFirebaseConnection.deleteGuide(mContext,guideRef);
+                                mContext.recreate();
                             }else if (items[i].equals("Cancel")){
                                 dialogInterface.dismiss();
                             }
